@@ -53,6 +53,12 @@ Claude instead, when a key is set: create a RunPod secret named `anthropic-api-k
 key and set the pod variable `ALEX_ANTHROPIC_KEY={{ RUNPOD_SECRET_anthropic-api-key }}`. Each result says which
 model wrote it. `ALEX_CLAUDE_MODEL` picks the Claude model (default `claude-sonnet-5-5`).
 
+Spec requests use prompt caching on the Claude API: the fixed studio instructions (about 1,000 tokens) go in
+the system prompt marked `cache_control: ephemeral`, and the brief, settings and lyric examples follow in the
+user message. A second spec within 5 minutes reads those instructions from the cache. `bridge.log` prints
+each Claude call's cached-read, cache-write and uncached token counts. The open model gets the same fixed
+system prompt first, so Ollama can reuse it too.
+
 ## Your lyrics as style examples
 
 The Library's **My lyrics** card stores your own songs (.txt, .md or .lrc files, or pasted). A first line

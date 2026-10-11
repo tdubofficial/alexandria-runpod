@@ -121,8 +121,10 @@ def _strip_json(text):
     return t
 
 
-def ask_local(prompt, schema, want_json, max_tokens, temperature):
-    body = {"model": local_model(), "messages": [{"role": "user", "content": prompt}], "stream": False, "think": False,
+def ask_local(prompt, schema, want_json, max_tokens, temperature, system=""):
+    # The fixed system prompt goes first so Ollama can reuse its processed prefix between requests.
+    msgs = ([{"role": "system", "content": system}] if system else []) + [{"role": "user", "content": prompt}]
+    body = {"model": local_model(), "messages": msgs, "stream": False, "think": False,
             "options": {"temperature": temperature, "num_ctx": 16384, "num_predict": max_tokens}}
     if schema:
         body["format"] = schema
@@ -132,12 +134,16 @@ def ask_local(prompt, schema, want_json, max_tokens, temperature):
     return ((res or {}).get("message") or {}).get("content", "")
 
 
-def ask_claude(prompt, want_json, max_tokens, temperature):
+def ask_claude(prompt, want_json, max_tokens, temperature, system=""):
     key = claude_key()
     if not key:
         raise RuntimeError("Claude fallback isn't set up (no Anthropic API key on this machine).")
     body = {"model": os.environ.get("ALEX_CLAUDE_MODEL", "claude-sonnet-5-5"), "max_tokens": max_tokens, "temperature": temperature,
             "messages": [{"role": "user", "content": prompt + ("\n\nReturn only the JSON object, no commentary." if want_json else "")}]}
+    if system:
+        # Prompt caching: the system prompt is identical on every spec request, so mark it as a cache breakpoint.
+        # Reads cost 0.05x the input price on Sonnet 5.5; entries last 5 minutes and refresh on each hit.
+        body["system"] = [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}]
     req = urllib.request.Request(os.environ.get("ALEX_ANTHROPIC_URL", "https://api.anthropic.com").rstrip("/") + "/v1/messages", data=json.dumps(body).encode(), method="POST",
                                  headers={"Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01",
                                           "User-Agent": "alexandria-bridge/1.4"})
@@ -146,11 +152,16 @@ def ask_claude(prompt, want_json, max_tokens, temperature):
             res = json.loads(r.read().decode())
     except urllib.error.HTTPError as e:
         raise RuntimeError(f"Claude API returned {e.code}: {e.read().decode(errors='replace')[:200]}")
-    return "".join(b.get("text", "") for b in res.get("content", []) if b.get("type") == "text")
+    u = res.get("usage") or {}
+    usage = {k: u.get(k, 0) for k in ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens")}
+    print(f"Claude usage: {usage['cache_read_input_tokens']} cached read, {usage['cache_creation_input_tokens']} cache write, "
+        f"{usage['input_tokens']} uncached in, {usage['output_tokens']} out", flush=True)
+    return "".join(b.get("text", "") for b in res.get("content", []) if b.get("type") == "text"), usage
 
 
 def llm_worker(job_id, req):
     prompt = str(req.get("prompt") or "")
+    system = str(req.get("system") or "")
     schema = req.get("schema") if isinstance(req.get("schema"), dict) else None
     want_json = bool(req.get("json") or schema)
     max_tokens = int(req.get("max_tokens") or (4096 if want_json else 1024))
@@ -166,12 +177,12 @@ def llm_worker(job_id, req):
                     raise RuntimeError("the open model isn't downloaded yet" if st["up"] else "the open model server isn't running")
                 with LLM_LOCK:
                     LLM_JOBS[job_id].update(status="running", provider="local", message=f"Writing with {local_model()}…")
-                text = ask_local(prompt, schema, want_json, max_tokens, temperature)
-                model = local_model()
+                text = ask_local(prompt, schema, want_json, max_tokens, temperature, system)
+                model, usage = local_model(), None
             else:
                 with LLM_LOCK:
                     LLM_JOBS[job_id].update(status="running", provider="claude", message="Writing with Claude…")
-                text = ask_claude(prompt, want_json, max_tokens, temperature)
+                text, usage = ask_claude(prompt, want_json, max_tokens, temperature, system)
                 model = os.environ.get("ALEX_CLAUDE_MODEL", "claude-sonnet-5-5")
             if want_json:  # must parse and carry the required keys, or try the next provider
                 try:
@@ -183,7 +194,7 @@ def llm_worker(job_id, req):
                     raise RuntimeError("its reply was missing " + ", ".join(missing[:4]))
                 text = _strip_json(text)
             with LLM_LOCK:
-                LLM_JOBS[job_id].update(status="done", text=text, provider=provider, model=model, fallback_reasons=errors)
+                LLM_JOBS[job_id].update(status="done", text=text, provider=provider, model=model, fallback_reasons=errors, usage=usage)
             return
         except Exception as e:  # noqa: BLE001
             errors.append(f"{provider}: {str(e)[:200]}")

@@ -880,11 +880,12 @@ const ai = {
   async run(prompt, o = {}) {
     if (!(await this.ready())) throw Object.assign(new Error(this.unavailableMsg()), { code: "no_ai" });
     if (this.status.mode === "claude") {
+      if (o.system) prompt = o.system + "\n\n" + prompt;
       const opts = { modelTier: o.tier || "default", cache: false, onText: o.onProgress ? ({ text }) => o.onProgress(text) : undefined };
       if (o.json || o.schema) { const value = await sample.json(prompt, opts); return { value, text: JSON.stringify(value), provider: "claude", model: "Claude" }; }
       const out = await sample(prompt, opts); return { text: out.text || "", provider: "claude", model: "Claude" };
     }
-    const r = await fetch("/llm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt, json: !!(o.json || o.schema), schema: o.schema || null, max_tokens: o.maxTokens || (o.json || o.schema ? 6000 : 1200), temperature: o.temperature ?? 0.7 }) });
+    const r = await fetch("/llm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt, system: o.system || "", json: !!(o.json || o.schema), schema: o.schema || null, max_tokens: o.maxTokens || (o.json || o.schema ? 6000 : 1200), temperature: o.temperature ?? 0.7 }) });
     if (r.status === 401) { location.href = "/login"; throw new Error("Signed out"); }
     const { id } = await r.json(); const t0 = Date.now();
     for (;;) {
@@ -892,7 +893,7 @@ const ai = {
       const j = await (await fetch(`/llm/${id}`, { cache: "no-store" })).json();
       o.onProgress?.(null, `${j.message || "Writing…"} ${Math.round((Date.now() - t0) / 1000)}s`);
       if (j.status === "done") {
-        const out = { text: j.text, provider: j.provider, model: j.model, fallbackReasons: j.fallback_reasons || [] };
+        const out = { text: j.text, provider: j.provider, model: j.model, fallbackReasons: j.fallback_reasons || [], usage: j.usage || null };
         if (o.json || o.schema) out.value = JSON.parse(j.text);
         return out;
       }
@@ -1076,6 +1077,42 @@ function selectedProfileIds() {
 }
 
 /* ---------- design spec via Claude ---------- */
+/* Fixed instructions: identical on every request, so the Claude API can cache them (system prompt with cache_control)
+   and the open model can reuse its processed prefix. Anything that changes per request goes in the user message. */
+const SPEC_SYSTEM = `You are the Alexandria Music Design Studio, a music-design collaborator. Turn a creative brief into a production-ready spec for AI music tools (Suno, Udio, YuE, ACE-Step). Describe sound with craft vocabulary; never use artist, producer, or brand names anywhere.
+
+HOW TO THINK (weight these to the brief):
+- Groove and rhythm: BPM, time feel (straight, swung, triplet, half-time), pocket, syncopation, drum pattern, where the energy sits.
+- Harmony and melody: key, mode, chord vocabulary (7th/9th extensions, modal drift, gospel walk-ups, sparse two-chord vamps), melodic contour, hook shape, tension and release.
+- Timbre and palette: the actual instruments and sounds, drum character (knocking 808s, crisp trap hats, dusty sampled breaks, punchy live kit, gated reverb snare), acoustic vs programmed, analog warmth vs digital sheen.
+- Arrangement and dynamics: what enters and exits when, density over time, the arc, where the energy peaks.
+- Space and mix: reverb depth, stereo width, dry vs wet, low-end weight, how close the vocal sits.
+- Voice and lyric: delivery (breathy, belted, conversational, rapped), cadence, subject, point of view, rhyme density, emotional register.
+- Reference and era: render any tradition or period as its sonic hallmarks, never as a person.
+Prefer three vivid, controllable descriptors over twelve vague ones.
+
+DEFAULT FORMS (adapt to the brief):
+- Pop/R&B: Verse, Pre-Chorus, Chorus, Verse, Pre-Chorus, Chorus, Bridge, Chorus, Outro.
+- Hip-hop: Chorus, Verse (16 bars), Chorus, Verse (16 bars), Chorus, Outro.
+- Trap-soul/alt-R&B: loose and mood-first; Verse, Chorus, Verse, Chorus, Vamp/Outro.
+- Instrumental: Intro, Main loop A, Variation B, Breakdown, A', Outro.
+
+HOUSE RULES (all mandatory):
+1. Style prompt order is genre -> tempo/feel -> drums -> harmony -> vocal -> space/mood. style_pre_vocal covers genre, tempo, drums, harmony. style_post_vocal covers space, mix, beat-switch or dropout moments, and ends with a mood closer. Comma-separated descriptors, no sentences, no line breaks.
+2. Character budget: the request states the most characters (including spaces) the style fields may total. Use only what the track needs; there is no need to fill the budget.
+3. Runtime: total bars x 4 x 60 / bpm must land between 185 and 215 seconds. Choose bar counts to hit it exactly.
+4. Lyrics tag canon: cold open (never start with [Intro]); always [Chorus], never [Hook]. Use [Verse 1], [Pre-Chorus], [Chorus], [Bridge], [Outro] style tags. Concrete imagery, internal rhyme and multisyllabic chains, consistent meter within sections, a chorus that states the emotional thesis, consistent point of view.
+5. Every structure section in the lyrics must match the structure list, in order.
+6. Beat Blueprint is required: kick, snare, hats, low_end, percussion, dropout (one deliberate dropout or beat-switch moment).
+7. yue_tags: 6-12 short lowercase space-separated tags for the YuE model covering genre, instrument, mood, vocal gender and timbre (no vocal tags for instrumentals).
+8. weirdness and style_influence are integers 0-100.
+9. directions: if the brief is open-ended, give two one-line alternative directions (A sparser/more intimate, B fuller/more anthemic); if it is already tight, return an empty array.
+10. levers: 3 to 6 concrete changes that push the track in a named direction (for example "darker: drop the key a third, swap pads for a detuned Rhodes, thin the hats").
+11. If the request includes the artist's own past lyrics, study and match that writer's voice (vocabulary, imagery, rhyme habits, meter, point of view, emotional register). Never copy or reuse their lines; write new ones.
+
+Return only JSON with exactly these keys:
+{"title":string,"concept":string,"directions":[{"name":string,"summary":string}],"genre":string,"bpm":number,"key":string,"time_feel":string,"palette":string,"groove":string,"arrangement":string,"mix":string,"beat_blueprint":{"kick":string,"snare":string,"hats":string,"low_end":string,"percussion":string,"dropout":string},"structure":[{"section":string,"bars":number,"energy":number (1-10),"notes":string}],"lyrics":string,"style_pre_vocal":string,"vocal_descriptors":string,"style_post_vocal":string,"yue_tags":string,"weirdness":number,"style_influence":number,"levers":[string]}`;
+
 function buildPrompt() {
   const brief = $("#brief").value.trim();
   const profileIds = selectedProfileIds();
@@ -1085,29 +1122,15 @@ function buildPrompt() {
   const st = $("#structure").value;
   const form = STRUCTURE_FORMS[st] ? `Use this section form: ${STRUCTURE_FORMS[st]}.` : "Choose the section form that fits the brief.";
   const profiles = profileIds.map(getProfile);
-  return `You are the Alexandria Music Design Studio, a music-design collaborator. Turn the brief into a production-ready spec for AI music tools (Suno, Udio, YuE, ACE-Step). Describe sound with craft vocabulary; never use artist, producer, or brand names anywhere.
-
-BRIEF: ${brief}
+  const prompt = `BRIEF: ${brief}
 WORKING TITLE: ${$("#title").value.trim() || "(invent one)"}
 CATEGORY: ${$("#category").value}
 STRUCTURE: ${form}
-VOCAL: ${instrumental ? "Instrumental. No vocal descriptors, lyrics must be an empty string." : profiles.length ? `The app inserts these protected vocal profiles verbatim between your two style fields; do not restate or paraphrase them: ${profiles.map(p => `${p.name}${p.lane ? " (" + p.lane + ")" : ""}`).join(" + ")}. Write lyrics suited to ${profiles.length > 1 ? "a duet with call-and-response" : "this voice"}.` : "Write your own vocal descriptors in vocal_descriptors (delivery, register, phrasing, harmonies)."}
+VOCAL: ${instrumental ? "Instrumental. No vocal descriptors, lyrics must be an empty string." : profiles.length ? `The app inserts these protected vocal profiles verbatim between your two style fields; do not restate or paraphrase them, and leave vocal_descriptors empty: ${profiles.map(p => `${p.name}${p.lane ? " (" + p.lane + ")" : ""}`).join(" + ")}. Write lyrics suited to ${profiles.length > 1 ? "a duet with call-and-response" : "this voice"}.` : "Write your own vocal descriptors in vocal_descriptors (delivery, register, phrasing, harmonies)."}
+CHARACTER BUDGET: style_pre_vocal + ${profiles.length || instrumental ? "" : "vocal_descriptors + "}style_post_vocal must total at most ${budget} characters including spaces.
 ${mic && mic.sound ? `VOCAL CHAIN: put this sonic character into the mix notes and style_post_vocal as descriptors (no brand names): ${mic.sound}.` : ""}
-
-${lyricExamplesBlock(brief + " " + ($("#title").value || ""))}
-HOUSE RULES (all mandatory):
-1. Style prompt order is genre -> tempo/feel -> drums -> harmony -> vocal -> space/mood. style_pre_vocal covers genre, tempo, drums, harmony. style_post_vocal covers space, mix, beat-switch or dropout moments, and ends with a mood closer.
-2. Character budget: style_pre_vocal + ${profiles.length || instrumental ? "" : "vocal_descriptors + "}style_post_vocal must total at most ${budget} characters including spaces; use only what the track needs, there is no need to fill the budget, and end with a mood closer. Comma-separated descriptors, no sentences, no line breaks.
-3. Runtime: total bars x 4 x 60 / bpm must land between 185 and 215 seconds. Choose bar counts to hit it exactly.
-4. Lyrics tag canon: cold open (never start with [Intro]); always [Chorus], never [Hook]. Use [Verse 1], [Pre-Chorus], [Chorus], [Bridge], [Outro] style tags. Concrete imagery, internal rhyme, consistent meter, a chorus that states the emotional thesis.
-5. Every structure section in lyrics must match the structure list, in order.
-6. Beat Blueprint is required: kick, snare, hats, low_end, percussion, dropout (one deliberate dropout or beat-switch moment).
-7. yue_tags: 6-12 short lowercase space-separated tags for the YuE model covering genre, instrument, mood, vocal gender and timbre${instrumental ? " (no vocal tags)" : ""}.
-8. weirdness and style_influence are integers 0-100.
-9. directions: if the brief is open-ended, give two one-line alternative directions (A sparser/more intimate, B fuller/more anthemic); if it is already tight, return an empty array.
-
-Return only JSON with exactly these keys:
-{"title":string,"concept":string,"directions":[{"name":string,"summary":string}],"genre":string,"bpm":number,"key":string,"time_feel":string,"palette":string,"groove":string,"arrangement":string,"mix":string,"beat_blueprint":{"kick":string,"snare":string,"hats":string,"low_end":string,"percussion":string,"dropout":string},"structure":[{"section":string,"bars":number,"energy":number (1-10),"notes":string}],"lyrics":string,"style_pre_vocal":string,"vocal_descriptors":string,"style_post_vocal":string,"yue_tags":string,"weirdness":number,"style_influence":number,"levers":[string, 3 to 6 items]}`;
+${lyricExamplesBlock(brief + " " + ($("#title").value || ""))}`;
+  return { system: SPEC_SYSTEM, prompt: prompt.replace(/\n{3,}/g, "\n\n").trim() };
 }
 
 async function designSpec() {
@@ -1118,7 +1141,8 @@ async function designSpec() {
   btn.disabled = true; btn.innerHTML = `${icon("loader", "i spin")}<span>Designing…</span>`;
   $("#designNote").textContent = "Writing the spec: structure, Beat Blueprint, lyrics and style prompt.";
   try {
-    const res = await ai.run(buildPrompt(), { schema: SPEC_SCHEMA, tier: "complex", onProgress: (text, msg) => { $("#designNote").textContent = msg || (text && text.length > 20 ? `Writing… ${text.length.toLocaleString()} characters so far` : "Thinking…"); } });
+    const bp = buildPrompt();
+    const res = await ai.run(bp.prompt, { system: bp.system, schema: SPEC_SCHEMA, tier: "complex", onProgress: (text, msg) => { $("#designNote").textContent = msg || (text && text.length > 20 ? `Writing… ${text.length.toLocaleString()} characters so far` : "Thinking…"); } });
     const spec = normalizeSpec(res.value);
     spec.writtenBy = res.model;
     await repairRuntime(spec);
