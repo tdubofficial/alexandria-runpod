@@ -17,6 +17,7 @@
   --r-sm:10px; --r-md:12px; --r-lg:18px;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{height:100%}
 body{background:var(--bg);color:var(--text);font-family:var(--f-text);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -186,7 +187,7 @@ ul.levers{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
 .lib-actions{display:flex;gap:4px;align-items:center}
 .empty{padding:36px 20px;text-align:center;color:var(--text2a);border:1px dashed var(--border);border-radius:var(--r-md);display:flex;flex-direction:column;gap:8px;align-items:center}
 .presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
-.preset{border-radius:14px;overflow:hidden;border:1px solid var(--border);background:var(--bg);cursor:pointer;text-align:left;padding:0;display:flex;flex-direction:column}
+.preset{border-radius:14px;overflow:hidden;border:1px solid var(--border);background:var(--bg);text-align:left;padding:0;display:flex;flex-direction:column}
 .preset:hover{border-color:var(--blue)}
 .preset .art{height:112px;position:relative}
 .preset .art canvas{width:100%;height:100%;display:block}
@@ -230,6 +231,46 @@ code.k{font-family:var(--f-mono);font-size:13px;background:var(--elev);padding:1
 
 /* idle auto-stop banner */
 .idlebar{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:70;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 32px);padding:10px 14px;border-radius:14px;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,204,0,.5);box-shadow:0 10px 30px rgba(0,0,0,.5);font-size:14px;color:var(--text2)}
+/* transport */
+.tl{display:flex;justify-content:space-between;font-size:12px;color:var(--text3);margin-top:4px}
+.transport{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:8px}
+.transport .iconbtn{gap:2px}
+.transport .iconbtn[disabled]{opacity:.35;cursor:not-allowed}
+.transport .iconbtn[aria-pressed="true"]{color:var(--blue);background:var(--blue-wash)}
+.tnum{font-size:11px;font-weight:700;font-variant-numeric:tabular-nums}
+.tsep{width:1px;height:24px;background:var(--border);margin:0 6px}
+.select.rate{width:auto;min-height:36px;padding:4px 30px 4px 10px;font-size:14px;background-position:right 10px center}
+.vol{display:inline-flex;align-items:center;gap:6px;color:var(--text2a);min-height:44px;padding:0 6px}
+.vol input{width:96px;accent-color:var(--blue)}
+.wave{cursor:pointer;border-radius:8px}
+.wave:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+/* editors, chips */
+.editor{border:1px solid var(--border);background:var(--bg);border-radius:var(--r-md);padding:16px;margin-bottom:14px}
+.editor-h{display:flex;flex-direction:column;gap:2px;margin-bottom:12px}
+.editor-h b{font-size:16px}
+.editor-h span{font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:14px;cursor:pointer}
+.chips button[aria-pressed="true"]{background:var(--blue-wash);border-color:var(--blue);color:var(--text)}
+.chips button .x{color:var(--text3);font-size:12px}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--text2);margin-top:10px;cursor:pointer}
+.check input{margin-top:3px;accent-color:var(--blue);width:16px;height:16px;flex:none}
+input[type="color"]{width:52px;height:40px;border:1px solid var(--border);border-radius:10px;background:var(--bg);padding:3px;cursor:pointer}
+input[type="range"]{accent-color:var(--blue)}
+.vstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:12px}
+.vstats div{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;min-width:0}
+.vstats b{display:block;font-size:12px;color:var(--text3);font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+.vstats span{font-size:14px}
+.preset{position:relative}
+.preset-load{all:unset;display:flex;flex-direction:column;cursor:pointer}
+.preset-load:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
+.preset-tools{position:absolute;top:6px;right:6px;display:flex;gap:4px;opacity:0;transition:opacity .15s}
+.preset:hover .preset-tools,.preset:focus-within .preset-tools{opacity:1}
+@media (hover:none){.preset-tools{opacity:1}}
+.preset-tools button{min-width:32px;min-height:32px;border-radius:8px;border:0;background:rgba(0,0,0,.6);color:#fff;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(8px)}
+.preset-tools button svg{width:16px;height:16px}
+.preset .confirmbar{position:absolute;inset:auto 6px 6px 6px;display:flex;gap:6px;align-items:center;justify-content:flex-end;background:rgba(0,0,0,.75);padding:6px;border-radius:10px;font-size:13px}
+.profile-actions{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
 /* dialog-ish inline confirm */
 .confirm{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--text2a)}
 
@@ -326,9 +367,20 @@ code.k{font-family:var(--f-mono);font-size:13px;background:var(--elev);padding:1
             <div style="min-width:0">
               <p class="t2" id="renderSub" style="font-size:14px">Synthesizing runs on your own machine through the Alexandria bridge. You can also load a finished render to preview it here.</p>
               <div class="prog"><i id="renderBar"></i></div>
-              <canvas class="wave" id="wave" aria-label="Waveform"></canvas>
+              <canvas class="wave" id="wave" tabindex="0" role="slider" aria-label="Playback position: click or drag to choose where to play from" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></canvas>
+              <div class="tl num"><span id="tCur">0:00</span><span id="tDur">0:00</span></div>
+              <div class="transport" role="group" aria-label="Player controls">
+                <button class="iconbtn" data-action="seek-start" id="tStart" title="Back to the top (Home)" aria-label="Back to the top" disabled><svg class="i"><use href="#i-skipback"/></svg></button>
+                <button class="iconbtn" data-action="seek-back" id="tBack" title="Back 10 seconds (←)" aria-label="Back 10 seconds" disabled><svg class="i"><use href="#i-rew"/></svg><span class="tnum">10</span></button>
+                <button class="playbtn" id="playBtn" data-action="play" disabled aria-label="Play" title="Play / pause (Space)"><svg class="i"><use href="#i-play"/></svg></button>
+                <button class="iconbtn" data-action="seek-fwd" id="tFwd" title="Forward 10 seconds (→)" aria-label="Forward 10 seconds" disabled><span class="tnum">10</span><svg class="i"><use href="#i-ff"/></svg></button>
+                <button class="iconbtn" data-action="seek-end" id="tEnd" title="Skip to the end (End)" aria-label="Skip to the end" disabled><svg class="i"><use href="#i-skipfwd"/></svg></button>
+                <span class="tsep"></span>
+                <button class="iconbtn" data-action="loop" id="loopBtn" aria-pressed="false" title="Loop the track (L)" aria-label="Loop"><svg class="i"><use href="#i-loop"/></svg></button>
+                <select id="rate" class="select rate" aria-label="Playback speed" title="Playback speed"><option value="0.5">0.5×</option><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option></select>
+                <label class="vol" title="Volume"><svg class="i"><use href="#i-volume"/></svg><input type="range" id="vol" min="0" max="1" step="0.01" value="1" aria-label="Volume"></label>
+              </div>
               <div class="player">
-                <button class="playbtn" id="playBtn" data-action="play" disabled aria-label="Play"><svg class="i"><use href="#i-play"/></svg></button>
                 <div style="min-width:0;flex:1"><b id="audioName" style="display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">No audio loaded</b><small class="t3 num" id="audioTime">0:00 / 0:00</small></div>
                 <button class="btn btn-ghost btn-sm" data-action="load-audio"><svg class="i"><use href="#i-upload"/></svg>Load audio</button>
                 <button class="btn btn-ghost btn-sm" data-action="save-audio" id="saveAudioBtn" hidden><svg class="i"><use href="#i-download"/></svg>Save</button>
@@ -407,24 +459,109 @@ code.k{font-family:var(--f-mono);font-size:13px;background:var(--elev);padding:1
       <!-- PRESETS -->
       <section class="view" id="view-presets" hidden>
         <div class="card">
-          <div class="card-h"><svg class="i"><use href="#i-layers"/></svg><h3>Preset Library</h3></div>
-          <p class="t2" style="font-size:14px;margin-bottom:14px">Starting briefs for each lane. Pick one to load it into the Studio.</p>
+          <div class="card-h"><svg class="i"><use href="#i-layers"/></svg><h3>Preset Library</h3><div class="spacer"></div>
+            <button class="btn btn-indigo btn-sm" data-action="open-fusion"><svg class="i"><use href="#i-sparkles"/></svg>Mix genres</button>
+            <button class="btn btn-ghost btn-sm" data-action="new-preset"><svg class="i"><use href="#i-plus"/></svg>New preset</button>
+          </div>
+          <p class="t2" style="font-size:14px;margin-bottom:14px">Starting briefs for each lane. Pick one to load it into the Studio, or use the buttons on each card to edit, duplicate or delete it.</p>
+
+          <div id="fusion" class="editor" hidden>
+            <div class="editor-h"><b>Mix genres</b><span class="t3">Pick two or three genres, set the feel, and build a fusion brief.</span></div>
+            <div class="chips" id="genreChips" role="group" aria-label="Genres"></div>
+            <div class="row" style="margin-top:10px">
+              <input id="newGenre" class="input grow" maxlength="40" placeholder="Add your own genre, e.g. Zydeco trap">
+              <input id="newGenreSound" class="input grow" maxlength="200" placeholder="What it sounds like (optional): accordion stabs, washboard hats…">
+              <button class="btn btn-ghost btn-sm" data-action="add-genre"><svg class="i"><use href="#i-plus"/></svg>Add genre</button>
+            </div>
+            <div class="fields" style="margin-top:12px">
+              <div class="field"><label for="fMood">Mood</label><select id="fMood" class="select"></select></div>
+              <div class="field"><label for="fBpm">Tempo <span class="num" id="fBpmVal">100</span> BPM</label><input id="fBpm" type="range" min="60" max="180" value="100"></div>
+              <div class="field"><label for="fEnergy">Energy</label><select id="fEnergy" class="select"><option value="laid-back">Laid-back</option><option value="mid" selected>Mid</option><option value="driving">Driving</option><option value="explosive">Explosive</option></select></div>
+              <div class="field"><label for="fVocal">Vocal</label><select id="fVocal" class="select"></select></div>
+            </div>
+            <div class="row" style="margin-top:12px">
+              <button class="btn btn-primary btn-sm" data-action="build-fusion"><svg class="i"><use href="#i-sliders"/></svg>Build brief</button>
+              <button class="btn btn-indigo btn-sm" data-action="claude-fusion" id="claudeFusionBtn"><svg class="i"><use href="#i-sparkles"/></svg>Write it with Claude</button>
+            </div>
+            <div class="field" style="margin-top:12px"><label for="fusionBrief">Fusion brief</label><textarea id="fusionBrief" class="input" maxlength="2000" placeholder="Pick genres, then press Build brief."></textarea></div>
+            <div class="row" style="margin-top:10px">
+              <button class="btn btn-primary btn-sm" data-action="fusion-to-studio"><svg class="i"><use href="#i-play"/></svg>Use in Studio</button>
+              <button class="btn btn-ghost btn-sm" data-action="fusion-to-preset"><svg class="i"><use href="#i-save"/></svg>Save as preset</button>
+              <button class="btn btn-ghost btn-sm" data-action="close-fusion">Close</button>
+            </div>
+          </div>
+
+          <div id="presetEditor" class="editor" hidden>
+            <div class="editor-h"><b id="presetEditorTitle">New preset</b></div>
+            <div class="fields">
+              <div class="field"><label for="prName">Name</label><input id="prName" class="input" maxlength="40"></div>
+              <div class="field"><label for="prSub">Subtitle</label><input id="prSub" class="input" maxlength="60" placeholder="e.g. Log drums, honeyed lead"></div>
+              <div class="field"><label for="prCat">Category</label><select id="prCat" class="select"></select></div>
+              <div class="field"><label for="prSt">Structure</label><select id="prSt" class="select"></select></div>
+              <div class="field"><label for="prVocal">Vocal profile</label><select id="prVocal" class="select"></select></div>
+              <div class="field"><label>Card colors</label><div class="row"><input type="color" id="prC1" aria-label="Main color"><input type="color" id="prC2" aria-label="Accent color"></div></div>
+            </div>
+            <div class="field" style="margin-top:10px"><label for="prBrief">Brief</label><textarea id="prBrief" class="input" maxlength="2000"></textarea></div>
+            <div class="row" style="margin-top:10px"><button class="btn btn-primary btn-sm" data-action="save-preset">Save preset</button><button class="btn btn-ghost btn-sm" data-action="cancel-preset">Cancel</button></div>
+          </div>
+
           <div class="presets" id="presetGrid"></div>
+          <div class="row" style="margin-top:12px"><button class="btn btn-ghost btn-sm" data-action="restore-presets" id="restorePresets" hidden>Restore built-in presets</button></div>
         </div>
         <div class="card">
-          <div class="card-h"><svg class="i"><use href="#i-mic"/></svg><h3>Vocal Profiles</h3><div class="spacer"></div><button class="btn btn-ghost btn-sm" data-action="new-profile"><svg class="i"><use href="#i-plus"/></svg>New profile</button></div>
+          <div class="card-h"><svg class="i"><use href="#i-mic"/></svg><h3>Vocal Profiles</h3><div class="spacer"></div>
+            <button class="btn btn-ghost btn-sm" data-action="new-profile"><svg class="i"><use href="#i-plus"/></svg>Describe a voice</button>
+            <button class="btn btn-indigo btn-sm" data-action="open-voicelab"><svg class="i"><use href="#i-wave"/></svg>From a vocal sample</button>
+            <button class="btn btn-ghost btn-sm" data-action="import-profiles"><svg class="i"><use href="#i-upload"/></svg>Import</button>
+            <button class="btn btn-ghost btn-sm" data-action="export-profiles"><svg class="i"><use href="#i-download"/></svg>Export all</button>
+            <input type="file" id="profileImport" accept=".json,.txt,.md,application/json,text/plain" hidden>
+            <input type="file" id="voiceFile" accept="audio/*" hidden>
+          </div>
           <p class="t2" style="font-size:14px;margin-bottom:14px">Profiles go into the style prompt word for word and are never trimmed to fit the character limit.</p>
-          <div id="profileEditor" hidden class="profile" style="margin-bottom:12px">
-            <div class="fields"><div class="field"><label for="pName">Name</label><input id="pName" class="input" maxlength="24"></div></div>
-            <div class="field" style="margin-top:10px"><label for="pText">Descriptors</label><textarea id="pText" class="input" maxlength="700"></textarea></div>
+
+          <div id="voiceLab" class="editor" hidden>
+            <div class="editor-h"><b>New profile from a vocal sample</b><span class="t3">An a cappella or vocal-only clip of 15 seconds to 2 minutes works best. The analysis runs in your browser.</span></div>
+            <div class="row"><button class="btn btn-primary btn-sm" data-action="pick-voice"><svg class="i"><use href="#i-upload"/></svg>Choose audio file</button><span class="t3" id="voiceFileName" style="font-size:13px">No file chosen</span></div>
+            <div class="prog" id="voiceProgWrap" hidden><i id="voiceProg"></i></div>
+            <div id="voiceResults" hidden>
+              <div class="vstats" id="voiceStats"></div>
+              <div class="field" style="margin-top:10px"><label for="voiceNotes">Anything the numbers miss? (optional)</label><input id="voiceNotes" class="input" maxlength="200" placeholder="e.g. Southern drawl, gospel runs, sings behind the beat"></div>
+              <label class="check"><input type="checkbox" id="voiceKeepRef"> Keep this sample as a voice reference for renders (engine studio only; ACE-Step uses it as a style reference, so it guides the sound but isn't an exact clone)</label>
+              <label class="check"><input type="checkbox" id="voiceConsent"> This is my own voice, or I have the singer's permission to use it.</label>
+              <div class="row" style="margin-top:10px">
+                <button class="btn btn-primary btn-sm" data-action="voice-to-profile"><svg class="i"><use href="#i-check"/></svg>Create profile</button>
+                <button class="btn btn-indigo btn-sm" data-action="voice-claude" id="voiceClaudeBtn"><svg class="i"><use href="#i-sparkles"/></svg>Create with Claude's wording</button>
+                <button class="btn btn-ghost btn-sm" data-action="close-voicelab">Close</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="profileEditor" hidden class="editor">
+            <div class="editor-h"><b id="profileEditorTitle">New profile</b></div>
+            <div class="fields">
+              <div class="field"><label for="pName">Name</label><input id="pName" class="input" maxlength="24"></div>
+              <div class="field"><label for="pLane">Lane / role</label><input id="pLane" class="input" maxlength="40" placeholder="e.g. Gospel lead, duet partner"></div>
+            </div>
+            <div class="row" style="margin-top:10px"><input id="pIdea" class="input grow" maxlength="200" placeholder="Short idea for Claude, e.g. gritty Southern baritone with gospel runs"><button class="btn btn-indigo btn-sm" data-action="profile-claude" id="profileClaudeBtn"><svg class="i"><use href="#i-sparkles"/></svg>Write it with Claude</button></div>
+            <div class="field" style="margin-top:10px"><label for="pText">Descriptors</label><textarea id="pText" class="input" maxlength="1200"></textarea></div>
+            <div class="row" id="pVoiceRow" style="margin-top:8px" hidden><span class="chip" id="pVoiceChip"></span><button class="btn btn-ghost btn-sm" data-action="remove-voiceref">Remove voice reference</button></div>
             <div class="row" style="margin-top:10px"><button class="btn btn-primary btn-sm" data-action="save-profile">Save profile</button><button class="btn btn-ghost btn-sm" data-action="cancel-profile">Cancel</button><span class="t3 num" id="pCount" style="font-size:13px"></span></div>
           </div>
           <div class="profiles" id="profileList"></div>
+          <div class="row" style="margin-top:12px"><button class="btn btn-ghost btn-sm" data-action="restore-profiles" id="restoreProfiles" hidden>Restore built-in profiles</button></div>
         </div>
       </section>
 
       <!-- SETTINGS -->
       <section class="view" id="view-settings" hidden>
+        <div class="card">
+          <div class="card-h"><svg class="i"><use href="#i-note"/></svg><h3>What's new</h3><span class="chip">v1.2</span></div>
+          <dl class="kv">
+            <dt>v1.2</dt><dd>Full player controls (top, ±10 s, end, loop, speed, volume, click or drag the waveform to choose where to play from, keyboard shortcuts). Editable preset library with a Mix genres builder and your own genres. Vocal profiles: edit, duplicate, delete, import, export, and create from a vocal sample. On the engine, your library is saved on the pod's storage.</dd>
+            <dt>v1.1</dt><dd>RunPod engine: password sign-in, idle auto-stop after 30 minutes with an in-studio countdown, engine log viewer.</dd>
+            <dt>v1.0</dt><dd>Studio, spec design with verified style prompt, Beat Blueprint, runtime check, tag canon, library, presets, local and cloud synthesis through the Alexandria bridge.</dd>
+          </dl>
+        </div>
         <div class="card">
           <div class="card-h"><svg class="i"><use href="#i-gear"/></svg><h3>House Rules</h3></div>
           <dl class="kv">
@@ -476,6 +613,13 @@ code.k{font-family:var(--f-mono);font-size:13px;background:var(--elev);padding:1
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h0"/></symbol>
   <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12"/></symbol>
   <symbol id="i-loader" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></symbol>
+  <symbol id="i-skipback" viewBox="0 0 24 24"><path d="M6 5v14"/><path d="M19 5 9 12l10 7z" fill="currentColor"/></symbol>
+  <symbol id="i-skipfwd" viewBox="0 0 24 24"><path d="M18 5v14"/><path d="M5 5l10 7-10 7z" fill="currentColor"/></symbol>
+  <symbol id="i-rew" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></symbol>
+  <symbol id="i-ff" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></symbol>
+  <symbol id="i-loop" viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></symbol>
+  <symbol id="i-volume" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></symbol>
 </svg>
 
 <script>
@@ -512,7 +656,7 @@ const MIC_PROFILES = [
   { key: "251", label: "Telefunken ELA M 251", blurb: "Tube large-diaphragm condenser.", sound: "lush tube warmth, creamy airy top, rich harmonic bloom" },
   { key: "c800g", label: "Sony C-800G", blurb: "Tube condenser favored for modern pop and hip-hop leads.", sound: "bright crisp hyper-detailed top, forward modern pop sheen" },
 ];
-const PRESETS = [
+const BUILTIN_PRESETS = [
   { id: "cinematic", name: "Cinematic Intro", sub: "Orchestral + electronic", cat: "Film Score", st: "Beat / instrumental", colors: ["#1B3A6B", "#7FB2FF", "#E8F0FF"], brief: "Cinematic opening cue: low brass swells and staccato strings over a pulsing analog synth arpeggio, slow build from hush to a wide orchestral-electronic peak, heroic but restrained, ends on an unresolved suspended chord." },
   { id: "lofi", name: "Lo-fi Study", sub: "Chill beats, warm texture", cat: "Song", st: "Beat / instrumental", colors: ["#5A3A22", "#E3A65C", "#2B1B10"], brief: "Lo-fi study beat: dusty swung boom-bap drums, detuned Rhodes 7th chords, vinyl crackle, soft upright bass, sidechained rain ambience, calm late-afternoon focus." },
   { id: "synthwave", name: "Synthwave Drive", sub: "Retro pads, modern mix", cat: "Song", st: "Pop / R&B", colors: ["#3B0F5C", "#FF4FA3", "#FF9500"], brief: "Synthwave night-drive anthem: gated reverb snare, pulsing octave bass, glassy polysynth leads, wide chorus pads, a breathy alto vocal about leaving a small town at 2 a.m., euphoric chorus lift." },
@@ -552,6 +696,41 @@ const EXAMPLE_SPEC = {
   levers: ["Darker: drop to D minor, swap Rhodes for detuned Wurlitzer, thin the shaker", "More anthemic: double the final chorus to 16 bars and add a choir stack (re-check runtime)", "More intimate: cap the bridge at head voice and lower Weirdness to 28%", "Club-ready: lift to 104 BPM and add a four-on-the-floor kick to the last chorus only"],
   profileIds: ["mimi"], mic: "auto",
 };
+
+/* ---------- genre palette for the Mix genres builder ---------- */
+const GENRES = [
+  ["afrorb", "Afro-R&B", "soft log-drum pulses, shuffled shaker sixteenths", "lush Rhodes 9th chords", "muted highlife guitar, warm sub-bass glides", 98],
+  ["afrobeats", "Afrobeats", "syncopated kick-and-rim groove, talking-drum fills", "bright major-key vamps", "palm-muted guitar riffs, plucky synth leads", 104],
+  ["amapiano", "Amapiano", "log-drum bass hits, airy shakers, sparse kicks", "jazzy minor 7th piano voicings", "deep pads, whistled hooks", 112],
+  ["neosoul", "Neo-soul", "behind-the-beat dusty drums, rimshots", "extended jazz chords with chromatic passing tones", "Rhodes, upright bass, muted trumpet", 84],
+  ["trapsoul", "Trap-soul", "half-time trap hats with rolls, deep 808s", "moody minor chord loops", "ambient pads, reverse guitar swells", 70],
+  ["gospel", "Gospel", "live kit with shout-chorus fills, handclaps", "gospel walk-ups and passing diminished chords", "Hammond B3, choir stacks, piano runs", 92],
+  ["southernhh", "Southern hip-hop", "knocking 808s, snappy claps, rattling hats", "sparse minor bell motifs", "chopped soul samples, synth brass", 76],
+  ["crunk", "Memphis crunk", "distorted 808s, triplet hats, chant snares", "ominous two-note minor riffs", "eerie bells, gang-vocal stabs", 140],
+  ["drill", "Drill", "sliding 808 bass, off-kilter hats, sparse snares", "dark minor piano and string loops", "choir pads, cold synth plucks", 142],
+  ["boombap", "Boom-bap", "dusty sampled breaks, hard snare on two and four", "jazzy looped chords", "vinyl crackle, upright bass, horn stabs", 90],
+  ["lofi", "Lo-fi", "swung lazy drums, soft kicks", "detuned 7th chords", "tape hiss, mellow Rhodes, warbly guitar", 78],
+  ["synthwave", "Synthwave", "gated-reverb snares, steady four-on-the-floor", "nostalgic minor-to-major lifts", "pulsing octave bass, glassy polysynths", 100],
+  ["house", "House", "four-on-the-floor kick, open hats on the off-beat", "soulful piano chord stabs", "rubbery bass, vocal chops", 124],
+  ["deephouse", "Deep house", "rounded kick, shuffled percussion", "warm minor 9th pads", "subby bass, filtered chords", 120],
+  ["techno", "Techno", "driving kick, rolling percussion", "hypnotic single-chord drones", "acid lines, metallic textures", 130],
+  ["dnb", "Drum & bass", "fast broken breakbeats", "atmospheric minor chords", "reese bass, airy pads", 174],
+  ["reggae", "Reggae", "one-drop drums, rimshot accents", "off-beat skank chords", "deep round bass, organ bubble", 76],
+  ["dancehall", "Dancehall", "dembow riddim, snappy snares", "bouncy minor hooks", "digital bass, steel-pan-like synths", 100],
+  ["countrysoul", "Country-soul", "brushed kit with a lazy backbeat", "gospel-tinged major progressions", "pedal steel, acoustic guitar, Wurlitzer", 82],
+  ["blues", "Blues", "shuffle groove, ride cymbal swing", "12-bar dominant 7th changes", "overdriven guitar licks, harmonica", 88],
+  ["jazz", "Jazz", "brushed swing with walking feel", "ii-V-I changes with rich extensions", "upright bass, muted trumpet, piano comping", 120],
+  ["funk", "Funk", "tight syncopated kick-snare, sixteenth hats", "dominant 9th vamps", "slap bass, clavinet, horn hits", 108],
+  ["disco", "Disco", "four-on-the-floor with open hats", "lush major 7th string arrangements", "octave bass, rhythm guitar chops", 118],
+  ["reggaeton", "Reggaeton", "dembow kick-snare pattern", "minor-key loops", "plucked synths, deep bass", 94],
+  ["latinpop", "Latin pop", "tresillo percussion, congas", "bright romantic progressions", "nylon guitar, brass accents", 102],
+  ["cinematic", "Cinematic", "taiko and orchestral percussion builds", "epic suspended chords and modulations", "string ostinatos, brass swells, choir", 90],
+  ["ambient", "Ambient", "barely-there pulse or no drums", "slow-evolving modal drones", "granular pads, field recordings", 70],
+  ["rock", "Rock", "punchy live kit, crash-heavy choruses", "power-chord progressions", "overdriven guitars, bass guitar", 120],
+  ["indiepop", "Indie pop", "tight live drums, tambourine", "jangly major-key chords", "chorused guitars, synth bass", 112],
+  ["pop", "Pop", "polished punchy kit, claps", "four-chord singalong progressions", "bright synths, layered vocals", 110],
+].map(([id, name, drums, harmony, palette, bpm]) => ({ id, name, drums, harmony, palette, bpm, builtin: true }));
+const MOODS = ["hopeful", "melancholy", "triumphant", "romantic", "dark", "playful", "reflective", "defiant", "euphoric", "nostalgic", "spiritual", "late-night"];
 
 /* ---------- helpers ---------- */
 const $ = (s, r = document) => r.querySelector(s);
@@ -610,8 +789,12 @@ const state = {
   view: ls.get("view", "studio"),
   spec: null,
   seg: "spec",
-  customProfiles: [],
   library: [],
+  fusion: { selected: [] },
+  editingPreset: null,
+  confirmPreset: null,
+  confirmProfile: null,
+  voiceDraft: null,
   libFilter: "All",
   libSearch: "",
   engine: { status: "disconnected", info: null },
@@ -621,7 +804,18 @@ const state = {
   editingProfile: null,
   trimming: false,
 };
-function allProfiles() { return [...BUILTIN_PROFILES, ...state.customProfiles]; }
+/* Built-ins merge with stored edits (same id) and can be hidden; stored records without a built-in id are your own. */
+function mergeBuiltins(builtins, records) {
+  const byId = new Map(records.map(r => [r.id, r]));
+  const out = [];
+  for (const b of builtins) { const o = byId.get(b.id); if (o?.hidden) continue; out.push(o ? { ...b, ...o, builtin: true, edited: true } : { ...b, builtin: true }); }
+  for (const r of records) if (!builtins.some(b => b.id === r.id) && !r.hidden) out.push(r);
+  return out;
+}
+function allProfiles() { return mergeBuiltins(BUILTIN_PROFILES, store.cache.profiles); }
+function allPresets() { return mergeBuiltins(BUILTIN_PRESETS, store.cache.presets); }
+function allGenres() { return [...GENRES, ...store.cache.genres]; }
+let bridgeMode = false;
 
 /* ---------- capabilities ---------- */
 let sample = null, db = null, downloads = null, userId = null;
@@ -634,46 +828,58 @@ const caps = (async () => {
   } catch {}
 })();
 
-/* ---------- storage: db when signed in on claude.ai, browser storage otherwise ---------- */
+/* ---------- storage: claude.ai account (db) · engine volume (bridge) · this browser (local) ---------- */
+const COLLECTIONS = ["specs", "profiles", "presets", "genres"];
+const LOCAL_KEY = { specs: "library", profiles: "profiles", presets: "presets", genres: "genres" };
 const store = {
-  where() { return db ? "Saved to your Alexandria library (private to you)" : "Saved in this browser"; },
+  backend: "local",
+  cache: { specs: [], profiles: [], presets: [], genres: [] },
+  where() { return { db: "Saved to your Alexandria library on claude.ai (private to you)", bridge: "Saved on your engine's storage", local: "Saved in this browser" }[this.backend]; },
   async loadAll() {
-    if (db) {
-      try {
-        const [s, p] = await Promise.all([
-          db.collection(`data/users/${userId}/specs`).orderBy("savedAt", "desc").limit(500).get(),
-          db.collection(`data/users/${userId}/profiles`).get(),
-        ]);
-        state.library = s.docs.map(d => ({ ...d.data(), id: d.id }));
-        state.customProfiles = p.docs.map(d => ({ ...d.data(), id: d.id }));
-        return;
-      } catch (e) { toast("err", "Couldn't load your library", "Showing what's saved in this browser instead."); }
+    this.backend = db ? "db" : bridgeMode ? "bridge" : "local";
+    for (const c of COLLECTIONS) {
+      try { this.cache[c] = await this.read(c); }
+      catch { this.cache[c] = ls.get(LOCAL_KEY[c], []); if (c === "specs") toast("err", "Couldn't load your library", "Showing what's saved in this browser instead."); }
     }
-    state.library = ls.get("library", []);
-    state.customProfiles = ls.get("profiles", []);
+    this.cache.specs.sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
+    state.library = this.cache.specs;
+  },
+  async read(c) {
+    if (this.backend === "db") {
+      const q = c === "specs" ? db.collection(`data/users/${userId}/${c}`).orderBy("savedAt", "desc").limit(500) : db.collection(`data/users/${userId}/${c}`);
+      return (await q.get()).docs.map(d => ({ ...d.data(), id: d.id }));
+    }
+    if (this.backend === "bridge") { const r = await fetch(`/store/${c}`, { cache: "no-store" }); if (!r.ok) throw new Error(r.status); return await r.json(); }
+    return ls.get(LOCAL_KEY[c], []);
+  },
+  async flush(c) {
+    if (this.backend === "bridge") { const r = await fetch(`/store/${c}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(this.cache[c]) }); if (!r.ok) throw new Error("save failed " + r.status); }
+    else if (this.backend === "local") ls.set(LOCAL_KEY[c], this.cache[c]);
+  },
+  async put(c, rec) {
+    const prev = this.cache[c];
+    this.cache[c] = [rec, ...prev.filter(x => x.id !== rec.id)];
+    try {
+      if (this.backend === "db") await db.collection(`data/users/${userId}/${c}`).doc(rec.id).set(rec);
+      else await this.flush(c);
+    } catch (e) { this.cache[c] = prev; throw e; }
+    if (c === "specs") state.library = this.cache.specs;
+    return rec;
+  },
+  async remove(c, id) {
+    const prev = this.cache[c];
+    this.cache[c] = prev.filter(x => x.id !== id);
+    try {
+      if (this.backend === "db") await db.collection(`data/users/${userId}/${c}`).doc(id).delete();
+      else await this.flush(c);
+    } catch (e) { this.cache[c] = prev; throw e; }
+    if (c === "specs") state.library = this.cache.specs;
   },
   async saveSpec(spec) {
     const rec = JSON.parse(JSON.stringify(spec)); delete rec.example; rec.savedAt = Date.now(); rec.id = rec.id && rec.id !== "example" ? rec.id : uid();
-    if (db) await db.collection(`data/users/${userId}/specs`).doc(rec.id).set(rec);
-    else ls.set("library", [rec, ...ls.get("library", []).filter(x => x.id !== rec.id)].slice(0, 300));
-    state.library = [rec, ...state.library.filter(x => x.id !== rec.id)];
-    return rec;
+    return this.put("specs", rec);
   },
-  async deleteSpec(id) {
-    if (db) await db.collection(`data/users/${userId}/specs`).doc(id).delete();
-    else ls.set("library", ls.get("library", []).filter(x => x.id !== id));
-    state.library = state.library.filter(x => x.id !== id);
-  },
-  async saveProfile(p) {
-    if (db) await db.collection(`data/users/${userId}/profiles`).doc(p.id).set(p);
-    else ls.set("profiles", [...ls.get("profiles", []).filter(x => x.id !== p.id), p]);
-    state.customProfiles = [...state.customProfiles.filter(x => x.id !== p.id), p];
-  },
-  async deleteProfile(id) {
-    if (db) await db.collection(`data/users/${userId}/profiles`).doc(id).delete();
-    else ls.set("profiles", ls.get("profiles", []).filter(x => x.id !== id));
-    state.customProfiles = state.customProfiles.filter(x => x.id !== id);
-  },
+  deleteSpec(id) { return this.remove("specs", id); },
 };
 
 /* ---------- toasts ---------- */
@@ -706,7 +912,11 @@ function go(view) {
 
 /* ---------- studio form ---------- */
 function fillSelect(el, items, value) { el.innerHTML = items.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join(""); if (value != null) el.value = value; }
-function renderForm() {
+function renderInspiration() {
+  $("#inspList").innerHTML = allPresets().slice(0, 4).map(p => `<button data-preset="${esc(p.id)}"><span class="sw" style="background:linear-gradient(135deg,${p.colors?.[0] || "#1B3A6B"},${p.colors?.[1] || "#7FB2FF"})"></span><span><b>${esc(p.name)}</b><small>${esc(p.sub || "")}</small></span></button>`).join("");
+}
+function renderForm(inspirationOnly) {
+  if (inspirationOnly) return renderInspiration();
   const draft = ls.get("draft", {});
   fillSelect($("#category"), CATEGORIES.map(c => [c, c]), draft.category || "Song");
   fillSelect($("#structure"), STRUCTURE_TEMPLATES.map(c => [c, c]), draft.structure || STRUCTURE_TEMPLATES[0]);
@@ -714,7 +924,7 @@ function renderForm() {
   fillSelect($("#mic"), MIC_PROFILES.map(m => [m.key, m.label]), draft.mic || "auto");
   $("#brief").value = draft.brief || ""; $("#title").value = draft.title || "";
   updateBriefCount(); updateMicBlurb();
-  $("#inspList").innerHTML = PRESETS.slice(0, 4).map(p => `<button data-preset="${p.id}"><span class="sw" style="background:linear-gradient(135deg,${p.colors[0]},${p.colors[1]})"></span><span><b>${esc(p.name)}</b><small>${esc(p.sub)}</small></span></button>`).join("");
+  renderInspiration();
 }
 function renderProfileSelects(pv, dv) {
   const prof = $("#profile"), duet = $("#duet");
@@ -1031,6 +1241,7 @@ async function synthesize() {
     engine: eng, title: spec.title, style_prompt: composeStyle(spec), yue_tags: spec.yue_tags, lyrics: spec.lyrics, yue_lyrics: yue.text,
     yue_segments: Math.max(1, yue.sections), duration: state.settings.duration === "auto" ? Math.round(rt.secs) : Number(state.settings.duration),
     seed: state.settings.seed === "" ? null : Number(state.settings.seed), bpm: spec.bpm, key: spec.key,
+    reference_voice_id: (spec.profileIds || []).map(getProfile).find(p => p?.voiceRef)?.voiceRef?.id || null,
   };
   Object.assign(state.render, { status: "running", step: 0, progress: 0, overall: 2, start: Date.now(), model: engineName(eng), job: null, blob: null });
   setRenderPill("run", "Rendering"); $("#renderSub").textContent = `Sending “${spec.title}” to ${engineName(eng)} on your machine.`;
@@ -1066,46 +1277,108 @@ async function synthesize() {
   } finally { clearInterval(tick); updateRenderStats(); }
 }
 
-/* ---------- audio + waveform ---------- */
+/* ---------- audio player + waveform ---------- */
 const audio = new Audio();
-let peaks = null;
+audio.preload = "auto";
+let peaks = null, hoverX = null, scrubbing = false;
 async function loadAudio(blob, name) {
   audio.src = URL.createObjectURL(blob);
-  $("#audioName").textContent = name; $("#playBtn").disabled = false;
+  audio.playbackRate = Number($("#rate").value) || 1;
+  $("#audioName").textContent = name;
+  ["#playBtn", "#tStart", "#tBack", "#tFwd", "#tEnd"].forEach(sel => $(sel).disabled = false);
   $("#saveAudioBtn").hidden = !state.render.blob;
+  setPlayIcon(false);
   try {
     const AC = window.AudioContext || window.webkitAudioContext; const ac = new AC();
     const buf = await ac.decodeAudioData(await blob.arrayBuffer());
-    const ch = buf.getChannelData(0), n = 160, step = Math.floor(ch.length / n); peaks = [];
-    for (let i = 0; i < n; i++) { let m = 0; for (let j = i * step; j < (i + 1) * step; j += 32) m = Math.max(m, Math.abs(ch[j] || 0)); peaks.push(m); }
+    const ch = buf.getChannelData(0), n = 400, step = Math.max(1, Math.floor(ch.length / n)); peaks = [];
+    for (let i = 0; i < n; i++) { let m = 0; for (let j = i * step; j < (i + 1) * step; j += 16) m = Math.max(m, Math.abs(ch[j] || 0)); peaks.push(m); }
     const mx = Math.max(...peaks, 0.01); peaks = peaks.map(p => p / mx); ac.close?.();
   } catch { peaks = null; }
   drawWave(); updateTime();
 }
+const hasAudio = () => !!audio.src && isFinite(audio.duration) && audio.duration > 0;
+function seekTo(t) {
+  if (!hasAudio()) return;
+  audio.currentTime = Math.max(0, Math.min(audio.duration - 0.01, t));
+  updateTime(); drawWave();
+}
+async function togglePlay() {
+  if (!audio.src) return;
+  if (audio.paused) { try { await audio.play(); } catch { toast("warn", "Playback was blocked", "Press play again."); } }
+  else audio.pause();
+}
+function xToTime(clientX) { const c = $("#wave"), r = c.getBoundingClientRect(); return Math.max(0, Math.min(1, (clientX - r.left) / r.width)) * (audio.duration || 0); }
 function drawWave() {
   const c = $("#wave"); const dpr = window.devicePixelRatio || 1; const w = c.clientWidth, h = c.clientHeight; if (!w) return;
-  if (c.width !== w * dpr) { c.width = w * dpr; c.height = h * dpr; }
+  if (c.width !== Math.round(w * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
   const g = c.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
-  const n = Math.max(40, Math.floor(w / 5)); const bw = w / n;
-  const prog = audio.duration ? audio.currentTime / audio.duration : (state.render.status === "running" ? (state.render.overall || 0) / 100 : 0);
+  const n = Math.max(40, Math.floor(w / 4)); const bw = w / n;
+  const playing = hasAudio();
+  const prog = playing ? audio.currentTime / audio.duration : (state.render.status === "running" ? (state.render.overall || 0) / 100 : 0);
   const grad = g.createLinearGradient(0, 0, w, 0); grad.addColorStop(0, "#007AFF"); grad.addColorStop(.6, "#5856D6"); grad.addColorStop(1, "#AF52DE");
   for (let i = 0; i < n; i++) {
     let a;
     if (peaks) a = peaks[Math.floor(i / n * peaks.length)];
     else { const x = i / n; a = 0.25 + 0.55 * Math.abs(Math.sin(x * 23.1) * Math.sin(x * 7.3 + 1.2)) * (0.6 + 0.4 * Math.sin(x * 3.1)); }
-    const bh = Math.max(3, a * (h - 8));
-    g.fillStyle = i / n <= prog ? grad : (peaks ? "rgba(235,235,245,.28)" : "rgba(235,235,245,.12)");
-    g.beginPath(); g.roundRect ? g.roundRect(i * bw + 1, (h - bh) / 2, Math.max(1.5, bw - 2), bh, 2) : g.rect(i * bw + 1, (h - bh) / 2, Math.max(1.5, bw - 2), bh); g.fill();
+    const bh = Math.max(3, a * (h - 12));
+    g.fillStyle = (i + 0.5) / n <= prog ? grad : (peaks ? "rgba(235,235,245,.28)" : "rgba(235,235,245,.12)");
+    g.beginPath(); g.roundRect ? g.roundRect(i * bw + 0.5, (h - bh) / 2, Math.max(1.2, bw - 1.5), bh, 1.5) : g.rect(i * bw + 0.5, (h - bh) / 2, Math.max(1.2, bw - 1.5), bh); g.fill();
+  }
+  if (playing) {
+    const px = prog * w; g.fillStyle = "#FFFFFF"; g.fillRect(Math.round(px) - 1, 2, 2, h - 4);
+    if (hoverX != null) {
+      g.fillStyle = "rgba(255,255,255,.45)"; g.fillRect(Math.round(hoverX), 0, 1, h);
+      const label = fmt(hoverX / w * audio.duration); g.font = "600 12px -apple-system,BlinkMacSystemFont,system-ui,sans-serif";
+      const tw = g.measureText(label).width + 12, lx = Math.min(Math.max(hoverX - tw / 2, 0), w - tw);
+      g.fillStyle = "rgba(28,28,30,.92)"; g.beginPath(); g.roundRect ? g.roundRect(lx, 2, tw, 20, 6) : g.rect(lx, 2, tw, 20); g.fill();
+      g.fillStyle = "#FFFFFF"; g.textBaseline = "middle"; g.fillText(label, lx + 6, 12.5);
+    }
   }
 }
-function updateTime() { $("#audioTime").textContent = `${fmt(audio.currentTime || 0)} / ${fmt(audio.duration || 0)}`; }
-audio.addEventListener("timeupdate", () => { updateTime(); drawWave(); });
-audio.addEventListener("ended", () => setPlayIcon(false));
-audio.addEventListener("loadedmetadata", updateTime);
+function updateTime() {
+  const cur = fmt(audio.currentTime || 0), dur = fmt(hasAudio() ? audio.duration : 0);
+  $("#audioTime").textContent = `${cur} / ${dur}`; $("#tCur").textContent = cur; $("#tDur").textContent = dur;
+  $("#wave").setAttribute("aria-valuenow", hasAudio() ? Math.round(audio.currentTime / audio.duration * 100) : 0);
+  $("#wave").setAttribute("aria-valuetext", `${cur} of ${dur}`);
+}
 function setPlayIcon(p) { $("#playBtn").innerHTML = icon(p ? "pause" : "play"); $("#playBtn").setAttribute("aria-label", p ? "Pause" : "Play"); }
+audio.addEventListener("timeupdate", () => { updateTime(); drawWave(); });
+audio.addEventListener("play", () => setPlayIcon(true));
+audio.addEventListener("pause", () => setPlayIcon(false));
+audio.addEventListener("ended", () => setPlayIcon(false));
+audio.addEventListener("loadedmetadata", () => { updateTime(); drawWave(); });
+(function wireWave() {
+  const c = $("#wave");
+  c.addEventListener("pointerdown", e => { if (!hasAudio()) return; scrubbing = true; c.setPointerCapture(e.pointerId); seekTo(xToTime(e.clientX)); });
+  c.addEventListener("pointermove", e => { const r = c.getBoundingClientRect(); hoverX = e.clientX - r.left; if (scrubbing) seekTo(xToTime(e.clientX)); else drawWave(); });
+  c.addEventListener("pointerup", e => { scrubbing = false; try { c.releasePointerCapture(e.pointerId); } catch {} });
+  c.addEventListener("pointerleave", () => { if (!scrubbing) { hoverX = null; drawWave(); } });
+  c.addEventListener("keydown", e => {
+    if (!hasAudio()) return;
+    const step = e.shiftKey ? 30 : 5;
+    if (e.key === "ArrowLeft") { seekTo(audio.currentTime - step); e.preventDefault(); }
+    else if (e.key === "ArrowRight") { seekTo(audio.currentTime + step); e.preventDefault(); }
+  });
+  $("#vol").addEventListener("input", e => { audio.volume = Number(e.target.value); ls.set("vol", audio.volume); });
+  $("#rate").addEventListener("change", e => { audio.playbackRate = Number(e.target.value) || 1; });
+  const v = ls.get("vol", 1); audio.volume = v; $("#vol").value = v;
+  document.addEventListener("keydown", e => {
+    if (e.target.closest("input, textarea, select, [contenteditable]") || e.metaKey || e.ctrlKey || e.altKey || !audio.src) return;
+    if (state.view !== "studio") return;
+    const k = e.key;
+    if (k === " " && !e.target.closest("button")) { togglePlay(); e.preventDefault(); }
+    else if (k === "ArrowLeft" && e.target !== $("#wave")) { seekTo(audio.currentTime - 10); e.preventDefault(); }
+    else if (k === "ArrowRight" && e.target !== $("#wave")) { seekTo(audio.currentTime + 10); e.preventDefault(); }
+    else if (k === "Home") { seekTo(0); e.preventDefault(); }
+    else if (k === "End") { seekTo(audio.duration - 0.5); e.preventDefault(); }
+    else if (k === "l" || k === "L") toggleLoop();
+  });
+})();
+function toggleLoop() { audio.loop = !audio.loop; $("#loopBtn").setAttribute("aria-pressed", String(audio.loop)); toast("info", audio.loop ? "Loop on" : "Loop off"); }
 
 /* ---------- library ---------- */
-function specColors(s) { const p = PRESETS.find(x => (s.genre || "").toLowerCase().includes(x.name.split(" ")[0].toLowerCase())); const h = [...(s.title || "x")].reduce((a, c) => a + c.charCodeAt(0), 0) % 360; return p ? p.colors : [`hsl(${h} 60% 30%)`, `hsl(${(h + 50) % 360} 80% 60%)`]; }
+function specColors(s) { const p = allPresets().find(x => (s.genre || "").toLowerCase().includes(x.name.split(" ")[0].toLowerCase())); const h = [...(s.title || "x")].reduce((a, c) => a + c.charCodeAt(0), 0) % 360; return p ? p.colors : [`hsl(${h} 60% 30%)`, `hsl(${(h + 50) % 360} 80% 60%)`]; }
 function renderLibrary() {
   $("#libStore").textContent = store.where();
   const filters = ["All", ...CATEGORIES];
@@ -1122,37 +1395,389 @@ function renderLibrary() {
       : `<button class="btn btn-ghost btn-sm" data-openspec="${s.id}">Open</button><button class="iconbtn" data-askdel="${s.id}" aria-label="Delete ${esc(s.title)}">${icon("trash")}</button>`}</div></div>`; }).join("");
 }
 
-/* ---------- presets & profiles ---------- */
+/* ---------- presets ---------- */
 function paintPresetArt(canvas, colors, seed) {
   const dpr = window.devicePixelRatio || 1, w = canvas.clientWidth || 200, h = canvas.clientHeight || 112;
   canvas.width = w * dpr; canvas.height = h * dpr; const g = canvas.getContext("2d"); g.scale(dpr, dpr);
   const bg = g.createLinearGradient(0, 0, w, h); bg.addColorStop(0, colors[0]); bg.addColorStop(1, "#05050a"); g.fillStyle = bg; g.fillRect(0, 0, w, h);
   for (let k = 0; k < 4; k++) {
-    g.beginPath(); g.lineWidth = 2 + k; g.strokeStyle = k % 2 ? colors[2] : colors[1]; g.globalAlpha = 0.55 - k * 0.1;
+    g.beginPath(); g.lineWidth = 2 + k; g.strokeStyle = k % 2 ? (colors[2] || colors[1]) : colors[1]; g.globalAlpha = 0.55 - k * 0.1;
     for (let x = 0; x <= w; x += 4) { const y = h * 0.6 + Math.sin(x / (18 + k * 9) + seed + k) * (14 + k * 6) * Math.sin(x / w * Math.PI); x ? g.lineTo(x, y) : g.moveTo(x, y); }
     g.stroke();
   }
   g.globalAlpha = 1;
 }
 function renderPresets() {
-  $("#presetGrid").innerHTML = PRESETS.map(p => `<button class="preset" data-preset="${p.id}"><span class="art"><canvas></canvas></span><div class="meta"><b>${esc(p.name)}</b><small>${esc(p.sub)}</small></div></button>`).join("");
-  $$("#presetGrid .preset").forEach((el, i) => paintPresetArt(el.querySelector("canvas"), PRESETS[i].colors, i * 1.7));
+  const list = allPresets();
+  $("#presetGrid").innerHTML = list.length ? list.map(p => `<div class="preset">
+    <button class="preset-load" data-preset="${esc(p.id)}" aria-label="Load ${esc(p.name)} into the Studio"><span class="art"><canvas></canvas></span><div class="meta"><b>${esc(p.name)}</b><small>${esc(p.sub || "")}${p.builtin ? (p.edited ? " · edited" : "") : " · yours"}</small></div></button>
+    <div class="preset-tools">
+      <button data-editpreset="${esc(p.id)}" title="Edit" aria-label="Edit ${esc(p.name)}">${icon("edit")}</button>
+      <button data-duppreset="${esc(p.id)}" title="Duplicate" aria-label="Duplicate ${esc(p.name)}">${icon("copy")}</button>
+      <button data-askdelpreset="${esc(p.id)}" title="Delete" aria-label="Delete ${esc(p.name)}">${icon("trash")}</button>
+    </div>
+    ${state.confirmPreset === p.id ? `<div class="confirmbar">${p.builtin ? "Hide this built-in?" : "Delete for good?"}<button class="btn btn-danger btn-sm" data-delpreset="${esc(p.id)}">${p.builtin ? "Hide" : "Delete"}</button><button class="btn btn-ghost btn-sm" data-action="cancel-delpreset">Keep</button></div>` : ""}
+  </div>`).join("") : `<div class="empty" style="grid-column:1/-1">${icon("layers")}<b>No presets</b><span>Press New preset or Mix genres to make one.</span></div>`;
+  $$("#presetGrid .preset canvas").forEach((cv, i) => paintPresetArt(cv, list[i].colors || ["#1B3A6B", "#7FB2FF", "#E8F0FF"], i * 1.7));
+  $("#restorePresets").hidden = !store.cache.presets.some(r => BUILTIN_PRESETS.some(b => b.id === r.id));
 }
-function renderProfiles() {
-  $("#profileList").innerHTML = allProfiles().map(p => `<div class="profile"><header><b>${esc(p.name)}</b>${p.lane ? `<span class="chip">${esc(p.lane)}</span>` : ""}<span class="t3 num" style="font-size:13px">${p.text.length} chars</span><div class="spacer"></div>
-    ${BUILTIN_PROFILES.includes(p) ? `<span class="t3" style="font-size:12px">Built-in</span>` : `<button class="btn btn-ghost btn-sm" data-editprofile="${p.id}">Edit</button><button class="iconbtn" data-delprofile="${p.id}" aria-label="Delete ${esc(p.name)}">${icon("trash")}</button>`}
-    </header><p>${esc(p.text)}</p></div>`).join("");
+function presetVocalOptions(sel, value) {
+  fillSelect(sel, [["", "Studio decides"], ["instrumental", "Instrumental"], ...allProfiles().map(p => [p.id, p.name])], value ?? "");
+}
+function openPresetEditor(p, title) {
+  state.editingPreset = p && p.id ? p.id : null;
+  $("#presetEditorTitle").textContent = title || (p ? `Edit ${p.name}` : "New preset");
+  fillSelect($("#prCat"), CATEGORIES.map(c => [c, c]), p?.cat || "Song");
+  fillSelect($("#prSt"), STRUCTURE_TEMPLATES.map(c => [c, c]), p?.st || STRUCTURE_TEMPLATES[0]);
+  presetVocalOptions($("#prVocal"), p?.profile ?? "");
+  $("#prName").value = p?.name || ""; $("#prSub").value = p?.sub || ""; $("#prBrief").value = p?.brief || "";
+  $("#prC1").value = toHex(p?.colors?.[0] || "#1B3A6B"); $("#prC2").value = toHex(p?.colors?.[1] || "#7FB2FF");
+  $("#fusion").hidden = true; $("#presetEditor").hidden = false; $("#prName").focus();
+  $("#presetEditor").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+function toHex(c) { if (/^#[0-9a-f]{6}$/i.test(c)) return c; const cv = document.createElement("canvas").getContext("2d"); cv.fillStyle = c; return /^#[0-9a-f]{6}$/i.test(cv.fillStyle) ? cv.fillStyle : "#5856D6"; }
+async function savePreset() {
+  const name = $("#prName").value.trim(), brief = $("#prBrief").value.trim();
+  if (!name || brief.length < 10) return toast("warn", "Add a name and a brief", "The brief needs at least a sentence.");
+  const c1 = $("#prC1").value, c2 = $("#prC2").value;
+  const rec = { id: state.editingPreset || "pr_" + uid(), name, sub: $("#prSub").value.trim(), cat: $("#prCat").value, st: $("#prSt").value, profile: $("#prVocal").value, colors: [c1, c2, "#E8F0FF"], brief };
+  try { await store.put("presets", rec); } catch { return toast("err", "Couldn't save the preset", "Try again."); }
+  $("#presetEditor").hidden = true; state.editingPreset = null; renderPresets(); renderForm(true);
+  toast("ok", "Preset saved", name);
+}
+async function deletePreset(id) {
+  const isBuiltin = BUILTIN_PRESETS.some(b => b.id === id);
+  try {
+    if (isBuiltin) { const cur = allPresets().find(p => p.id === id) || {}; await store.put("presets", { id, hidden: true, name: cur.name }); }
+    else await store.remove("presets", id);
+  } catch { return toast("err", "Couldn't delete", "Try again."); }
+  state.confirmPreset = null; renderPresets(); renderForm(true);
+  toast("ok", isBuiltin ? "Built-in preset hidden" : "Preset deleted", isBuiltin ? "Restore it any time with Restore built-in presets." : "");
+}
+async function restoreBuiltins(coll, builtins) {
+  const ids = store.cache[coll].filter(r => builtins.some(b => b.id === r.id)).map(r => r.id);
+  for (const id of ids) { try { await store.remove(coll, id); } catch {} }
 }
 function loadPreset(id) {
-  const p = PRESETS.find(x => x.id === id); if (!p) return;
-  $("#brief").value = p.brief; $("#category").value = p.cat; $("#structure").value = p.st;
-  if (p.st === "Beat / instrumental") $("#profile").value = "instrumental";
-  else if (id === "crunk") $("#profile").value = "rapgod";
-  else if (id === "afrorb") $("#profile").value = "mimi";
+  const p = allPresets().find(x => x.id === id); if (!p) return;
+  $("#brief").value = p.brief; $("#category").value = p.cat || "Song"; $("#structure").value = p.st || STRUCTURE_TEMPLATES[0];
+  const vocal = p.profile ?? (p.st === "Beat / instrumental" ? "instrumental" : id === "crunk" ? "rapgod" : id === "afrorb" ? "mimi" : null);
+  if (vocal != null && [...$("#profile").options].some(o => o.value === vocal)) $("#profile").value = vocal;
   updateBriefCount(); saveDraft();
   if (state.view !== "studio") go("studio");
   toast("info", `${p.name} loaded`, "Adjust the brief, then press Design Spec.");
   $("#brief").focus();
+}
+
+/* ---------- Mix genres ---------- */
+function renderFusion() {
+  const sel = state.fusion.selected;
+  $("#genreChips").innerHTML = allGenres().map(g => `<button type="button" data-genre="${esc(g.id)}" aria-pressed="${sel.includes(g.id)}">${esc(g.name)}${g.builtin ? "" : ` <span class="x" data-delgenre="${esc(g.id)}" role="button" aria-label="Delete ${esc(g.name)}" title="Delete this genre">✕</span>`}</button>`).join("");
+}
+function openFusion() {
+  if (!$("#fMood").options.length) fillSelect($("#fMood"), MOODS.map(m => [m, m[0].toUpperCase() + m.slice(1)]), "hopeful");
+  presetVocalOptions($("#fVocal"), $("#fVocal").value || "");
+  renderFusion(); $("#presetEditor").hidden = true; $("#fusion").hidden = false;
+  $("#fusion").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+function fusionGenres() { const all = allGenres(); return state.fusion.selected.map(id => all.find(g => g.id === id)).filter(Boolean); }
+function buildFusionBrief() {
+  const gs = fusionGenres();
+  if (!gs.length) { toast("warn", "Pick at least one genre"); return ""; }
+  const bpm = Number($("#fBpm").value), mood = $("#fMood").value, energy = $("#fEnergy").value;
+  const energyWord = { "laid-back": "laid-back and unhurried", mid: "steady and grooving", driving: "driving and urgent", explosive: "explosive, built for the drop" }[energy];
+  const names = gs.map(g => g.name);
+  const title = names.length === 1 ? names[0] : names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
+  const lead = gs[0], second = gs[1] || gs[0], third = gs[2];
+  const parts = [`${title} fusion at ${bpm} BPM, ${mood} and ${energyWord}.`];
+  parts.push(`Drums: ${lead.drums}${gs.length > 1 && second.drums !== lead.drums ? `, cross-bred with ${second.drums.split(",")[0]}` : ""}.`);
+  parts.push(`Harmony: ${second.harmony}${third ? `, with ${third.harmony.split(",")[0]} in the bridge` : ""}.`);
+  const palette = [...new Set(gs.flatMap(g => g.palette.split(",").map(x => x.trim())).filter(Boolean))].slice(0, 5);
+  parts.push(`Palette: ${palette.join(", ")}.`);
+  const v = $("#fVocal").value, prof = v && v !== "instrumental" ? getProfile(v) : null;
+  parts.push(v === "instrumental" ? "Instrumental, no vocals." : prof ? `Lead vocal: ${prof.name}.` : "");
+  return parts.filter(Boolean).join(" ");
+}
+async function claudeFusion() {
+  const gs = fusionGenres(); if (!gs.length) return toast("warn", "Pick at least one genre");
+  await caps; if (!sample) return toast("warn", "Claude isn't available in this copy", "Use Build brief here, or open the claude.ai copy.");
+  const btn = $("#claudeFusionBtn"); btn.disabled = true; btn.innerHTML = `${icon("loader", "i spin")}Writing…`;
+  try {
+    const v = $("#fVocal").value, prof = v && v !== "instrumental" ? getProfile(v) : null;
+    const out = await sample(`Write a creative music brief (3 to 4 sentences) for a genre fusion. Use craft vocabulary for drums, groove, harmony, palette, arrangement arc and mood. Never use artist, producer or brand names. Return only the brief.
+Genres to fuse: ${gs.map(g => `${g.name} (${[g.drums, g.harmony, g.palette].filter(Boolean).join("; ")})`).join(" + ")}
+Tempo: ${$("#fBpm").value} BPM. Mood: ${$("#fMood").value}. Energy: ${$("#fEnergy").value}.
+Vocal: ${v === "instrumental" ? "instrumental" : prof ? prof.name + " — " + prof.text.slice(0, 200) : "the studio chooses"}.`, { modelTier: "default", cache: false });
+    $("#fusionBrief").value = (out.text || "").trim();
+  } catch (e) { toast("err", "Couldn't write the brief", e?.code === "rate_limited" ? "Usage limit reached. Wait a minute and try again." : "Try Build brief instead."); }
+  finally { btn.disabled = false; btn.innerHTML = `${icon("sparkles")}Write it with Claude`; }
+}
+async function addGenre() {
+  const name = $("#newGenre").value.trim(); if (!name) return toast("warn", "Type a genre name first");
+  if (allGenres().some(g => g.name.toLowerCase() === name.toLowerCase())) return toast("warn", "That genre is already in the list");
+  const sound = $("#newGenreSound").value.trim() || `${name.toLowerCase()} rhythm section, ${name.toLowerCase()} textures`;
+  const rec = { id: "g_" + uid(), name, drums: sound, harmony: `${name.toLowerCase()} chord language`, palette: sound, bpm: 100 };
+  try { await store.put("genres", rec); } catch { return toast("err", "Couldn't save the genre", "Try again."); }
+  state.fusion.selected = [...state.fusion.selected, rec.id].slice(-3);
+  $("#newGenre").value = ""; $("#newGenreSound").value = ""; renderFusion(); toast("ok", "Genre added", name);
+}
+
+/* ---------- vocal profiles ---------- */
+function renderProfiles() {
+  const list = allProfiles();
+  $("#profileList").innerHTML = list.map(p => `<div class="profile"><header><b>${esc(p.name)}</b>${p.lane ? `<span class="chip">${esc(p.lane)}</span>` : ""}${p.voiceRef ? `<span class="chip" title="Used as a style reference when rendering on the engine">${icon("wave")} Voice reference</span>` : ""}<span class="t3 num" style="font-size:13px">${p.text.length} chars</span><div class="spacer"></div>
+    ${state.confirmProfile === p.id
+      ? `<span class="confirm">${p.builtin ? "Hide this built-in?" : "Delete for good?"}<button class="btn btn-danger btn-sm" data-delprofile="${esc(p.id)}">${p.builtin ? "Hide" : "Delete"}</button><button class="btn btn-ghost btn-sm" data-action="cancel-delprofile">Keep</button></span>`
+      : `<span class="profile-actions">${p.builtin ? `<span class="t3" style="font-size:12px">Built-in${p.edited ? " · edited" : ""}</span>` : ""}
+        <button class="btn btn-ghost btn-sm" data-editprofile="${esc(p.id)}">${icon("edit")}Edit</button>
+        <button class="iconbtn" data-dupprofile="${esc(p.id)}" title="Duplicate" aria-label="Duplicate ${esc(p.name)}">${icon("copy")}</button>
+        <button class="iconbtn" data-exportprofile="${esc(p.id)}" title="Export" aria-label="Export ${esc(p.name)}">${icon("download")}</button>
+        <button class="iconbtn" data-askdelprofile="${esc(p.id)}" title="Delete" aria-label="Delete ${esc(p.name)}">${icon("trash")}</button></span>`}
+    </header><p>${esc(p.text)}</p></div>`).join("") || `<div class="empty">${icon("mic")}<b>No vocal profiles</b><span>Describe a voice, upload a vocal sample, or import profiles.</span></div>`;
+  $("#restoreProfiles").hidden = !store.cache.profiles.some(r => BUILTIN_PROFILES.some(b => b.id === r.id));
+}
+function openProfileEditor(p, title, extra) {
+  state.editingProfile = p && p.id ? p.id : null;
+  state.profileDraft = Object.assign({ voiceRef: p?.voiceRef || null, analysis: p?.analysis || null, pendingVoice: null }, extra || {});
+  $("#profileEditorTitle").textContent = title || (p?.id ? `Edit ${p.name}` : "New profile");
+  $("#pName").value = p?.name || ""; $("#pLane").value = p?.lane || ""; $("#pText").value = p?.text || ""; $("#pIdea").value = "";
+  updateProfileCount(); showVoiceRefRow();
+  $("#voiceLab").hidden = true; $("#profileEditor").hidden = false; $("#pName").focus();
+  $("#profileEditor").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+function updateProfileCount() { $("#pCount").textContent = `${$("#pText").value.length} chars · goes into the prompt word for word`; }
+function showVoiceRefRow() {
+  const d = state.profileDraft || {};
+  const has = d.voiceRef || d.pendingVoice;
+  $("#pVoiceRow").hidden = !has;
+  if (has) $("#pVoiceChip").textContent = d.pendingVoice ? `Voice reference: ${d.pendingVoice.name} (uploads on save)` : `Voice reference: ${d.voiceRef.name || d.voiceRef.id}`;
+}
+async function saveProfile() {
+  const name = $("#pName").value.trim(), text = $("#pText").value.trim().replace(/[.\s]+$/, "");
+  if (!name || text.length < 10) return toast("warn", "Add a name and descriptors", "Descriptors need at least a few words.");
+  if (allProfiles().some(p => p.name.toLowerCase() === name.toLowerCase() && p.id !== state.editingProfile)) return toast("warn", "That name is taken", "Pick a different profile name.");
+  const d = state.profileDraft || {};
+  let voiceRef = d.voiceRef || null;
+  if (d.pendingVoice) {
+    if (!bridgeMode) { toast("warn", "Voice reference not saved", "Samples can only be stored on the engine. The profile keeps its descriptors."); }
+    else {
+      try {
+        const r = await fetch("/voices", { method: "POST", headers: { "Content-Type": d.pendingVoice.type || "application/octet-stream", "X-Filename": encodeURIComponent(d.pendingVoice.name) }, body: d.pendingVoice });
+        if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.status);
+        const j = await r.json(); voiceRef = { id: j.id, name: d.pendingVoice.name, bytes: j.bytes };
+      } catch (e) { return toast("err", "Couldn't upload the voice sample", String(e.message || e)); }
+    }
+  }
+  const base = allProfiles().find(p => p.id === state.editingProfile);
+  const rec = { id: state.editingProfile || "p_" + uid(), name, lane: $("#pLane").value.trim() || (base?.lane ?? "Custom"), text };
+  if (voiceRef) rec.voiceRef = voiceRef;
+  if (d.analysis) rec.analysis = d.analysis;
+  try { await store.put("profiles", rec); } catch { return toast("err", "Couldn't save the profile", "Try again."); }
+  $("#profileEditor").hidden = true; state.profileDraft = null; renderProfiles(); renderProfileSelects();
+  toast("ok", "Profile saved", `${name} · ${text.length} chars${voiceRef ? " · with voice reference" : ""}`);
+}
+async function deleteProfile(id) {
+  const isBuiltin = BUILTIN_PROFILES.some(b => b.id === id);
+  const cur = allProfiles().find(p => p.id === id);
+  try {
+    if (isBuiltin) await store.put("profiles", { id, hidden: true, name: cur?.name || id });
+    else {
+      await store.remove("profiles", id);
+      if (cur?.voiceRef && bridgeMode && !allProfiles().some(p => p.voiceRef?.id === cur.voiceRef.id)) fetch(`/voices/${cur.voiceRef.id}`, { method: "DELETE" }).catch(() => {});
+    }
+  } catch { return toast("err", "Couldn't delete", "Try again."); }
+  state.confirmProfile = null; renderProfiles(); renderProfileSelects();
+  toast("ok", isBuiltin ? "Built-in profile hidden" : "Profile deleted", isBuiltin ? "Restore it any time with Restore built-in profiles." : "");
+}
+function exportProfiles(list, filename) {
+  const data = { app: "Alexandria", kind: "vocal-profiles", version: 1, exported: new Date().toISOString(),
+    profiles: list.map(p => ({ name: p.name, lane: p.lane || "", text: p.text, ...(p.voiceRef ? { voiceRef: p.voiceRef } : {}), ...(p.analysis ? { analysis: p.analysis } : {}) })) };
+  return saveFile(filename, JSON.stringify(data, null, 2), "application/json");
+}
+function parseProfileFile(text, filename) {
+  const t = text.trim();
+  if (/\.json$/i.test(filename) || t.startsWith("{") || t.startsWith("[")) {
+    const j = JSON.parse(t); const arr = Array.isArray(j) ? j : Array.isArray(j.profiles) ? j.profiles : [j];
+    return arr.map(x => ({ name: String(x.name || "").trim(), lane: String(x.lane || "Imported").trim(), text: String(x.text || x.descriptors || x.profile || "").trim(), voiceRef: x.voiceRef, analysis: x.analysis })).filter(x => x.name && x.text.length >= 10);
+  }
+  // Text: "Name: descriptors" per line, or "Name" line followed by a descriptor paragraph.
+  const out = [];
+  for (const block of t.split(/\n\s*\n/)) {
+    const lines = block.split("\n").map(l => l.trim().replace(/^[-*•]\s*/, "").replace(/\*\*/g, "")).filter(Boolean);
+    for (let i = 0; i < lines.length; i++) {
+      const m = lines[i].match(/^([^:()]{2,24})(?:\s*\(([^)]*)\))?\s*:\s*(.{10,})$/);
+      if (m) out.push({ name: m[1].trim(), lane: (m[2] || "Imported").trim(), text: m[3].trim() });
+      else if (i === 0 && lines.length > 1 && lines[0].length <= 24) { out.push({ name: lines[0], lane: "Imported", text: lines.slice(1).join(" ") }); break; }
+    }
+  }
+  return out;
+}
+async function importProfiles(file) {
+  let items;
+  try { items = parseProfileFile(await file.text(), file.name); } catch { return toast("err", "Couldn't read that file", "Use a JSON export from Alexandria, or text lines like  Name: descriptors"); }
+  if (!items.length) return toast("warn", "No profiles found", "Use a JSON export, or text lines like  Name: descriptors");
+  let added = 0, updated = 0;
+  for (const it of items) {
+    const existing = allProfiles().find(p => p.name.toLowerCase() === it.name.toLowerCase());
+    const rec = { id: existing ? existing.id : "p_" + uid(), name: it.name.slice(0, 24), lane: it.lane || "Imported", text: it.text.replace(/[.\s]+$/, "").slice(0, 1200) };
+    if (it.voiceRef && bridgeMode) rec.voiceRef = it.voiceRef;
+    if (it.analysis) rec.analysis = it.analysis;
+    try { await store.put("profiles", rec); existing ? updated++ : added++; } catch {}
+  }
+  renderProfiles(); renderProfileSelects();
+  toast("ok", "Profiles imported", `${added} added${updated ? `, ${updated} updated (same name)` : ""}`);
+}
+async function claudeProfile() {
+  const idea = $("#pIdea").value.trim() || $("#pText").value.trim();
+  if (!idea) return toast("warn", "Describe the voice first", "A few words in the idea box is enough.");
+  await caps; if (!sample) return toast("warn", "Claude isn't available in this copy", "Write the descriptors yourself here, or use the claude.ai copy.");
+  const btn = $("#profileClaudeBtn"); btn.disabled = true; btn.innerHTML = `${icon("loader", "i spin")}Writing…`;
+  try {
+    const example = BUILTIN_PROFILES[0].text;
+    const out = await sample(`Write one vocal profile for an AI music style prompt: a single comma-separated descriptor stack of 300 to 550 characters, in craft vocabulary (tone, register, texture, phrasing, ornamentation, dynamics, harmonies, ad-libs). Never use artist names. No sentences, no line breaks. Return only the descriptors.
+Example of the house style: ${example}
+Voice to describe: ${idea}`, { modelTier: "default", cache: false });
+    $("#pText").value = (out.text || "").trim().replace(/^["']|["']$/g, "").replace(/[.\s]+$/, ""); updateProfileCount();
+  } catch (e) { toast("err", "Couldn't write the profile", e?.code === "rate_limited" ? "Usage limit reached. Wait a minute and try again." : "Try again in a moment."); }
+  finally { btn.disabled = false; btn.innerHTML = `${icon("sparkles")}Write it with Claude`; }
+}
+
+/* ---------- voice analysis (runs in the browser) ---------- */
+function fftMag(re) {
+  const n = re.length, im = new Float32Array(n);
+  for (let i = 1, j = 0; i < n; i++) { let bit = n >> 1; for (; j & bit; bit >>= 1) j ^= bit; j ^= bit; if (i < j) { [re[i], re[j]] = [re[j], re[i]]; } }
+  for (let len = 2; len <= n; len <<= 1) {
+    const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+    for (let i = 0; i < n; i += len) { let cr = 1, ci = 0;
+      for (let k = 0; k < len / 2; k++) { const a = i + k, b = a + len / 2; const tr = re[b] * cr - im[b] * ci, ti = re[b] * ci + im[b] * cr;
+        re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti; const ncr = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = ncr; } }
+  }
+  const mag = new Float32Array(n / 2); for (let i = 0; i < n / 2; i++) mag[i] = Math.hypot(re[i], im[i]); return mag;
+}
+const pct = (arr, q) => { if (!arr.length) return 0; const a = [...arr].sort((x, y) => x - y); return a[Math.min(a.length - 1, Math.max(0, Math.floor(q * (a.length - 1))))]; };
+async function analyzeVoice(blob, onProgress) {
+  const AC = window.AudioContext || window.webkitAudioContext; const ac = new AC();
+  const buf = await ac.decodeAudioData(await blob.arrayBuffer()); ac.close?.();
+  const sr0 = buf.sampleRate, len = Math.min(buf.length, Math.floor(sr0 * 120));
+  const mono = new Float32Array(len);
+  for (let c = 0; c < buf.numberOfChannels; c++) { const ch = buf.getChannelData(c); for (let i = 0; i < len; i++) mono[i] += ch[i] / buf.numberOfChannels; }
+  const f = Math.max(1, Math.round(sr0 / 16000)), sr = sr0 / f, x = new Float32Array(Math.floor(len / f));
+  for (let i = 0; i < x.length; i++) { let a = 0; for (let k = 0; k < f; k++) a += mono[i * f + k]; x[i] = a / f; }
+  const W = Math.round(sr * 0.032), hop = Math.round(sr * 0.02), tmin = Math.floor(sr / 1000), tmax = Math.floor(sr / 65), frames = Math.floor((x.length - W - tmax) / hop);
+  if (frames < 20) throw new Error("The clip is too short. Use at least 5 seconds of singing.");
+  const rmsDb = [], f0 = new Float32Array(frames), aper = new Float32Array(frames), cent = [];
+  let peakRms = 0; const rmsArr = new Float32Array(frames);
+  for (let fi = 0; fi < frames; fi++) { let e = 0; const o = fi * hop; for (let i = 0; i < W; i++) e += x[o + i] * x[o + i]; rmsArr[fi] = Math.sqrt(e / W); peakRms = Math.max(peakRms, rmsArr[fi]); }
+  const gate = peakRms * Math.pow(10, -35 / 20);
+  const d = new Float32Array(tmax + 1), win = new Float32Array(1024).map((_, i) => 0.5 - 0.5 * Math.cos(2 * Math.PI * i / 1023));
+  for (let fi = 0; fi < frames; fi++) {
+    if (fi % 60 === 0) { onProgress?.(fi / frames); await new Promise(r => setTimeout(r)); }
+    const o = fi * hop; if (rmsArr[fi] < gate) continue;
+    rmsDb.push(20 * Math.log10(rmsArr[fi] / peakRms));
+    d[0] = 1; let run = 0, best = -1;
+    for (let t = 1; t <= tmax; t++) { let s2 = 0; for (let i = 0; i < W; i++) { const df = x[o + i] - x[o + i + t]; s2 += df * df; } run += s2; d[t] = run ? s2 * t / run : 1; }
+    for (let t = tmin; t < tmax; t++) { if (d[t] < 0.2 && d[t] <= d[t + 1]) { best = t; break; } }
+    if (best > 0) {
+      const a = d[best - 1], b = d[best], c = d[best + 1], den = a - 2 * b + c, shift = den ? 0.5 * (a - c) / den : 0;
+      f0[fi] = sr / (best + shift); aper[fi] = b;
+    }
+    if (fi % 3 === 0 && o + 1024 <= x.length) {
+      const re = new Float32Array(1024); for (let i = 0; i < 1024; i++) re[i] = x[o + i] * win[i];
+      const mag = fftMag(re); let num = 0, den2 = 0; for (let k = 2; k < mag.length; k++) { const fr = k * sr / 1024; num += fr * mag[k]; den2 += mag[k]; } if (den2) cent.push(num / den2);
+    }
+  }
+  onProgress?.(1);
+  const voiced = [...f0].filter(v => v > 0), dur = len / sr0;
+  if (voiced.length < 15) throw new Error("No clear singing found. Use a vocal-only clip with little background music.");
+  const med = pct(voiced, .5), lo = pct(voiced, .1), hi = pct(voiced, .9);
+  const rangeSt = 12 * Math.log2(hi / lo);
+  const apers = [...aper].filter(v => v > 0), breath = pct(apers, .5);
+  let jit = []; for (let i = 1; i < frames; i++) if (f0[i] > 0 && f0[i - 1] > 0) { const r = Math.abs(f0[i] - f0[i - 1]) / f0[i]; if (r < 0.06) jit.push(r); }
+  const jitter = pct(jit, .5);
+  // vibrato: residual pitch wobble (cents) and its rate inside sustained voiced runs
+  const fps = sr / hop; let vibDepth = [], vibRate = [];
+  for (let i = 0; i < frames;) {
+    if (!(f0[i] > 0)) { i++; continue; } let j = i; while (j < frames && f0[j] > 0) j++;
+    if (j - i >= fps * 0.3) {
+      const cents = []; for (let k = i; k < j; k++) cents.push(1200 * Math.log2(f0[k] / med));
+      const sm = cents.map((_, k) => { let a = 0, n = 0; for (let q = Math.max(0, k - 7); q <= Math.min(cents.length - 1, k + 7); q++) { a += cents[q]; n++; } return a / n; });
+      const res = cents.map((v, k) => v - sm[k]); let zc = 0; for (let k = 1; k < res.length; k++) if ((res[k] > 0) !== (res[k - 1] > 0)) zc++;
+      vibDepth.push(Math.sqrt(res.reduce((a, v) => a + v * v, 0) / res.length) * 1.41); vibRate.push(zc / 2 / ((j - i) / fps));
+    }
+    i = j;
+  }
+  const vDepth = pct(vibDepth, .5), vRate = pct(vibRate, .5);
+  const dynRange = pct(rmsDb, .95) - pct(rmsDb, .1);
+  // onsets: level jumps of 6 dB+ above the quietest point in the previous 100 ms (frames are 20 ms apart)
+  const dbs = Array.from(rmsArr, v => 20 * Math.log10((v + 1e-9) / peakRms));
+  // a new onset only counts after the level has fallen 6 dB below the peak since the last one (hysteresis)
+  let onsets = 0, armed = true, peakSince = -Infinity;
+  for (let i = 5; i < frames; i++) {
+    peakSince = Math.max(peakSince, dbs[i]);
+    if (!armed && dbs[i] < peakSince - 6) armed = true;
+    if (!armed) continue;
+    let lo = Infinity; for (let k = i - 5; k < i; k++) lo = Math.min(lo, dbs[k]);
+    if (dbs[i] > -30 && dbs[i] - lo > 6) { onsets++; armed = false; peakSince = dbs[i]; }
+  }
+  // singing time = frames above the gate plus pauses shorter than 0.4 s (breaths between syllables)
+  let activeFrames = 0, gap = 0;
+  for (let i = 0; i < frames; i++) { if (rmsArr[i] >= gate) { activeFrames += 1 + (gap && gap < fps * 0.4 ? gap : 0); gap = 0; } else gap++; }
+  const sylRate = onsets / Math.max(1, activeFrames / fps);
+  const centroid = pct(cent, .5);
+  return { seconds: Math.round(dur), medianHz: Math.round(med), lowHz: Math.round(lo), highHz: Math.round(hi), rangeSemitones: Math.round(rangeSt), breathiness: +breath.toFixed(3), jitterPct: +(jitter * 100).toFixed(2), vibratoCents: Math.round(vDepth), vibratoHz: +vRate.toFixed(1), dynamicDb: Math.round(dynRange), syllablesPerSec: +sylRate.toFixed(1), brightnessHz: Math.round(centroid), voicedPct: Math.round(voiced.length / frames * 100) };
+}
+const noteName = hz => { const n = Math.round(12 * Math.log2(hz / 440)) + 69; return ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"][n % 12] + (Math.floor(n / 12) - 1); };
+function describeVoice(a) {
+  const reg = a.medianHz < 110 ? "deep bass-baritone register" : a.medianHz < 165 ? "baritone-to-tenor register" : a.medianHz < 220 ? "tenor or low alto register" : a.medianHz < 300 ? "alto-mezzo register" : a.medianHz < 400 ? "mezzo-soprano register" : "bright soprano register";
+  const tone = a.brightnessHz < 1300 ? "dark, rounded" : a.brightnessHz < 2200 ? "warm" : a.brightnessHz < 3200 ? "bright, forward" : "airy, crisp";
+  const breath = a.breathiness < 0.08 ? "clean focused tone" : a.breathiness < 0.16 ? "a touch of breath on the tone" : "breathy, airy delivery";
+  const rasp = a.jitterPct > 1.8 ? "gritty raspy edges" : a.jitterPct > 1.1 ? "slight grain on sustains" : "smooth sustains";
+  const vib = a.vibratoCents > 35 && a.vibratoHz >= 4 && a.vibratoHz <= 8.5 ? "pronounced vibrato on held notes" : a.vibratoCents > 18 ? "light natural vibrato" : "mostly straight-tone sustains";
+  const phr = a.syllablesPerSec > 4 ? "rapid percussive syllabic delivery" : a.syllablesPerSec > 2.5 ? "conversational rhythmic phrasing" : "legato phrasing with long sustained lines";
+  const dyn = a.dynamicDb > 18 ? "wide dynamic swells from murmur to full voice" : a.dynamicDb > 10 ? "moderate dynamic shading" : "steady, even dynamics";
+  const rng = a.rangeSemitones > 19 ? "wide range spanning over an octave and a half" : a.rangeSemitones > 11 ? "comfortable octave-plus range" : "compact focused range";
+  return `${tone} ${reg}, ${breath}, ${rasp}, ${vib}, ${phr}, ${dyn}, ${rng}`;
+}
+function renderVoiceStats(a) {
+  const cells = [["Register", `${noteName(a.medianHz)} center (${a.medianHz} Hz)`], ["Range", `${noteName(a.lowHz)}–${noteName(a.highHz)} · ${a.rangeSemitones} semitones`], ["Tone", `${a.brightnessHz} Hz brightness`], ["Breath", a.breathiness < 0.08 ? "Clean" : a.breathiness < 0.16 ? "Light breath" : "Breathy"],
+    ["Grain", `${a.jitterPct}% pitch jitter`], ["Vibrato", a.vibratoCents > 18 ? `${a.vibratoCents} cents at ${a.vibratoHz} Hz` : "Mostly straight"], ["Dynamics", `${a.dynamicDb} dB range`], ["Phrasing", `${a.syllablesPerSec} onsets/sec`], ["Singing found", `${a.voicedPct}% of ${a.seconds}s`]];
+  $("#voiceStats").innerHTML = cells.map(([k, v]) => `<div><b>${k}</b><span class="num">${esc(v)}</span></div>`).join("");
+}
+async function runVoiceLab(file) {
+  state.voiceDraft = { file, analysis: null };
+  $("#voiceFileName").textContent = file.name; $("#voiceResults").hidden = true; $("#voiceProgWrap").hidden = false; $("#voiceProg").style.width = "0%";
+  try {
+    const a = await analyzeVoice(file, p => $("#voiceProg").style.width = Math.round(p * 100) + "%");
+    state.voiceDraft.analysis = a; renderVoiceStats(a); $("#voiceResults").hidden = false;
+    $("#voiceKeepRef").checked = bridgeMode; $("#voiceKeepRef").disabled = !bridgeMode;
+    if (!bridgeMode) $("#voiceKeepRef").parentElement.title = "Open the engine studio to store samples as references.";
+  } catch (e) { toast("err", "Couldn't analyze that audio", String(e.message || e).slice(0, 160), 9000); }
+  finally { $("#voiceProgWrap").hidden = true; }
+}
+async function voiceToProfile(withClaude) {
+  const v = state.voiceDraft; if (!v?.analysis) return;
+  const keep = $("#voiceKeepRef").checked;
+  if (keep && !$("#voiceConsent").checked) return toast("warn", "Confirm you can use this voice", "Tick the permission box to keep the sample as a reference.");
+  let text = describeVoice(v.analysis);
+  const notes = $("#voiceNotes").value.trim();
+  if (notes) text += `, ${notes.replace(/[.\s]+$/, "")}`;
+  if (withClaude) {
+    await caps;
+    if (!sample) toast("warn", "Claude isn't available in this copy", "Using the measured descriptors instead.");
+    else {
+      const btn = $("#voiceClaudeBtn"); btn.disabled = true; btn.innerHTML = `${icon("loader", "i spin")}Writing…`;
+      try {
+        const out = await sample(`Turn these measurements of a singer's voice into one vocal profile for an AI music style prompt: a comma-separated descriptor stack of 300 to 550 characters in craft vocabulary (tone, register, texture, phrasing, ornamentation, dynamics). No artist names, no numbers or Hz values, no sentences. Return only the descriptors.
+House style example: ${BUILTIN_PROFILES[0].text}
+Measurements: ${JSON.stringify(v.analysis)}
+Measured summary: ${describeVoice(v.analysis)}
+Listener notes: ${notes || "none"}`, { modelTier: "default", cache: false });
+        if (out.text?.trim()) text = out.text.trim().replace(/^["']|["']$/g, "").replace(/[.\s]+$/, "");
+      } catch { toast("warn", "Claude couldn't write it", "Using the measured descriptors instead."); }
+      finally { btn.disabled = false; btn.innerHTML = `${icon("sparkles")}Create with Claude's wording`; }
+    }
+  }
+  openProfileEditor({ name: "", lane: "From vocal sample", text }, "New profile from your sample", { analysis: v.analysis, pendingVoice: keep && bridgeMode ? v.file : null });
 }
 
 /* ---------- offline copy ---------- */
@@ -1169,7 +1794,7 @@ function bridgeCommand() {
 
 /* ---------- events ---------- */
 document.addEventListener("click", async e => {
-  const t = e.target.closest("[data-action],[data-nav],[data-seg],[data-preset],[data-copy],[data-openspec],[data-askdel],[data-delspec],[data-libfilter],[data-editprofile],[data-delprofile]");
+  const t = e.target.closest("[data-delgenre],[data-action],[data-nav],[data-seg],[data-preset],[data-copy],[data-openspec],[data-askdel],[data-delspec],[data-libfilter],[data-editprofile],[data-delprofile],[data-askdelprofile],[data-dupprofile],[data-exportprofile],[data-editpreset],[data-duppreset],[data-askdelpreset],[data-delpreset],[data-genre]");
   if (!t) return;
   const d = t.dataset;
   if (d.nav) return go(d.nav);
@@ -1179,8 +1804,27 @@ document.addEventListener("click", async e => {
   if (d.openspec) { const s = state.library.find(x => x.id === d.openspec); if (s) { state.spec = JSON.parse(JSON.stringify(s)); state.seg = "spec"; go("studio"); renderSpec(); } return; }
   if (d.askdel) { state.confirmDel = d.askdel; return renderLibrary(); }
   if (d.delspec) { try { await store.deleteSpec(d.delspec); toast("ok", "Spec deleted"); } catch { toast("err", "Couldn't delete", "Try again."); } state.confirmDel = null; return renderLibrary(); }
-  if (d.editprofile) { const p = getProfile(d.editprofile); state.editingProfile = p.id; $("#pName").value = p.name; $("#pText").value = p.text; $("#profileEditor").hidden = false; $("#pCount").textContent = p.text.length + " chars"; return; }
-  if (d.delprofile) { await store.deleteProfile(d.delprofile); renderProfiles(); renderProfileSelects(); return toast("ok", "Profile deleted"); }
+  if (d.delgenre) {
+    e.stopPropagation();
+    try { await store.remove("genres", d.delgenre); } catch { return toast("err", "Couldn't delete the genre"); }
+    state.fusion.selected = state.fusion.selected.filter(x => x !== d.delgenre); return renderFusion();
+  }
+  if (d.genre) {
+    const sel = state.fusion.selected;
+    state.fusion.selected = sel.includes(d.genre) ? sel.filter(x => x !== d.genre) : [...sel, d.genre].slice(-3);
+    if (!sel.includes(d.genre) && sel.length >= 3) toast("info", "Up to three genres", "The oldest pick was swapped out.");
+    const g = fusionGenres()[0]; if (g && state.fusion.selected.length === 1) { $("#fBpm").value = g.bpm; $("#fBpmVal").textContent = g.bpm; }
+    return renderFusion();
+  }
+  if (d.editpreset) { const p = allPresets().find(x => x.id === d.editpreset); return p && openPresetEditor(p); }
+  if (d.duppreset) { const p = allPresets().find(x => x.id === d.duppreset); return p && openPresetEditor({ ...p, id: null, name: `${p.name} copy`.slice(0, 40) }, `Duplicate ${p.name}`); }
+  if (d.askdelpreset) { state.confirmPreset = d.askdelpreset; return renderPresets(); }
+  if (d.delpreset) return deletePreset(d.delpreset);
+  if (d.editprofile) { const p = getProfile(d.editprofile); return p && openProfileEditor(p); }
+  if (d.dupprofile) { const p = getProfile(d.dupprofile); return p && openProfileEditor({ ...p, id: null, name: `${p.name} 2`.slice(0, 24), voiceRef: p.voiceRef }, `Duplicate ${p.name}`); }
+  if (d.exportprofile) { const p = getProfile(d.exportprofile); return p && exportProfiles([p], `${p.name.replace(/[^\w\- ]+/g, "").trim() || "profile"}.alexandria-voice.json`); }
+  if (d.askdelprofile) { state.confirmProfile = d.askdelprofile; return renderProfiles(); }
+  if (d.delprofile) return deleteProfile(d.delprofile);
   if (d.copy) {
     const spec = state.spec || EXAMPLE_SPEC;
     const map = { style: [composeStyle(spec), "Style prompt"], lyrics: [spec.lyrics, "Lyrics"], "yue-tags": [spec.yue_tags, "YuE tags"], "yue-lyrics": [toYueLyrics(spec.lyrics).text, "YuE lyrics"] };
@@ -1195,22 +1839,51 @@ document.addEventListener("click", async e => {
     case "import-spec": return $("#specFile").click();
     case "load-audio": return $("#audioFile").click();
     case "save-audio": if (state.render.blob) return saveFile($("#audioName").textContent, state.render.blob); return;
-    case "play": if (audio.paused) { try { await audio.play(); setPlayIcon(true); } catch { toast("warn", "Playback was blocked", "Press play again."); } } else { audio.pause(); setPlayIcon(false); } return;
+    case "play": return togglePlay();
+    case "seek-start": return seekTo(0);
+    case "seek-back": return seekTo(audio.currentTime - 10);
+    case "seek-fwd": return seekTo(audio.currentTime + 10);
+    case "seek-end": return seekTo((audio.duration || 0) - 0.5);
+    case "loop": return toggleLoop();
+    case "open-fusion": return openFusion();
+    case "close-fusion": $("#fusion").hidden = true; return;
+    case "add-genre": return addGenre();
+    case "build-fusion": { const b = buildFusionBrief(); if (b) $("#fusionBrief").value = b; return; }
+    case "claude-fusion": return claudeFusion();
+    case "fusion-to-studio": {
+      const b = $("#fusionBrief").value.trim() || buildFusionBrief(); if (!b) return;
+      $("#brief").value = b; const v = $("#fVocal").value; if (v && [...$("#profile").options].some(o => o.value === v)) $("#profile").value = v;
+      updateBriefCount(); saveDraft(); go("studio"); return toast("info", "Fusion brief loaded", "Press Design Spec when you're ready.");
+    }
+    case "fusion-to-preset": {
+      const b = $("#fusionBrief").value.trim() || buildFusionBrief(); if (!b) return;
+      const gs = fusionGenres(); const c = ["#5856D6", "#FF9500", "#34C759", "#FF3B30", "#AF52DE", "#007AFF"];
+      return openPresetEditor({ name: gs.map(g => g.name).join(" × ").slice(0, 40), sub: `${$("#fMood").value}, ${$("#fBpm").value} BPM`, cat: "Song", st: STRUCTURE_TEMPLATES[0], profile: $("#fVocal").value, colors: [c[gs.length % c.length], c[(gs.length + 2) % c.length]], brief: b }, "Save fusion as preset");
+    }
+    case "new-preset": return openPresetEditor(null);
+    case "save-preset": return savePreset();
+    case "cancel-preset": $("#presetEditor").hidden = true; state.editingPreset = null; return;
+    case "cancel-delpreset": state.confirmPreset = null; return renderPresets();
+    case "restore-presets": await restoreBuiltins("presets", BUILTIN_PRESETS); renderPresets(); renderForm(true); return toast("ok", "Built-in presets restored");
+    case "restore-profiles": await restoreBuiltins("profiles", BUILTIN_PROFILES); renderProfiles(); renderProfileSelects(); return toast("ok", "Built-in profiles restored");
+    case "cancel-delprofile": state.confirmProfile = null; return renderProfiles();
+    case "import-profiles": return $("#profileImport").click();
+    case "export-profiles": return exportProfiles(allProfiles(), "alexandria-vocal-profiles.json");
+    case "profile-claude": return claudeProfile();
+    case "remove-voiceref": if (state.profileDraft) { state.profileDraft.voiceRef = null; state.profileDraft.pendingVoice = null; showVoiceRefRow(); } return;
+    case "open-voicelab": $("#profileEditor").hidden = true; $("#voiceLab").hidden = false; $("#voiceLab").scrollIntoView({ behavior: "smooth", block: "nearest" }); return;
+    case "close-voicelab": $("#voiceLab").hidden = true; return;
+    case "pick-voice": return $("#voiceFile").click();
+    case "voice-to-profile": return voiceToProfile(false);
+    case "voice-claude": return voiceToProfile(true);
     case "save-spec": { if (!state.spec) return; try { const rec = await store.saveSpec(state.spec); state.spec.id = rec.id; toast("ok", "Saved to Library", state.spec.title); } catch { toast("err", "Couldn't save", "Your spec is still here. Try again."); } return; }
     case "export-md": { const spec = state.spec || EXAMPLE_SPEC; const name = (spec.title || "spec").replace(/[^\w\- ]+/g, "").trim() || "spec"; await saveFile(name + ".md", specMarkdown(spec), "text/markdown"); await saveFile(name + ".json", JSON.stringify(spec, null, 2), "application/json"); return; }
     case "cancel-del": state.confirmDel = null; return renderLibrary();
     case "offline-copy": return offlineCopy();
     case "copy-bridge-cmd": return copyText(bridgeCommand(), "Bridge command");
-    case "new-profile": state.editingProfile = null; $("#pName").value = ""; $("#pText").value = ""; $("#pCount").textContent = ""; $("#profileEditor").hidden = false; $("#pName").focus(); return;
-    case "cancel-profile": $("#profileEditor").hidden = true; return;
-    case "save-profile": {
-      const name = $("#pName").value.trim(), text = $("#pText").value.trim().replace(/[.\s]+$/, "");
-      if (!name || text.length < 10) return toast("warn", "Add a name and descriptors", "Descriptors need at least a few words.");
-      if (allProfiles().some(p => p.name.toLowerCase() === name.toLowerCase() && p.id !== state.editingProfile)) return toast("warn", "That name is taken", "Pick a different profile name.");
-      const p = { id: state.editingProfile || "p_" + uid(), name, text, lane: "Custom" };
-      try { await store.saveProfile(p); } catch { return toast("err", "Couldn't save the profile", "Try again."); }
-      $("#profileEditor").hidden = true; renderProfiles(); renderProfileSelects(); return toast("ok", "Profile saved", `${name} · ${text.length} chars`);
-    }
+    case "new-profile": return openProfileEditor(null, "Describe a voice");
+    case "cancel-profile": $("#profileEditor").hidden = true; state.profileDraft = null; return;
+    case "save-profile": return saveProfile();
     case "keep-alive": try { await fetch("/health", { cache: "no-store" }); } catch {} $("#idleBar").hidden = true; toast("ok", "Timer reset", "The engine stays on for another full idle period."); return;
     case "save-settings": state.settings.seed = $("#setSeed").value.trim().replace(/\D/g, ""); state.settings.duration = $("#setDuration").value; ls.set("settings", state.settings); return toast("ok", "Defaults saved");
   }
@@ -1218,7 +1891,11 @@ document.addEventListener("click", async e => {
 $("#brief").addEventListener("input", () => { updateBriefCount(); saveDraft(); });
 ["#title", "#category", "#structure", "#profile", "#duet", "#mic"].forEach(s => $(s).addEventListener("change", () => { saveDraft(); updateMicBlurb(); }));
 $("#libSearch").addEventListener("input", e => { state.libSearch = e.target.value; renderLibrary(); });
-$("#pText").addEventListener("input", e => $("#pCount").textContent = e.target.value.length + " chars");
+$("#pText").addEventListener("input", updateProfileCount);
+$("#fBpm").addEventListener("input", e => $("#fBpmVal").textContent = e.target.value);
+$("#newGenre").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addGenre(); } });
+$("#profileImport").addEventListener("change", async e => { const f = e.target.files[0]; e.target.value = ""; if (f) await importProfiles(f); });
+$("#voiceFile").addEventListener("change", async e => { const f = e.target.files[0]; e.target.value = ""; if (f) await runVoiceLab(f); });
 $("#engType").addEventListener("change", () => { $("#bridgeCmd").textContent = bridgeCommand(); $("#archEngine").textContent = engineName($("#engType").value); state.settings.engType = $("#engType").value; ls.set("settings", state.settings); if (state.engine.status === "connected") setEnginePill("connected", `Connected: ${engineName($("#engType").value)}`); });
 $("#specFile").addEventListener("change", async e => {
   const f = e.target.files[0]; e.target.value = ""; if (!f) return;
@@ -1292,7 +1969,7 @@ async function boot() {
       const r = await fetch("/health", { cache: "no-store" });
       if (r.status === 401) { location.href = "/login"; return; }
       const h = await r.json();
-      if (h && h.ok) { isLocalHost = true; $("#engUrl").value = location.origin; state.settings.engUrl = location.origin; $("#signOut").hidden = false; watchIdle(h); }
+      if (h && h.ok) { isLocalHost = true; bridgeMode = !!h.store; $("#engUrl").value = location.origin; state.settings.engUrl = location.origin; $("#signOut").hidden = false; watchIdle(h); }
     } catch {}
   }
   go(state.view); aurora();
@@ -1303,10 +1980,13 @@ async function boot() {
   if (!sample) { $("#designNote").textContent = isLocalHost ? "Offline copy: Design Spec runs on claude.ai. Export a spec there, then use Import spec here." : "Couldn't connect to Claude in this view. Reload the page and allow Alexandria to use Claude when asked."; }
   await store.loadAll();
   renderProfileSelects(ls.get("draft", {}).profile ?? "mimi", ls.get("draft", {}).duet ?? "");
+  renderInspiration();
   if (state.view === "library") renderLibrary();
-  if (state.view === "presets") renderProfiles();
+  if (state.view === "presets") { renderPresets(); renderProfiles(); }
   if (isLocalHost) testEngine(true);
 }
+// Read-only handle for automated tests and debugging in the browser console.
+Object.defineProperty(window, "__alx", { value: Object.freeze({ store, state, audio, allPresets, allProfiles, getProfile, bridgeMode: () => bridgeMode }) });
 boot();
 })();
 </script>

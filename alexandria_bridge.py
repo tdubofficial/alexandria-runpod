@@ -52,6 +52,22 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+STORE_NAMES = {"specs", "profiles", "presets", "genres"}
+VOICE_EXT = {".wav", ".mp3", ".flac", ".ogg", ".m4a", ".aac", ".webm"}
+STORE_LOCK = threading.Lock()
+
+
+def data_dir(name):
+    d = Path(ARGS.out).parent / name
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def voice_path(voice_id):
+    if not re.fullmatch(r"v_[a-f0-9]{12}", voice_id or ""):
+        return None
+    hits = [p for p in data_dir("voices").glob(voice_id + ".*") if p.suffix.lower() in VOICE_EXT]
+    return hits[0] if hits else None
 AUDIO_EXT = (".wav", ".mp3", ".flac", ".ogg")
 MIME = {".wav": "audio/wav", ".mp3": "audio/mpeg", ".flac": "audio/flac", ".ogg": "audio/ogg"}
 
@@ -190,6 +206,10 @@ def render_ace15(job_id, job, out_dir, base):
         body["inference_steps"] = ARGS.ace_steps15
     if seed is not None:
         body.update(seed=int(seed), use_random_seed=False)
+    ref = voice_path(job.get("reference_voice_id"))
+    if ref:
+        body["reference_audio_path"] = str(ref.resolve())   # ACE-Step "style transfer" reference
+        set_job(job_id, message="ACE-Step generating with the voice reference…")
     try:
         res = http_json(base + "/release_task", body, timeout=120)
     except urllib.error.HTTPError as e:
@@ -494,8 +514,8 @@ class Handler(BaseHTTPRequestHandler):
         if AUTH is not None:
             return  # password mode: same-origin only
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-Filename")
         self.send_header("Access-Control-Allow-Private-Network", "true")
 
     def send_json(self, obj, code=200):
@@ -532,11 +552,34 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             return self.wfile.write(data)
         if path == "/health":
-            return self.send_json({"ok": True, "version": "1.1",
+            return self.send_json({"ok": True, "version": "1.2", "store": True,
                                    "idle": {"enabled": bool(ARGS.idle_stop_minutes), "seconds_left": idle_seconds_left(),
                                             "minutes": ARGS.idle_stop_minutes, "key": bool(runpod_key()),
                                             "error": IDLE_STATE["error"]},
                                    "engines": {"yue": bool(ARGS.yue_dir), "ace": ace_alive(), "custom": bool(ARGS.custom_cmd)}})
+        m = re.fullmatch(r"/store/([a-z]+)", path)
+        if m and m.group(1) in STORE_NAMES:
+            f = data_dir("store") / f"{m.group(1)}.json"
+            with STORE_LOCK:
+                data = f.read_bytes() if f.exists() else b"[]"
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            return self.wfile.write(data)
+        m = re.fullmatch(r"/voices/(v_[a-f0-9]{12})", path)
+        if m:
+            vp = voice_path(m.group(1))
+            if not vp:
+                return self.send_json({"error": "No such voice sample"}, 404)
+            data = vp.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", {".mp3": "audio/mpeg", ".flac": "audio/flac", ".ogg": "audio/ogg", ".m4a": "audio/mp4",
+                                              ".aac": "audio/aac", ".webm": "audio/webm"}.get(vp.suffix.lower(), "audio/wav"))
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            return self.wfile.write(data)
         m = re.fullmatch(r"/logs/(bootstrap|ace-step|bridge)", path)
         if m:
             f = Path(ARGS.out).parent / "logs" / f"{m.group(1)}.log"
@@ -568,11 +611,52 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json({k: job.get(k) for k in ("status", "progress", "message", "log_tail")} | {"elapsed": elapsed})
         self.send_json({"error": "Not found"}, 404)
 
+    def do_PUT(self):
+        if not self.authed():
+            return self.deny(self.path)
+        m = re.fullmatch(r"/store/([a-z]+)", self.path.split("?")[0])
+        if not m or m.group(1) not in STORE_NAMES:
+            return self.send_json({"error": "Not found"}, 404)
+        length = int(self.headers.get("Content-Length") or 0)
+        if length > 40 * 1024 * 1024:
+            return self.send_json({"error": "Too large"}, 413)
+        raw = self.rfile.read(length)
+        try:
+            data = json.loads(raw or b"[]")
+            assert isinstance(data, list)
+        except Exception:
+            return self.send_json({"error": "Body must be a JSON list"}, 400)
+        f = data_dir("store") / f"{m.group(1)}.json"
+        with STORE_LOCK:
+            tmp = f.with_suffix(".tmp")
+            tmp.write_text(json.dumps(data), encoding="utf-8")
+            tmp.replace(f)
+        return self.send_json({"ok": True, "count": len(data)})
+
+    def do_DELETE(self):
+        if not self.authed():
+            return self.deny(self.path)
+        m = re.fullmatch(r"/voices/(v_[a-f0-9]{12})", self.path.split("?")[0])
+        vp = voice_path(m.group(1)) if m else None
+        if not vp:
+            return self.send_json({"error": "No such voice sample"}, 404)
+        vp.unlink()
+        return self.send_json({"ok": True})
+
     def do_POST(self):
         if self.path.split("?")[0] == "/login" and AUTH is not None:
             return self.do_login()
         if not self.authed():
             return self.deny(self.path)
+        if self.path.split("?")[0] == "/voices":
+            length = int(self.headers.get("Content-Length") or 0)
+            if not 0 < length <= 30 * 1024 * 1024:
+                return self.send_json({"error": "Voice samples must be under 30 MB"}, 413)
+            ext = Path(urllib.parse.unquote(self.headers.get("X-Filename") or "sample.wav")).suffix.lower()
+            ext = ext if ext in VOICE_EXT else ".wav"
+            vid = "v_" + uuid.uuid4().hex[:12]
+            (data_dir("voices") / (vid + ext)).write_bytes(self.rfile.read(length))
+            return self.send_json({"id": vid, "bytes": length})
         if self.path.split("?")[0] != "/render":
             return self.send_json({"error": "Not found"}, 404)
         try:

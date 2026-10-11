@@ -33,6 +33,14 @@ To ship an update, push to `main` and restart the pod.
 | `alexandria_bridge.py` | Studio server: sign-in, job queue, talks to ACE-Step |
 | `alexandria.html` | The studio |
 
+## Your library on the engine
+
+When you use the studio from the engine, profiles, presets, custom genres and saved specs are stored on the
+network volume (`/workspace/alexandria/store/`), so they survive restarts and work from any browser. Vocal
+samples kept as voice references are stored in `/workspace/alexandria/voices/`, and renders with that profile
+pass the sample to ACE-Step as `reference_audio_path` (ACE-Step calls this style transfer: it steers the sound,
+it is not an exact voice clone). Move profiles between the claude.ai studio and the engine with Export and Import.
+
 ## Idle auto-stop
 
 The studio stops its own pod after 30 minutes with no signed-in activity and no song rendering
