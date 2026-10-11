@@ -250,6 +250,8 @@ code.k{font-family:var(--f-mono);font-size:13px;background:var(--elev);padding:1
 .editor-h b{font-size:16px}
 .editor-h span{font-size:13px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
+.snstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.snstats>div{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;min-width:0}.snstats small{display:block;font-size:12px;color:var(--text3)}.snstats b{display:block;font-size:15px;font-weight:600;overflow-wrap:anywhere}
+@media (max-width:640px){.snstats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .chips button{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:14px;cursor:pointer}
 .chips button[aria-pressed="true"]{background:var(--blue-wash);border-color:var(--blue);color:var(--text)}
 .chips button .x{color:var(--text3);font-size:12px}
@@ -435,6 +437,38 @@ input[type="range"]{accent-color:var(--blue)}
         </div>
       </section>
 
+      <!-- MY SOUND -->
+      <section class="view" id="view-sound" hidden>
+        <div class="card">
+          <div class="card-h"><svg class="i"><use href="#i-wave"/></svg><h3>Analyze my music</h3></div>
+          <p class="t2" style="font-size:14px;margin-bottom:10px">Add finished tracks you produced. Alexandria listens to each one in this browser and measures tempo, groove and swing, key, loudness, low end, brightness, stereo width, harmony and the energy arc, then turns the numbers into style cues. The audio is never uploaded or saved: only the measurements and cues go into your library.</p>
+          <label class="check" style="margin:0 0 12px"><input type="checkbox" id="snOwn"> These are my own recordings, or I have the rights to analyze them</label>
+          <div class="row"><button class="btn btn-primary" data-action="pick-tracks"><svg class="i"><use href="#i-upload"/></svg>Choose audio files</button><span class="t3" style="font-size:13px">MP3, WAV, FLAC, M4A or OGG · several at once is fine</span>
+            <input type="file" id="trackFiles" accept="audio/*,.mp3,.wav,.flac,.m4a,.aac,.ogg,.aif,.aiff" multiple hidden></div>
+          <div id="snProgress" class="t2 num" style="font-size:14px;margin-top:10px" role="status" hidden></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><svg class="i"><use href="#i-sparkles"/></svg><h3>Your sound</h3><span class="t3 num" id="snCount" style="font-size:13px"></span><div class="spacer"></div>
+            <button class="btn btn-ghost btn-sm" data-action="sound-to-brief"><svg class="i"><use href="#i-plus"/></svg>Use in brief</button></div>
+          <label class="check" style="margin:0 0 12px"><input type="checkbox" id="useMySound"> Use my sound profile when designing specs</label>
+          <div id="snProfile"></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><svg class="i"><use href="#i-note"/></svg><h3>Analyzed tracks</h3><div class="spacer"></div>
+            <button class="btn btn-ghost btn-sm" data-action="import-tracks"><svg class="i"><use href="#i-upload"/></svg>Import</button>
+            <button class="btn btn-ghost btn-sm" data-action="export-tracks"><svg class="i"><use href="#i-download"/></svg>Export</button>
+            <input type="file" id="trackImport" accept=".json,application/json" hidden></div>
+          <p class="t3" style="font-size:13px;margin-bottom:10px">Cues are estimates from the measurements. Edit them, add notes about what a meter can't hear (genre, instruments, vocals), or let the AI writer word them.</p>
+          <div id="trackEditor" class="editor" hidden>
+            <div class="field"><label for="trTitle">Title</label><input id="trTitle" class="input" maxlength="80"></div>
+            <div class="field" style="margin-top:10px"><label for="trNotes">Your notes (genre, instruments, vocals, anything the meter can't hear)</label><textarea id="trNotes" class="input" style="min-height:70px" maxlength="400" placeholder="e.g. alt-R&amp;B, Rhodes and nylon guitar, breathy tenor lead, choir stacks on the last chorus"></textarea></div>
+            <div class="field" style="margin-top:10px"><label for="trCues">Style cues (comma-separated)</label><textarea id="trCues" class="input" style="min-height:90px" maxlength="600"></textarea></div>
+            <div class="row" style="margin-top:10px"><button class="btn btn-primary btn-sm" data-action="save-track">Save</button><button class="btn btn-ghost btn-sm" data-action="cancel-track">Cancel</button></div>
+          </div>
+          <div class="lib" id="trackList"></div>
+        </div>
+      </section>
+
       <!-- ENGINES -->
       <section class="view" id="view-engines" hidden>
         <div class="card">
@@ -578,9 +612,9 @@ input[type="range"]{accent-color:var(--blue)}
       <!-- SETTINGS -->
       <section class="view" id="view-settings" hidden>
         <div class="card">
-          <div class="card-h"><svg class="i"><use href="#i-note"/></svg><h3>What's new</h3><span class="chip">v1.4</span></div>
+          <div class="card-h"><svg class="i"><use href="#i-note"/></svg><h3>What's new</h3><span class="chip">v1.5</span></div>
           <dl class="kv">
-            <dt>v1.4</dt><dd>Every AI feature works on the engine: an open-source model runs on your pod (Qwen3.6 27B by default) with Claude as the fallback. My lyrics: upload or paste your own songs and the writer studies the closest ones to write in your voice. Automatic runtime repair for specs.</dd>
+            <dt>v1.5</dt><dd>My Sound: analyze your finished tracks in the browser (tempo, swing, key, loudness, low end, tone, width, harmony, energy arc) into a library of style cues the writer uses. Song details in My lyrics.</dd><dt>v1.4</dt><dd>Every AI feature works on the engine: an open-source model runs on your pod (Qwen3.6 27B by default) with Claude as the fallback. My lyrics: upload or paste your own songs and the writer studies the closest ones to write in your voice. Automatic runtime repair for specs.</dd>
             <dt>v1.3</dt><dd>Export in 18 formats: WAV and AIFF masters, FLAC, ALAC, MP3, AAC, Ogg Vorbis, Opus, CD (Red Book), Dolby Digital, Dolby Digital Plus, Dolby TrueHD, DTS, 5.1 WAV, MP4 and MKV.</dd>
             <dt>v1.2</dt><dd>Full player controls (top, ±10 s, end, loop, speed, volume, click or drag the waveform to choose where to play from, keyboard shortcuts). Editable preset library with a Mix genres builder and your own genres. Vocal profiles: edit, duplicate, delete, import, export, and create from a vocal sample. On the engine, your library is saved on the pod's storage.</dd>
             <dt>v1.1</dt><dd>RunPod engine: password sign-in, idle auto-stop after 30 minutes with an in-studio countdown, engine log viewer.</dd>
@@ -918,7 +952,7 @@ function pickLyricExamples(query, n = 3, maxEach = 900) {
   const all = store.cache.lyrics || []; if (!all.length) return [];
   const q = new Set(lyricWords(query));
   const scored = all.map(l => { const w = lyricWords(l.title + " " + (l.tags || "") + " " + (l.mood || "") + " " + (l.style || "") + " " + l.text); let hit = 0; for (const x of new Set(w)) if (q.has(x)) hit++; return { l, score: hit + Math.random() * 0.5 }; });
-  return scored.sort((a, b) => b.score - a.score).slice(0, n).map(({ l }) => { const t = stripNames(l.text); const st = stripNames(l.style); return { title: l.title, meta: songMeta(l), style: st.length > 1000 ? st.slice(0, 1000) + "…" : st, text: t.length > maxEach ? t.slice(0, maxEach) + "\n…" : t }; });
+  return scored.sort((a, b) => b.score - a.score).slice(0, n).map(({ l }) => { const t = stripNames(l.text); const st = stripNames(l.style); const tr = (store.cache.tracks || []).find(t => t.title.toLowerCase() === l.title.trim().toLowerCase()); return { title: l.title, meta: [songMeta(l), tr ? "measured: " + trackMeta(tr.a) : ""].filter(Boolean).join(" · "), style: st.length > 1000 ? st.slice(0, 1000) + "…" : st, text: t.length > maxEach ? t.slice(0, maxEach) + "\n…" : t }; });
 }
 function lyricExamplesBlock(query) {
   const ex = pickLyricExamples(query); if (!ex.length) return "";
@@ -995,11 +1029,11 @@ async function addLyric(title, text, tags, meta = {}) {
 }
 
 /* ---------- storage: claude.ai account (db) · engine volume (bridge) · this browser (local) ---------- */
-const COLLECTIONS = ["specs", "profiles", "presets", "genres", "lyrics"];
-const LOCAL_KEY = { specs: "library", profiles: "profiles", presets: "presets", genres: "genres", lyrics: "lyrics" };
+const COLLECTIONS = ["specs", "profiles", "presets", "genres", "lyrics", "tracks"];
+const LOCAL_KEY = { specs: "library", profiles: "profiles", presets: "presets", genres: "genres", lyrics: "lyrics", tracks: "tracks" };
 const store = {
   backend: "local",
-  cache: { specs: [], profiles: [], presets: [], genres: [], lyrics: [] },
+  cache: { specs: [], profiles: [], presets: [], genres: [], lyrics: [], tracks: [] },
   where() { return { db: "Saved to your Alexandria library on claude.ai (private to you)", bridge: "Saved on your engine's storage", local: "Saved in this browser" }[this.backend]; },
   async loadAll() {
     this.backend = db ? "db" : bridgeMode ? "bridge" : "local";
@@ -1072,7 +1106,7 @@ function toast(kind, title, sub = "", ms = 5000) {
 }
 
 /* ---------- navigation ---------- */
-const VIEWS = [["studio", "Studio", "home"], ["library", "Library", "note"], ["engines", "Engines", "cpu"], ["presets", "Presets", "layers"], ["settings", "Settings", "gear"]];
+const VIEWS = [["studio", "Studio", "home"], ["library", "Library", "note"], ["sound", "My Sound", "wave"], ["engines", "Engines", "cpu"], ["presets", "Presets", "layers"], ["settings", "Settings", "gear"]];
 function renderNav() {
   const html = VIEWS.map(([k, label, ic]) => `<button data-nav="${k}" ${state.view === k ? 'aria-current="page"' : ""}>${icon(ic)}<span>${label}</span></button>`).join("");
   $("#sidenav").innerHTML = html; $("#tabbar").innerHTML = html;
@@ -1083,6 +1117,7 @@ function go(view) {
   $("#viewTitle").textContent = VIEWS.find(v => v[0] === view)[1];
   renderNav();
   if (view === "library") { renderLibrary(); renderLyricsLib(); }
+  if (view === "sound") renderSound();
   if (view === "presets") { renderPresets(); renderProfiles(); }
   window.scrollTo({ top: 0 });
 }
@@ -1153,6 +1188,7 @@ HOUSE RULES (all mandatory):
 9. directions: if the brief is open-ended, give two one-line alternative directions (A sparser/more intimate, B fuller/more anthemic); if it is already tight, return an empty array.
 10. levers: 3 to 6 concrete changes that push the track in a named direction (for example "darker: drop the key a third, swap pads for a detuned Rhodes, thin the hats").
 11. If the request includes the artist's own past songs, study and match that writer's voice (vocabulary, imagery, rhyme habits, meter, point of view, emotional register) and, where the brief fits, their production habits (tempo, key, length, mood, palette). Never copy or reuse their lines; write new ones. Translate any production instruction an AI music tool can't act on (exact Hz tunings, dB values, decay times, "frequencies calibrated for" claims) into audible descriptors.
+12. If the request includes the artist's recorded sound (measured from their own finished tracks), lean tempo, groove, key, low end, tone, stereo width, loudness character and energy arc toward it unless the brief asks for something different. Treat the numbers as estimates and describe the sound in craft words, not numbers, except BPM.
 
 Return only JSON with exactly these keys:
 {"title":string,"concept":string,"directions":[{"name":string,"summary":string}],"genre":string,"bpm":number,"key":string,"time_feel":string,"palette":string,"groove":string,"arrangement":string,"mix":string,"beat_blueprint":{"kick":string,"snare":string,"hats":string,"low_end":string,"percussion":string,"dropout":string},"structure":[{"section":string,"bars":number,"energy":number (1-10),"notes":string}],"lyrics":string,"style_pre_vocal":string,"vocal_descriptors":string,"style_post_vocal":string,"yue_tags":string,"weirdness":number,"style_influence":number,"levers":[string]}`;
@@ -1173,7 +1209,8 @@ STRUCTURE: ${form}
 VOCAL: ${instrumental ? "Instrumental. No vocal descriptors, lyrics must be an empty string." : profiles.length ? `The app inserts these protected vocal profiles verbatim between your two style fields; do not restate or paraphrase them, and leave vocal_descriptors empty: ${profiles.map(p => `${p.name}${p.lane ? " (" + p.lane + ")" : ""}`).join(" + ")}. Write lyrics suited to ${profiles.length > 1 ? "a duet with call-and-response" : "this voice"}.` : "Write your own vocal descriptors in vocal_descriptors (delivery, register, phrasing, harmonies)."}
 CHARACTER BUDGET: style_pre_vocal + ${profiles.length || instrumental ? "" : "vocal_descriptors + "}style_post_vocal must total at most ${budget} characters including spaces.
 ${mic && mic.sound ? `VOCAL CHAIN: put this sonic character into the mix notes and style_post_vocal as descriptors (no brand names): ${mic.sound}.` : ""}
-${lyricExamplesBlock(brief + " " + ($("#title").value || ""))}`;
+${lyricExamplesBlock(brief + " " + ($("#title").value || ""))}
+${soundProfileBlock(brief + " " + ($("#title").value || ""))}`;
   return { system: SPEC_SYSTEM, prompt: prompt.replace(/\n{3,}/g, "\n\n").trim() };
 }
 
@@ -2148,9 +2185,298 @@ function bridgeCommand() {
   return `python alexandria_bridge.py ${flag} --port 7870`;
 }
 
+/* ---------- My Sound: measure finished tracks in the browser; the audio is discarded, only numbers and cues are kept ---------- */
+const KK_MAJ = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88];
+const KK_MIN = [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17];
+const PITCH = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+const yieldUI = () => new Promise(r => setTimeout(r));
+const mmss = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`.replace(/:60$/, ":59");
+
+/* BS.1770 K-weighting (RBJ biquads, as in pyloudnorm) */
+function kFilter(x, fs) {
+  const shelf = (() => { const G = 3.99984385397, Q = 0.7071752369554193, fc = 1681.9744509555319, A = Math.pow(10, G / 40), w = 2 * Math.PI * fc / fs, al = Math.sin(w) / (2 * Q), c = Math.cos(w), sA = Math.sqrt(A);
+    return [A * ((A + 1) + (A - 1) * c + 2 * sA * al), -2 * A * ((A - 1) + (A + 1) * c), A * ((A + 1) + (A - 1) * c - 2 * sA * al), (A + 1) - (A - 1) * c + 2 * sA * al, 2 * ((A - 1) - (A + 1) * c), (A + 1) - (A - 1) * c - 2 * sA * al]; })();
+  const hp = (() => { const Q = 0.5003270373253953, fc = 38.13547087613982, w = 2 * Math.PI * fc / fs, al = Math.sin(w) / (2 * Q), c = Math.cos(w);
+    return [(1 + c) / 2, -(1 + c), (1 + c) / 2, 1 + al, -2 * c, 1 - al]; })();
+  const run = (inp, [b0, b1, b2, a0, a1, a2]) => { const y = new Float32Array(inp.length); let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+    for (let i = 0; i < inp.length; i++) { const v = (b0 * inp[i] + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2) / a0; x2 = x1; x1 = inp[i]; y2 = y1; y1 = v; y[i] = v; } return y; };
+  return run(run(x, shelf), hp);
+}
+function integratedLufs(chans, fs) {
+  const k = chans.map(c => kFilter(c, fs)), B = Math.round(0.4 * fs), step = Math.round(0.1 * fs), blocks = [];
+  for (let s = 0; s + B <= k[0].length; s += step) { let z = 0; for (const ch of k) { let e = 0; for (let i = s; i < s + B; i++) e += ch[i] * ch[i]; z += e / B; } blocks.push(z); }
+  const L = z => -0.691 + 10 * Math.log10(z);
+  const abs = blocks.filter(z => L(z) > -70); if (!abs.length) return -70;
+  const rel = L(abs.reduce((a, b) => a + b, 0) / abs.length) - 10;
+  const g = abs.filter(z => L(z) > rel); return L(g.reduce((a, b) => a + b, 0) / g.length);
+}
+
+async function analyzeTrack(file, onProgress = () => {}) {
+  const AC = window.AudioContext || window.webkitAudioContext; const ac = new AC();
+  let buf; try { buf = await ac.decodeAudioData(await file.arrayBuffer()); } finally { ac.close?.(); }
+  const fs0 = buf.sampleRate, maxLen = Math.min(buf.length, Math.floor(fs0 * 480));   // first 8 minutes
+  if (maxLen < fs0 * 20) throw new Error("Use a track at least 20 seconds long.");
+  const chans = []; for (let c = 0; c < Math.min(2, buf.numberOfChannels); c++) chans.push(buf.getChannelData(c).subarray(0, maxLen));
+  onProgress(0.05, "Measuring loudness"); await yieldUI();
+  const lufs = integratedLufs(chans, fs0);
+  let peak = 0; for (const ch of chans) for (let i = 0; i < ch.length; i++) { const a = Math.abs(ch[i]); if (a > peak) peak = a; }
+  let corr = 1, sideRatio = 0;
+  if (chans.length === 2) { let lr = 0, ll = 0, rr = 0, m2 = 0, s2 = 0; const [L, R] = chans;
+    for (let i = 0; i < L.length; i += 4) { lr += L[i] * R[i]; ll += L[i] * L[i]; rr += R[i] * R[i]; const m = L[i] + R[i], s = L[i] - R[i]; m2 += m * m; s2 += s * s; }
+    corr = ll && rr ? lr / Math.sqrt(ll * rr) : 1; sideRatio = m2 ? s2 / m2 : 0; }
+  // mono at 22.05 kHz for rhythm, tone and harmony
+  onProgress(0.15, "Preparing audio"); await yieldUI();
+  const fs = 22050, n = Math.floor(maxLen / fs0 * fs), off = new OfflineAudioContext(1, n, fs);
+  const src = off.createBufferSource(); const cut = off.createBuffer(chans.length, maxLen, fs0); chans.forEach((c, i) => cut.copyToChannel(c, i));
+  src.buffer = cut; src.connect(off.destination); src.start(); const x = (await off.startRendering()).getChannelData(0);
+  const dur = x.length / fs;
+
+  // pass 1: onset envelope (N=1024, hop=256 -> 86 frames/s)
+  const N1 = 1024, H1 = 256, fr = fs / H1, w1 = new Float32Array(N1).map((_, i) => 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (N1 - 1)));
+  const F1 = Math.floor((x.length - N1) / H1), env = new Float32Array(F1), envLo = new Float32Array(F1), kMax1 = Math.round(8000 / fs * N1), kLo = Math.round(1500 / fs * N1); let prev = new Float32Array(kMax1);
+  for (let f = 0; f < F1; f++) {
+    if (f % 2000 === 0) { onProgress(0.2 + 0.35 * f / F1, "Finding the groove"); await yieldUI(); }
+    const re = new Float32Array(N1); for (let i = 0; i < N1; i++) re[i] = x[f * H1 + i] * w1[i];
+    const mag = fftMag(re); let flux = 0;
+    let fluxLo = 0;
+    for (let k = 1; k < kMax1; k++) { const v = Math.log1p(100 * mag[k]); const d = v - prev[k]; if (d > 0) { flux += d; if (k < kLo) fluxLo += d; } prev[k] = v; }
+    env[f] = flux; envLo[f] = fluxLo;
+  }
+  // remove the slow trend, keep rises
+  const W = Math.round(fr * 0.4);
+  const detrend = e => { const out = new Float32Array(F1); let acc = 0; for (let i = 0; i < F1; i++) { acc += e[i]; if (i >= W) acc -= e[i - W]; out[i] = Math.max(0, e[i] - acc / Math.min(i + 1, W)); } return out; };
+  const o = detrend(env), oLo = detrend(envLo);
+
+  // tempo: autocorrelation of the low/mid onsets (kick, snare, bass; hats excluded so swung subdivisions can't win),
+  // comb over multiples, mild preference around 110 BPM
+  const ac1 = lag => { let s = 0; const L = Math.floor(lag), fr2 = lag - L; for (let i = 0; i + L + 1 < F1; i++) s += oLo[i] * (oLo[i + L] * (1 - fr2) + oLo[i + L + 1] * fr2); return s; };
+  const comb = lag => { let s = 0; for (let k = 1; k <= 4; k++) s += ac1(lag * k) / k; return s; };
+  const prior = bpm => Math.exp(-0.5 * Math.pow(Math.log2(bpm / 110) / 1.0, 2));
+  const cand = [];
+  for (let lag = Math.floor(fr * 60 / 200); lag <= Math.ceil(fr * 60 / 55); lag++) cand.push([lag, comb(lag) * prior(60 * fr / lag)]);
+  await yieldUI();
+  cand.sort((a, b) => b[1] - a[1]);
+  const bestLag = cand[0][0];
+  const combFine = lag => { let s = 0; for (let k = 1; k <= 16; k++) s += ac1(lag * k); return s; };
+  let fine = bestLag, fineV = combFine(bestLag); for (let lag = bestLag - 1; lag <= bestLag + 1; lag += 0.01) { const v = combFine(lag); if (v > fineV) { fine = lag; fineV = v; } }
+  const bpm = 60 * fr / fine;
+  const alt = cand.find(c => Math.abs(60 * fr / c[0] / bpm - 1) > 0.06 && Math.abs(c[0] - bestLag) > 2);
+  const tempoConf = alt ? Math.max(0, Math.min(1, 1 - alt[1] / cand[0][1])) : 1;
+  const tempoAlt = alt && alt[1] > 0.85 * cand[0][1] ? Math.round(60 * fr / alt[0]) : null;
+  if (window.__dbg) window.__dbg.push(...cand.slice(0, 6).map(c => [Math.round(600 * fr / c[0]) / 10, Math.round(c[1] / cand[0][1] * 100) / 100]));
+
+  // groove: fold onsets onto one beat (48 bins), align the strongest bin to the beat, read where the off-beats land
+  const P = fine, hist = new Float32Array(48), cnt = new Float32Array(48);
+  for (let i = 0; i < F1; i++) { const b = Math.floor(((i % P) / P) * 48) % 48; hist[b] += o[i]; cnt[b]++; }
+  for (let b = 0; b < 48; b++) hist[b] /= cnt[b] || 1;
+  let ph = 0; for (let b = 1; b < 48; b++) if (hist[b] > hist[ph]) ph = b;
+  const at = b => hist[((ph + b) % 48 + 48) % 48] / (hist[ph] || 1);
+  // swing = where the off-beat subdivisions land: 16ths are scored on BOTH off-16ths of the beat together
+  // (bins 24s and 24+24s), which rejects one-off bumps such as a kick's echo; 0.5 = straight, 0.667 = triplet swing
+  const atf = b => { const i = Math.floor(b), f = b - i; return Math.max(at(i) * (1 - f) + at(i + 1) * f, at(Math.round(b))); };
+  let s16 = 0.5, e16 = 0, s8 = 0.5, e8 = 0;
+  for (let sw = 0.45; sw <= 0.751; sw += 0.01) {
+    const v16 = (atf(24 * sw) + atf(24 + 24 * sw)) / 2; if (v16 > e16) { e16 = v16; s16 = sw; }
+    const v8 = atf(48 * sw); if (v8 > e8) { e8 = v8; s8 = sw; }
+  }
+  const use16 = e16 > 0.2 && e16 > 0.35 * e8;
+  const swing = use16 ? s16 : e8 > 0.2 ? s8 : null;
+  // density: onset peaks per beat
+  let peaks = 0, last = -1e9; const mean = o.reduce((a, b) => a + b, 0) / F1, sd = Math.sqrt(o.reduce((a, b) => a + (b - mean) ** 2, 0) / F1), thr = mean + 0.5 * sd, gap = Math.round(fr * 0.06);
+  for (let i = 1; i + 1 < F1; i++) if (o[i] > thr && o[i] >= o[i - 1] && o[i] > o[i + 1] && i - last >= gap) { peaks++; last = i; }
+  const perBeat = peaks / (dur * bpm / 60);
+
+  // pass 2: tone and harmony (N=4096, hop=2048)
+  const N2 = 4096, H2 = 2048, w2 = new Float32Array(N2).map((_, i) => 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (N2 - 1)));
+  const F2 = Math.floor((x.length - N2) / H2), bands = { sub: [20, 60], bass: [60, 250], lowmid: [250, 2000], presence: [2000, 6000], air: [6000, 11000] };
+  const bandE = Object.fromEntries(Object.keys(bands).map(k => [k, 0])); const chroma = new Float64Array(12); let cNum = 0, cDen = 0, richSum = 0, richN = 0;
+  const frameDb = [], hz = k => k * fs / N2, kT0 = Math.ceil(80 * N2 / fs), kT1 = Math.floor(2000 * N2 / fs);
+  for (let f = 0; f < F2; f++) {
+    if (f % 400 === 0) { onProgress(0.55 + 0.4 * f / F2, "Reading tone and harmony"); await yieldUI(); }
+    const re = new Float32Array(N2); for (let i = 0; i < N2; i++) re[i] = x[f * H2 + i] * w2[i];
+    const mag = fftMag(re); let tot = 0; const fc = new Float64Array(12);
+    let mxT = 0; for (let k = kT0; k <= kT1; k++) if (mag[k] > mxT) mxT = mag[k];
+    for (let k = 1; k < mag.length; k++) { const p = mag[k] * mag[k], h = hz(k); tot += p; cNum += h * p; cDen += p;
+      for (const b in bands) if (h >= bands[b][0] && h < bands[b][1]) { bandE[b] += p; break; }
+      if (k >= kT0 && k <= kT1 && mag[k] > 0.1 * mxT && mag[k] > mag[k - 1] && mag[k] >= mag[k + 1]) { const pc = ((Math.round(12 * Math.log2(h / 440)) + 69) % 12 + 12) % 12; fc[pc] += mag[k]; } }
+    frameDb.push(10 * Math.log10(tot / N2 + 1e-12));
+    const mx = Math.max(...fc); if (mx > 0 && tot > 1e-6) { for (let i = 0; i < 12; i++) chroma[i] += fc[i] / mx; richSum += fc.filter(v => v > 0.35 * mx).length; richN++; }
+  }
+  const corrK = (prof, rot) => { const c = Array.from({ length: 12 }, (_, i) => chroma[(i + rot) % 12]); const mc = c.reduce((a, b) => a + b) / 12, mp = prof.reduce((a, b) => a + b) / 12;
+    let num = 0, dc = 0, dp = 0; for (let i = 0; i < 12; i++) { num += (c[i] - mc) * (prof[i] - mp); dc += (c[i] - mc) ** 2; dp += (prof[i] - mp) ** 2; } return num / Math.sqrt(dc * dp || 1); };
+  const keys = []; for (let r = 0; r < 12; r++) { keys.push([r, "major", corrK(KK_MAJ, r)]); keys.push([r, "minor", corrK(KK_MIN, r)]); }
+  keys.sort((a, b) => b[2] - a[2]);
+  const totE = Object.values(bandE).reduce((a, b) => a + b, 0) || 1, share = Object.fromEntries(Object.entries(bandE).map(([k, v]) => [k, v / totE]));
+
+  // energy arc: 4-bar blocks (or 8 s), loudness per block
+  const blockSec = bpm >= 55 && bpm <= 200 ? 16 * 60 / bpm : 8, per = Math.max(1, Math.round(blockSec * fs / H2)), blocks = [];
+  for (let i = 0; i < frameDb.length; i += per) { const seg = frameDb.slice(i, i + per); const lin = seg.reduce((a, d) => a + Math.pow(10, d / 10), 0) / seg.length; blocks.push({ t: i * H2 / fs, db: 10 * Math.log10(lin) }); }
+  const dbs = blocks.map(b => b.db), lo = pct(dbs, 0.1), hi = pct(dbs, 0.9), range = hi - lo;
+  const level = d => range < 3 ? "steady" : d < lo + range * 0.4 ? "low" : d < lo + range * 0.8 ? "mid" : "peak";
+  const arc = []; for (const b of blocks) { const lv = level(b.db); if (arc.length && arc[arc.length - 1].level === lv) arc[arc.length - 1].end = b.t + blockSec; else arc.push({ level: lv, start: b.t, end: b.t + blockSec }); }
+  arc.forEach(a => a.end = Math.min(a.end, dur));
+  onProgress(1, "Done");
+  return {
+    v: 1, duration: Math.round(dur), bpm: Math.round(bpm * 10) / 10, tempoConf: Math.round(tempoConf * 100) / 100, tempoAlt, steadyBeat: tempoConf >= 0.1,
+    key: `${PITCH[keys[0][0]]} ${keys[0][1]}`, keyRelative: (keys[1][1] !== keys[0][1] && (keys[1][0] - keys[0][0] + 12) % 12 === (keys[0][1] === "major" ? 9 : 3) && keys[0][2] - keys[1][2] < 0.15) ? `${PITCH[keys[1][0]]} ${keys[1][1]}` : null, keyConf: Math.round((keys[0][2] - keys[1][2]) * 100) / 100, keyAlt: `${PITCH[keys[1][0]]} ${keys[1][1]}`,
+    lufs: Math.round(lufs * 10) / 10, peakDb: Math.round(20 * Math.log10(peak || 1e-9) * 10) / 10, plr: Math.round((20 * Math.log10(peak || 1e-9) - lufs) * 10) / 10,
+    stereoCorr: Math.round(corr * 100) / 100, sideRatio: Math.round(sideRatio * 1000) / 1000, channels: chans.length,
+    swing: swing == null ? null : Math.round(swing * 100) / 100, swingGrid: use16 ? "16ths" : "8ths", onsetsPerBeat: Math.round(perBeat * 10) / 10,
+    centroid: Math.round(cNum / (cDen || 1)), bands: Object.fromEntries(Object.entries(share).map(([k, v]) => [k, Math.round(v * 1000) / 1000])),
+    harmonyRichness: Math.round(richSum / (richN || 1) * 10) / 10, dynamicsRange: Math.round(range * 10) / 10,
+    arc: arc.map(a => ({ level: a.level, start: Math.round(a.start), end: Math.round(a.end) })),
+  };
+}
+
+/* measurements -> plain sound descriptors (no names) */
+function describeTrack(a) {
+  const c = [];
+  const g = a.swingGrid === "16ths" ? "16th" : "8th";
+  const feel = a.swing == null ? "" : a.swing >= 0.62 ? `heavy swung ${a.swingGrid}` : a.swing >= 0.56 ? `light ${g} swing` : `straight ${a.swingGrid}`;
+  const beat = a.steadyBeat !== false;
+  if (beat) { c.push(`${Math.round(a.bpm)} BPM`); if (feel) c.push(feel); } else c.push("free-flowing, no steady beat");
+  c.push(a.keyRelative ? `${a.key} (or ${a.keyRelative})` : a.key);
+  if (beat) c.push(a.onsetsPerBeat < 1.6 ? "sparse, spacious rhythm" : a.onsetsPerBeat < 3 ? "steady mid-density groove" : "busy, dense percussion");
+  const lowEnd = a.bands.sub + a.bands.bass;
+  c.push(a.bands.sub > 0.3 ? "heavy sub-bass weight" : a.bands.sub > 0.15 ? "solid sub-bass" : lowEnd > 0.55 ? "warm, full low end" : lowEnd < 0.25 ? "light, lean low end" : "balanced low end");
+  const top = a.bands.presence + a.bands.air;   // share of energy above 2 kHz
+  c.push(top < 0.02 ? "dark, rolled-off top end" : top > 0.09 ? "bright, airy top end" : "smooth, balanced top end");
+  if (a.bands.lowmid > 0.45) c.push("thick low-mids");
+  if (a.channels === 2) c.push(a.stereoCorr > 0.92 ? "narrow, centered mix" : a.stereoCorr < 0.55 ? "very wide stereo image" : "wide stereo image");
+  c.push(a.harmonyRichness >= 4.2 ? "lush extended harmony" : a.harmonyRichness >= 3 ? "full chordal harmony" : "sparse, simple harmony");
+  c.push(a.lufs > -8.5 ? "loud, dense modern master" : a.lufs > -12 ? "punchy, polished master" : a.lufs > -16 ? "open, dynamic master" : "quiet, very dynamic mix");
+  if (beat && a.plr < 8) c.push("heavily compressed transients"); else if (beat && a.plr > 14) c.push("big transient punch");
+  const arcTxt = arcText(a); if (arcTxt) c.push(arcTxt);
+  return c;
+}
+function arcText(a) {
+  if (!a.arc?.length || a.arc.length === 1) return a.dynamicsRange < 3 ? "steady energy throughout" : "";
+  const name = { low: "low", mid: "mid", peak: "peak", steady: "steady" };
+  const parts = a.arc.filter(s => s.end - s.start >= 6).map(s => `${name[s.level]} ${mmss(s.start)}`);
+  const drops = a.arc.filter((s, i) => i > 0 && i < a.arc.length - 1 && s.level === "low" && a.arc[i - 1].level !== "low" && a.arc[i + 1].level !== "low").map(s => mmss(s.start));
+  return `energy arc: ${parts.join(" → ")}${drops.length ? `; breakdown at ${drops.join(", ")}` : ""}`;
+}
+
+/* ---------- My Sound library: one record per analyzed track (numbers + cues, never audio) ---------- */
+const trackTitle = name => String(name || "Untitled").replace(/\.[a-z0-9]{2,5}$/i, "").replace(/^\s*\d{1,3}\s*[-_.)]\s*/, "").replace(/[_]+/g, " ").replace(/\s{2,}/g, " ").trim() || "Untitled";
+const trackMeta = a => [a.steadyBeat === false ? "no steady beat" : `${Math.round(a.bpm)} BPM`, a.keyRelative ? `${a.key} / ${a.keyRelative}` : a.key, `${a.lufs} LUFS`, mmss(a.duration)].join(" · ");
+const trackCues = t => t.cuesEdited || (t.aiCues ? t.aiCues : (t.cues || []).join(", "));
+const median = arr => { const a = [...arr].sort((x, y) => x - y); return a.length ? (a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2) : 0; };
+
+function soundProfile(tracks = store.cache.tracks || []) {
+  if (!tracks.length) return null;
+  const A = tracks.map(t => t.a).filter(Boolean), beat = A.filter(a => a.steadyBeat !== false);
+  const bpms = beat.map(a => a.bpm), lufs = A.map(a => a.lufs);
+  const keyCount = {}; A.forEach(a => keyCount[a.key] = (keyCount[a.key] || 0) + 1);
+  const topKeys = Object.entries(keyCount).sort((x, y) => y[1] - x[1]).slice(0, 3).map(([k, n]) => `${k}${n > 1 ? ` (${n})` : ""}`);
+  const minorShare = A.filter(a => /minor/.test(a.key)).length / (A.length || 1);
+  const swings = beat.filter(a => a.swing != null).map(a => a.swing);
+  const skip = /BPM|major|minor|no steady beat|energy arc|steady energy/;
+  const cueCount = {}; tracks.forEach(t => new Set((t.cues || []).filter(c => !skip.test(c))).forEach(c => cueCount[c] = (cueCount[c] || 0) + 1));
+  const need = Math.max(2, Math.ceil(tracks.length * 0.4));
+  const common = Object.entries(cueCount).filter(([, n]) => tracks.length < 2 ? true : n >= need).sort((x, y) => y[1] - x[1]).map(([c]) => c).slice(0, 8);
+  const tempo = bpms.length ? (bpms.length > 1 ? `${Math.round(Math.min(...bpms))}–${Math.round(Math.max(...bpms))} BPM (typically ${Math.round(median(bpms))})` : `${Math.round(bpms[0])} BPM`) : "";
+  const groove = swings.length ? (median(swings) >= 0.56 ? "usually swung" : "usually straight") : "";
+  const mode = A.length > 1 ? (minorShare >= 0.65 ? "mostly minor keys" : minorShare <= 0.35 ? "mostly major keys" : "major and minor keys") : "";
+  const text = [tempo, groove, mode, `masters around ${Math.round(median(lufs))} LUFS`, ...common].filter(Boolean).join(", ");
+  return { n: tracks.length, tempo, groove, mode, topKeys, lufs: Math.round(median(lufs) * 10) / 10, common, text };
+}
+
+function closestTracks(query, n = 2) {
+  const all = store.cache.tracks || []; if (!all.length) return [];
+  const q = new Set(lyricWords(query));
+  return all.map(t => { let hit = 0; for (const w of new Set(lyricWords(t.title + " " + (t.notes || "") + " " + trackCues(t)))) if (q.has(w)) hit++; return { t, score: hit + (t.addedAt || 0) / 1e15 }; })
+    .sort((a, b) => b.score - a.score).slice(0, n).map(x => x.t);
+}
+function soundProfileBlock(query) {
+  if (!ls.get("useMySound", true)) return "";
+  const p = soundProfile(); if (!p) return "";
+  const close = closestTracks(query);
+  return `\nTHE ARTIST'S RECORDED SOUND (measured from ${p.n} of their own finished track${p.n === 1 ? "" : "s"}; estimates, lean toward this unless the brief asks for something else):\nOverall: ${stripNames(p.text)}\n${close.map(t => `Track "${t.title}" (${trackMeta(t.a)}): ${stripNames(trackCues(t))}${t.notes ? `; artist's notes: ${stripNames(t.notes)}` : ""}`).join("\n")}\n`;
+}
+
+function renderSound() {
+  const list = store.cache.tracks || [], p = soundProfile(list);
+  $("#useMySound").checked = ls.get("useMySound", true);
+  $("#snCount").textContent = list.length ? `${list.length} track${list.length === 1 ? "" : "s"}` : "";
+  $("#snProfile").innerHTML = p ? `<div class="snstats">${[["Tempo", p.tempo || "no steady beat"], ["Groove", p.groove || "n/a"], ["Keys", p.topKeys.join(", ")], ["Loudness", `${p.lufs} LUFS median`]].map(([k, v]) => `<div><small>${k}</small><b class="num">${esc(v)}</b></div>`).join("")}</div>
+    <div class="chips" style="margin-top:12px">${p.common.map(c => `<span class="chip">${esc(c)}</span>`).join("")}</div>
+    <p class="t3" style="font-size:13px;margin-top:10px">The writer gets this profile, plus the two tracks closest to your brief, each time it designs a spec.</p>`
+    : `<div class="empty">${icon("wave")}<b>No tracks analyzed yet</b><span>Add a few of your finished songs above. The profile builds as you add more.</span></div>`;
+  $("#trackList").innerHTML = list.map(t => `<div class="lib-item" style="grid-template-columns:minmax(0,1fr) auto;align-items:start">
+    <div style="min-width:0"><b>${esc(t.title)}</b><small class="num">${esc(trackMeta(t.a))}${t.linkedLyric ? " · linked to My lyrics" : ""}</small>
+      <div class="t2" style="font-size:13px;margin-top:6px;white-space:normal">${t.aiCues && !t.cuesEdited ? `<span class="chip" style="height:20px;margin-right:6px">AI wording</span>` : ""}${esc(trackCues(t))}</div>
+      ${t.notes ? `<div class="t3" style="font-size:13px;margin-top:4px;white-space:normal">Notes: ${esc(t.notes)}</div>` : ""}</div>
+    <div class="lib-actions">${state.confirmTrack === t.id ? `<span class="confirm">Delete?<button class="btn btn-danger btn-sm" data-deltrack="${esc(t.id)}">Delete</button><button class="btn btn-ghost btn-sm" data-action="cancel-deltrack">Keep</button></span>`
+      : `<button class="iconbtn" data-aitrack="${esc(t.id)}" aria-label="Write cues with AI for ${esc(t.title)}" title="Write cues with AI">${state.aiTrack === t.id ? icon("loader", "i spin") : icon("sparkles")}</button><button class="iconbtn" data-edittrack="${esc(t.id)}" aria-label="Edit ${esc(t.title)}">${icon("edit")}</button><button class="iconbtn" data-asktrack="${esc(t.id)}" aria-label="Delete ${esc(t.title)}">${icon("trash")}</button>`}</div></div>`).join("");
+}
+
+async function analyzeFiles(files) {
+  if (!$("#snOwn").checked) { toast("warn", "Confirm the recordings are yours", "Tick the box above, then choose the files again."); return; }
+  const prog = $("#snProgress"); prog.hidden = false; let ok = 0; const bad = [];
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i], label = `${i + 1} of ${files.length}: ${f.name}`;
+    try {
+      const a = await analyzeTrack(f, (x, msg) => { prog.textContent = `Analyzing ${label} · ${msg} ${Math.round(x * 100)}%`; });
+      const title = trackTitle(f.name), same = (store.cache.tracks || []).find(t => t.title.toLowerCase() === title.toLowerCase());
+      const rec = { id: same?.id || "tr_" + uid(), title, fileName: f.name.slice(0, 120), notes: same?.notes || "", a, cues: describeTrack(a), aiCues: "", cuesEdited: "", addedAt: same?.addedAt || Date.now(), analyzedAt: Date.now() };
+      const lyr = (store.cache.lyrics || []).find(l => l.title.trim().toLowerCase() === title.toLowerCase());
+      if (lyr) { rec.linkedLyric = lyr.id; const upd = { ...lyr }; let ch = false;
+        if (!upd.bpm && a.steadyBeat !== false) { upd.bpm = String(Math.round(a.bpm)); ch = true; } if (!upd.key) { upd.key = a.key; ch = true; } if (!upd.duration) { upd.duration = mmss(a.duration); ch = true; }
+        if (ch) await store.put("lyrics", upd); }
+      await store.put("tracks", rec); ok++;
+    } catch (e) { bad.push(`${f.name} (${String(e.message || e).slice(0, 60)})`); }
+    renderSound();
+  }
+  prog.hidden = true;
+  toast(ok ? "ok" : "warn", `${ok} track${ok === 1 ? "" : "s"} analyzed`, bad.length ? `Couldn't read: ${bad.slice(0, 2).join(", ")}${bad.length > 2 ? "…" : ""}` : "The audio wasn't saved; only the measurements were.", 8000);
+}
+
+async function aiTrackCues(id) {
+  const t = (store.cache.tracks || []).find(x => x.id === id); if (!t || state.aiTrack) return;
+  if (!(await ai.ready())) return toast("warn", "No AI writer available here", ai.unavailableMsg(), 10000);
+  state.aiTrack = id; renderSound();
+  try {
+    const res = await ai.run(`Turn these measurements of a finished track, and the artist's notes, into a style-prompt fragment for AI music tools (Suno, Udio, ACE-Step).
+Rules: comma-separated descriptors, no sentences, at most 350 characters, no artist, producer or brand names. Describe only what the measurements and notes support; the measurements can't hear instruments or vocals, so name those only if the notes do. Start with genre (from the notes, if given), then tempo and feel, drums and low end, harmony, space and mix, and end with a mood word.
+Measurements (estimates): ${JSON.stringify({ ...t.a, arc: arcText(t.a) })}
+Plain-language reading of them: ${(t.cues || []).join(", ")}
+Artist's notes: ${t.notes || "(none)"}
+Return only the descriptor line.`, { tier: "quick", temperature: 0.4, maxTokens: 300 });
+    const line = String(res.text || "").replace(/^["'`\s]+|["'`\s]+$/g, "").replace(/\n+/g, " ").slice(0, 400);
+    if (!line) throw new Error("The writer returned nothing.");
+    await store.put("tracks", { ...t, aiCues: line, cuesEdited: "" }); toast("ok", "Cues written", providerNote(res));
+  } catch (e) { toast("err", "Couldn't write the cues", aiErr(e)); }
+  finally { state.aiTrack = null; renderSound(); }
+}
+function editTrack(id) {
+  const t = (store.cache.tracks || []).find(x => x.id === id); if (!t) return;
+  state.editTrack = id; $("#trTitle").value = t.title; $("#trNotes").value = t.notes || ""; $("#trCues").value = trackCues(t);
+  $("#trackEditor").hidden = false; $("#trackEditor").scrollIntoView({ block: "center", behavior: "smooth" });
+}
+async function saveTrackEdit() {
+  const t = (store.cache.tracks || []).find(x => x.id === state.editTrack); if (!t) return;
+  const cues = $("#trCues").value.trim(), auto = t.aiCues || (t.cues || []).join(", ");
+  try { await store.put("tracks", { ...t, title: $("#trTitle").value.trim().slice(0, 80) || t.title, notes: $("#trNotes").value.trim().slice(0, 400), cuesEdited: cues && cues !== auto ? cues.slice(0, 600) : "" }); }
+  catch (e) { return toast("err", "Couldn't save", saveErr(e)); }
+  state.editTrack = null; $("#trackEditor").hidden = true; renderSound(); toast("ok", "Track updated");
+}
+async function exportTracks() {
+  const data = { app: "alexandria", kind: "my-sound", version: 1, exportedAt: new Date().toISOString(), profile: soundProfile(), tracks: store.cache.tracks || [] };
+  await saveFile(`alexandria-my-sound-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(data, null, 2), "application/json");
+}
+async function importTracks(file) {
+  try {
+    const d = JSON.parse(await file.text()); const list = Array.isArray(d) ? d : d.tracks;
+    if (!Array.isArray(list)) throw new Error("This isn't an Alexandria My Sound export.");
+    let n = 0; for (const t of list) { if (!t || !t.a || !t.title) continue; await store.put("tracks", { ...t, id: t.id && /^tr_/.test(t.id) ? t.id : "tr_" + uid() }); n++; }
+    renderSound(); toast("ok", `${n} track${n === 1 ? "" : "s"} imported`);
+  } catch (e) { toast("err", "Couldn't import", String(e.message || e).slice(0, 160)); }
+}
+
 /* ---------- events ---------- */
 document.addEventListener("click", async e => {
-  const t = e.target.closest("[data-editlyric],[data-asklyric],[data-dellyric],[data-delgenre],[data-action],[data-nav],[data-seg],[data-preset],[data-copy],[data-openspec],[data-askdel],[data-delspec],[data-libfilter],[data-editprofile],[data-delprofile],[data-askdelprofile],[data-dupprofile],[data-exportprofile],[data-editpreset],[data-duppreset],[data-askdelpreset],[data-delpreset],[data-genre]");
+  const t = e.target.closest("[data-edittrack],[data-asktrack],[data-deltrack],[data-aitrack],[data-editlyric],[data-asklyric],[data-dellyric],[data-delgenre],[data-action],[data-nav],[data-seg],[data-preset],[data-copy],[data-openspec],[data-askdel],[data-delspec],[data-libfilter],[data-editprofile],[data-delprofile],[data-askdelprofile],[data-dupprofile],[data-exportprofile],[data-editpreset],[data-duppreset],[data-askdelpreset],[data-delpreset],[data-genre]");
   if (!t) return;
   const d = t.dataset;
   if (d.nav) return go(d.nav);
@@ -2160,6 +2486,10 @@ document.addEventListener("click", async e => {
   if (d.openspec) { const s = state.library.find(x => x.id === d.openspec); if (s) { state.spec = JSON.parse(JSON.stringify(s)); state.seg = "spec"; go("studio"); renderSpec(); } return; }
   if (d.askdel) { state.confirmDel = d.askdel; return renderLibrary(); }
   if (d.delspec) { try { await store.deleteSpec(d.delspec); toast("ok", "Spec deleted"); } catch { toast("err", "Couldn't delete", "Try again."); } state.confirmDel = null; return renderLibrary(); }
+  if (d.edittrack) return editTrack(d.edittrack);
+  if (d.aitrack) return aiTrackCues(d.aitrack);
+  if (d.asktrack) { state.confirmTrack = d.asktrack; return renderSound(); }
+  if (d.deltrack) { try { await store.remove("tracks", d.deltrack); } catch (e) { return toast("err", "Couldn't delete", saveErr(e)); } state.confirmTrack = null; return renderSound(); }
   if (d.editlyric) { const l = (store.cache.lyrics || []).find(x => x.id === d.editlyric); if (!l) return; state.editLyric = l.id; fillLyricEditor(l); $("#lyricEditor").hidden = false; $("#lyricEditor").scrollIntoView({ block: "center", behavior: "smooth" }); return; }
   if (d.asklyric) { state.confirmLyric = d.asklyric; return renderLyricsLib(); }
   if (d.dellyric) { try { await store.remove("lyrics", d.dellyric); } catch (e) { return toast("err", "Couldn't delete", saveErr(e)); } state.confirmLyric = null; return renderLyricsLib(); }
@@ -2201,6 +2531,14 @@ document.addEventListener("click", async e => {
     case "play": return togglePlay();
     case "upload-lyrics": return $("#lyricsFiles").click();
     case "paste-lyric": state.editLyric = null; fillLyricEditor({}); $("#lyricEditor").hidden = false; $("#lyTitle").focus(); return;
+    case "pick-tracks": return $("#trackFiles").click();
+    case "import-tracks": return $("#trackImport").click();
+    case "export-tracks": return exportTracks();
+    case "save-track": return saveTrackEdit();
+    case "cancel-track": state.editTrack = null; $("#trackEditor").hidden = true; return;
+    case "cancel-deltrack": state.confirmTrack = null; return renderSound();
+    case "sound-to-brief": { const p = soundProfile(); if (!p) return toast("warn", "Analyze a track first"); const b = $("#brief"), add = "Match my sound: " + stripNames(p.text) + ".";
+      b.value = ((b.value.trim() ? b.value.trim() + "\n" : "") + add).slice(0, CHAR_LIMIT); b.dispatchEvent(new Event("input")); go("studio"); b.focus(); return toast("ok", "Added to your brief"); }
     case "cancel-lyric": $("#lyricEditor").hidden = true; return;
     case "save-lyric": try {
       const raw = $("#lyText").value;
@@ -2268,6 +2606,9 @@ $("#pText").addEventListener("input", updateProfileCount);
 $("#fBpm").addEventListener("input", e => $("#fBpmVal").textContent = e.target.value);
 $("#exportFmt").addEventListener("change", updateExportNote);
 $("#useMyLyrics").addEventListener("change", e => ls.set("useMyLyrics", e.target.checked));
+$("#useMySound").addEventListener("change", e => ls.set("useMySound", e.target.checked));
+$("#trackFiles").addEventListener("change", e => { const f = [...e.target.files]; e.target.value = ""; if (f.length) analyzeFiles(f); });
+$("#trackImport").addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f) importTracks(f); });
 $("#lyText").addEventListener("paste", () => setTimeout(() => {
   const raw = $("#lyText").value; if (!isSongSheet(raw)) return;
   const sheets = parseSongSheets(raw); if (sheets.length !== 1) { if (sheets.length > 1) toast("info", `${sheets.length} songs in this sheet`, "Save to add them all."); return; }

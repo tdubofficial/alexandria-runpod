@@ -73,6 +73,20 @@ song sheet (`SONG 1: "Title"`, `BPM: 102 | Key: F# Major | Duration: ~3:15 | Tar
 a title already in the library updates it. Artist names written as "Name-like", "Name-inspired", "Name-type" or
 "Name-style" stay in your library but are removed before the writer sees the example.
 
+## My Sound (your finished tracks)
+
+The **My Sound** page measures finished tracks you produced: tempo, groove and swing, key, integrated loudness
+(BS.1770 LUFS), peak-to-loudness ratio, low-end weight, brightness, stereo width, harmonic density and the energy
+arc. The audio is decoded and measured in the browser and then discarded; only the numbers and the style cues
+are saved (`/workspace/alexandria/store/tracks.json` on the engine). The cues can be edited, given notes about
+what a meter can't hear (genre, instruments, vocals) or worded by the AI writer. A profile across all tracks,
+plus the two tracks closest to the brief, goes to the writer with every spec. Export and Import move the
+library as JSON. A track with the same title as a song in My lyrics fills that song's missing BPM, key and length.
+
+Checked against synthetic tracks with known values: tempo within 1 BPM, loudness within 0.3 LU of ffmpeg's
+EBU R128 meter, swing within 0.02, key correct except for relative major/minor pairs (both are shown when close).
+The descriptor wording uses fixed thresholds and is an estimate.
+
 ## Export formats
 
 The player's **Export** button converts the current track on the engine with ffmpeg: WAV and AIFF masters

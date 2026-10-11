@@ -52,7 +52,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-STORE_NAMES = {"specs", "profiles", "presets", "genres", "lyrics"}
+STORE_NAMES = {"specs", "profiles", "presets", "genres", "lyrics", "tracks"}
 
 # Export formats: key -> (extension, mime, ffmpeg output arguments). Surround versions are upmixed from the stereo render.
 UPMIX = ["-af", "surround=chl_out=5.1:lfe_low=120,aresample=48000"]
@@ -722,7 +722,7 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             return self.wfile.write(data)
         if path == "/health":
-            return self.send_json({"ok": True, "version": "1.4", "store": True,
+            return self.send_json({"ok": True, "version": "1.5", "store": True,
                                    "idle": {"enabled": bool(ARGS.idle_stop_minutes), "seconds_left": idle_seconds_left(),
                                             "minutes": ARGS.idle_stop_minutes, "key": bool(runpod_key()),
                                             "error": IDLE_STATE["error"]},
