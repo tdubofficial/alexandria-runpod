@@ -146,6 +146,17 @@ def ace_api_url():
     return None
 
 
+def ace_alive():
+    base = ace_api_url()
+    if not base:
+        return False
+    try:
+        with urllib.request.urlopen(base + "/health", timeout=2) as r:
+            return r.status == 200 and "nginx" not in (r.headers.get("Server") or "").lower()
+    except Exception:
+        return False
+
+
 def parse_key(text):
     m = re.match(r"\s*([A-G])([#b\u266f\u266d]?)\s*(major|minor|maj|min|m)?\b", text or "", re.I)
     if not m:
@@ -457,7 +468,18 @@ class Handler(BaseHTTPRequestHandler):
             return self.wfile.write(data)
         if path == "/health":
             return self.send_json({"ok": True, "version": "1.0",
-                                   "engines": {"yue": bool(ARGS.yue_dir), "ace": bool(ace_api_url()), "custom": bool(ARGS.custom_cmd)}})
+                                   "engines": {"yue": bool(ARGS.yue_dir), "ace": ace_alive(), "custom": bool(ARGS.custom_cmd)}})
+        m = re.fullmatch(r"/logs/(bootstrap|ace-step|bridge)", path)
+        if m:
+            f = Path(ARGS.out).parent / "logs" / f"{m.group(1)}.log"
+            text = "\n".join(f.read_text(errors="replace").splitlines()[-300:]) if f.exists() else f"(no {f.name} yet)"
+            data = text.encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            return self.wfile.write(data)
         m = re.fullmatch(r"/jobs/([\w\-]+)(/audio)?", path)
         if m:
             with JOBS_LOCK:

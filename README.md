@@ -17,7 +17,9 @@ off to the image's normal start script. `bootstrap.sh`:
 4. runs `start.sh` — starts ACE-Step's API privately on `127.0.0.1:8001` and the password-protected studio on port `7870`.
 
 Open `https://<pod-id>-7870.proxy.runpod.net` and sign in. The first boot downloads ACE-Step's models, so it takes a while.
-Progress: `/workspace/alexandria/logs/bootstrap.log`, `ace-step.log`, `bridge.log`.
+Progress: `/workspace/alexandria/logs/bootstrap.log`, `ace-step.log`, `bridge.log`. While signed in, read them in the browser at `/logs/bootstrap`, `/logs/ace-step` and `/logs/bridge`.
+
+ACE-Step's API runs on `127.0.0.1:18011` because RunPod images use nginx on port 8001. The first render after a fresh volume downloads ACE-Step's models (about 18 minutes on the first test); later renders skip that.
 
 To ship an update, push to `main` and restart the pod.
 
