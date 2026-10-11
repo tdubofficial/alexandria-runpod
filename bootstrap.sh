@@ -5,7 +5,7 @@
 set -uo pipefail
 W=/workspace
 mkdir -p "$W/alexandria/logs"
-exec >> "$W/alexandria/logs/bootstrap.log" 2>&1
+exec > >(tee -a "$W/alexandria/logs/bootstrap.log") 2>&1   # file + pod logs
 echo "=== Alexandria bootstrap $(date -u +%FT%TZ) pod=${RUNPOD_POD_ID:-?}"
 
 REPO="${ALEX_REPO:-tdubofficial/alexandria-runpod}"
