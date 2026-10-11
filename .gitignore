@@ -1,0 +1,4 @@
+alexandria_auth.json
+*.log
+renders/
+__pycache__/

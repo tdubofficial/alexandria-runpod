@@ -1,0 +1,1288 @@
+<title>Alexandria Studio</title>
+<style>
+/* Layout: sidebar app shell (desktop) / bottom tab bar (phone); Studio = brief + inspiration rail, then spec and render panels.
+   Dark-first single look per the Alexandria design board (system SF Pro stack, iOS semantic palette). */
+:root{
+  color-scheme:dark;
+  --blue:#007AFF; --indigo:#5856D6; --purple:#AF52DE; --orange:#FF9500;
+  --green:#34C759; --yellow:#FFCC00; --red:#FF3B30;
+  --bg:#000000; --surface:#1C1C1E; --elev:#2C2C2E; --secondary:#3A3A3C; --border:#38383A;
+  --text:#FFFFFF; --text2:#EBEBF5; --text3:#8E8E93; --text2a:rgba(235,235,245,.62);
+  --blue-wash:rgba(0,122,255,.14); --indigo-wash:rgba(88,86,214,.16); --orange-wash:rgba(255,149,0,.14);
+  --green-wash:rgba(52,199,89,.14); --yellow-wash:rgba(255,204,0,.14); --red-wash:rgba(255,59,48,.14);
+  --glass:rgba(28,28,30,.72);
+  --f-display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",system-ui,sans-serif;
+  --f-text:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,sans-serif;
+  --f-mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r-sm:10px; --r-md:12px; --r-lg:18px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--f-text);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
+p{margin:0}
+.mono{font-family:var(--f-mono)}
+.num{font-variant-numeric:tabular-nums}
+.t2{color:var(--text2a)} .t3{color:var(--text3)}
+.eyebrow{font-size:12px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)}
+svg.i{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* shell */
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100%}
+.side{position:sticky;top:env(safe-area-inset-top,0px);height:100vh;border-right:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;gap:20px;padding:20px 12px}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px}
+.brand b{font-family:var(--f-display);font-size:20px;letter-spacing:-.01em}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav button{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 12px;border-radius:var(--r-md);border:0;background:transparent;color:var(--text2a);font-size:15px;font-weight:500;cursor:pointer;text-align:left}
+.nav button:hover{background:var(--elev);color:var(--text)}
+.nav button[aria-current="page"]{background:var(--blue-wash);color:var(--text)}
+.nav button[aria-current="page"] svg{color:var(--blue)}
+.side-foot{margin-top:auto;padding:12px;border-radius:var(--r-md);background:var(--elev);font-size:13px;color:var(--text2a)}
+.main{min-width:0;padding-inline:16px;padding-block:0 96px}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;margin-inline:-16px;padding:12px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:rgba(0,0,0,.62);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--border)}
+.top h1{font-size:17px;font-weight:600}
+.top .sub{font-size:13px;color:var(--text3)}
+.spacer{flex:1}
+.wrap{max-width:1180px;margin:0 auto;padding-top:24px;display:flex;flex-direction:column;gap:20px}
+.view[hidden]{display:none!important}
+
+/* hero */
+.hero{position:relative;overflow:hidden;border-radius:var(--r-lg);border:1px solid var(--border);background:#05050a;min-height:168px;padding:28px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px}
+.hero canvas{position:absolute;inset:0;width:100%;height:100%}
+.hero > *:not(canvas){position:relative}
+.hero h2{font-size:clamp(28px,4.4vw,44px);font-weight:800;letter-spacing:-.025em;line-height:1.05}
+.hero h2 span{font-weight:600;color:var(--text2a)}
+.flow{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:14px;color:var(--text2a);margin-top:6px}
+.flow i{font-style:normal;color:var(--text3)}
+
+/* cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;min-width:0}
+.card-h{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.card-h h3{font-size:20px;font-weight:600;letter-spacing:-.01em}
+.card-h svg{color:var(--blue)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);gap:20px;align-items:start}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label{font-size:13px;font-weight:500;color:var(--text2a)}
+.input,.select,textarea.input{width:100%;min-height:44px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 14px;font-size:16px;line-height:22px;outline:none;transition:border-color .15s}
+.input:focus,.select:focus{border-color:var(--blue)}
+.select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' stroke='%238E8E93' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+textarea.input{resize:vertical;min-height:132px}
+.counter{position:absolute;right:12px;bottom:10px;font-size:12px;color:var(--text3)}
+.rel{position:relative}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:14px;border:1px solid transparent;font-size:15px;font-weight:600;cursor:pointer;transition:filter .15s,background .15s;white-space:nowrap}
+.btn:active{filter:brightness(.85)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-indigo{background:var(--indigo);color:#fff}
+.btn-orange{background:var(--orange);color:#000}
+.btn-danger{background:var(--red);color:#fff}
+.btn-ghost{background:var(--elev);color:var(--text);text-decoration:none}
+.btn-ghost:hover{background:var(--secondary)}
+.btn-sm{min-height:36px;padding:0 12px;font-size:14px;border-radius:10px}
+.grow{flex:1 1 180px}
+.iconbtn{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;border-radius:12px;border:0;background:transparent;color:var(--text2a);cursor:pointer}
+.iconbtn:hover{background:var(--elev);color:var(--text)}
+
+/* pills */
+.pill{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:999px;font-size:13px;font-weight:600;border:1px solid var(--border);color:var(--text2a);white-space:nowrap}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:var(--text3)}
+.pill.ok{color:var(--green);border-color:rgba(52,199,89,.4);background:var(--green-wash)} .pill.ok .dot{background:var(--green)}
+.pill.run{color:#4DA3FF;border-color:rgba(0,122,255,.45);background:var(--blue-wash)} .pill.run .dot{background:var(--blue)}
+.pill.warn{color:var(--yellow);border-color:rgba(255,204,0,.4);background:var(--yellow-wash)} .pill.warn .dot{background:var(--yellow)}
+.pill.err{color:#FF6961;border-color:rgba(255,59,48,.45);background:var(--red-wash)} .pill.err .dot{background:var(--red)}
+.pill.proc{color:var(--orange);border-color:rgba(255,149,0,.45);background:var(--orange-wash)} .pill.proc .dot{background:var(--orange)}
+.chip{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:8px;background:var(--elev);font-size:13px;color:var(--text2);white-space:nowrap}
+.tag-ex{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;background:var(--orange-wash);color:var(--orange);font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+
+/* inspiration */
+.insp{display:flex;flex-direction:column;gap:8px}
+.insp button{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:8px 10px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--bg);cursor:pointer;text-align:left}
+.insp button:hover{border-color:var(--blue)}
+.insp .sw{width:40px;height:40px;border-radius:10px;flex:none}
+.insp b{display:block;font-size:14px;font-weight:600}
+.insp small{display:block;font-size:12px;color:var(--text3)}
+
+/* segmented */
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:12px;background:var(--bg);border:1px solid var(--border);overflow-x:auto;max-width:100%}
+.seg button{min-height:36px;padding:0 14px;border-radius:9px;border:0;background:transparent;color:var(--text2a);font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap}
+.seg button[aria-selected="true"]{background:var(--secondary);color:var(--text)}
+
+/* spec */
+.spec-title{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.spec-title h3{font-size:24px;font-weight:700;letter-spacing:-.015em}
+.concept{font-size:16px;color:var(--text2a);max-width:72ch;margin-top:6px}
+.metrics{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.kv{display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px 18px;font-size:15px}
+.kv dt{color:var(--text3);font-size:13px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;padding-top:2px}
+.kv dd{margin:0;min-width:0}
+.panel{margin-top:16px}
+pre.block{margin:0;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;font-family:var(--f-mono);font-size:13.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;color:var(--text2);max-height:520px;overflow:auto}
+.prompt-parts .vp{color:#B9B7FF;background:var(--indigo-wash);border-radius:4px}
+.meter{height:8px;border-radius:99px;background:var(--elev);overflow:hidden}
+.meter i{display:block;height:100%;border-radius:99px;background:var(--blue);transition:width .3s}
+.meter.over i{background:var(--red)}
+.meter-row{display:flex;align-items:center;gap:12px;margin:12px 0 4px}
+.meter-row .meter{flex:1}
+.warnbox{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:var(--r-md);background:var(--yellow-wash);border:1px solid rgba(255,204,0,.35);color:var(--text2);font-size:14px;margin-top:10px}
+.warnbox svg{color:var(--yellow);margin-top:2px}
+.infobox{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:var(--r-md);background:var(--blue-wash);border:1px solid rgba(0,122,255,.35);color:var(--text2);font-size:14px}
+.infobox svg{color:#4DA3FF;margin-top:2px}
+.struct{width:100%;border-collapse:collapse;font-size:14px}
+.struct th{text-align:left;font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);padding:8px 10px;border-bottom:1px solid var(--border)}
+.struct td{padding:10px;border-bottom:1px solid var(--border);vertical-align:top}
+.struct td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.ebar{display:flex;gap:2px;align-items:center}
+.ebar i{width:7px;height:14px;border-radius:2px;background:var(--elev)}
+.ebar i.on{background:var(--blue)}
+.ebar i.on.hot{background:var(--orange)}
+.tablewrap{overflow-x:auto}
+.bp{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.bp div{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px}
+.bp b{display:block;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.energy{display:flex;align-items:flex-end;gap:4px;height:96px;padding:8px 0 0;border-bottom:1px solid var(--border)}
+.energy .col{flex:1;min-width:10px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}
+.energy .col i{display:block;width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,var(--blue),var(--indigo))}
+.energy .col.peak i{background:linear-gradient(180deg,var(--orange),var(--purple))}
+.elabels{display:flex;gap:4px;font-size:11px;color:var(--text3);margin-top:6px}
+.elabels span{flex:1;min-width:10px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ul.levers{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+
+/* render */
+.render-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:20px}
+.wave{width:100%;height:96px;display:block}
+.prog{height:8px;border-radius:99px;background:var(--elev);overflow:hidden;margin:10px 0 14px}
+.prog i{display:block;height:100%;width:0;background:var(--blue);border-radius:99px;transition:width .35s}
+.rstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.rstats div{min-width:0}
+.rstats b{display:block;font-size:12px;font-weight:600;color:var(--text3)}
+.rstats span{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.steps li{display:flex;align-items:center;gap:10px}
+.steps .st{margin-left:auto;font-size:12px;color:var(--text3)}
+.steps .b{width:20px;height:20px;border-radius:50%;border:2px solid var(--secondary);flex:none;display:grid;place-items:center}
+.steps li.done .b{background:var(--green);border-color:var(--green)}
+.steps li.active .b{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-wash)}
+.steps li.err .b{background:var(--red);border-color:var(--red)}
+.steps li.active .st{color:#4DA3FF}
+.player{display:flex;align-items:center;gap:12px;margin-top:14px}
+.playbtn{width:48px;height:48px;border-radius:50%;border:0;background:var(--blue);color:#fff;display:grid;place-items:center;cursor:pointer;flex:none}
+.playbtn[disabled]{background:var(--elev);color:var(--text3);cursor:not-allowed}
+.playbtn svg{width:20px;height:20px}
+
+/* library / presets */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.search{position:relative;flex:1 1 220px}
+.search svg{position:absolute;left:12px;top:13px;color:var(--text3)}
+.search .input{padding-left:38px}
+.lib{display:flex;flex-direction:column;gap:10px}
+.lib-item{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px 14px;border-radius:var(--r-md);background:var(--bg);border:1px solid var(--border)}
+.lib-item .sw{width:48px;height:48px;border-radius:10px}
+.lib-item b{display:block;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lib-item small{display:block;font-size:13px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lib-actions{display:flex;gap:4px;align-items:center}
+.empty{padding:36px 20px;text-align:center;color:var(--text2a);border:1px dashed var(--border);border-radius:var(--r-md);display:flex;flex-direction:column;gap:8px;align-items:center}
+.presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.preset{border-radius:14px;overflow:hidden;border:1px solid var(--border);background:var(--bg);cursor:pointer;text-align:left;padding:0;display:flex;flex-direction:column}
+.preset:hover{border-color:var(--blue)}
+.preset .art{height:112px;position:relative}
+.preset .art canvas{width:100%;height:100%;display:block}
+.preset div.meta{padding:10px 12px}
+.preset b{display:block;font-size:15px}
+.preset small{font-size:12px;color:var(--text3)}
+.profiles{display:flex;flex-direction:column;gap:10px}
+.profile{padding:14px;border-radius:var(--r-md);background:var(--bg);border:1px solid var(--border)}
+.profile header{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.profile header b{font-size:16px}
+.profile p{font-size:14px;color:var(--text2a)}
+
+/* engines */
+.arch{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap}
+.arch .node{flex:1 1 150px;padding:14px;border-radius:var(--r-md);background:var(--bg);border:1px solid var(--border);min-width:0}
+.arch .node.core{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue) inset,0 0 28px rgba(0,122,255,.25)}
+.arch .node b{display:block;font-size:15px}
+.arch .node small{font-size:13px;color:var(--text3)}
+.arch .arrow{align-self:center;color:var(--text3)}
+.formula{font-family:var(--f-mono);font-size:18px;margin:6px 0 10px}
+.legend{display:grid;grid-template-columns:28px minmax(0,1fr);gap:4px 10px;font-size:14px;color:var(--text2a)}
+.legend span:nth-child(odd){font-family:var(--f-mono);color:var(--text)}
+.eng-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.eng{padding:16px;border-radius:var(--r-md);background:var(--bg);border:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+.eng h4{margin:0;font-size:16px;font-family:var(--f-display)}
+.eng p{font-size:14px;color:var(--text2a)}
+code.k{font-family:var(--f-mono);font-size:13px;background:var(--elev);padding:1px 6px;border-radius:6px}
+
+/* toasts */
+.toasts{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;display:flex;flex-direction:column;gap:8px;width:min(360px,calc(100vw - 32px))}
+.toast{display:grid;grid-template-columns:24px minmax(0,1fr) 28px;gap:10px;align-items:start;padding:12px;border-radius:14px;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--border);box-shadow:0 10px 30px rgba(0,0,0,.5);animation:tin .25s ease-out}
+.toast.warn{border-color:rgba(255,204,0,.45)} .toast.err{border-color:rgba(255,59,48,.5)}
+.toast b{display:block;font-size:14px}
+.toast small{display:block;font-size:13px;color:var(--text2a)}
+.toast .ic{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;color:#fff}
+.toast .ic svg{width:14px;height:14px;stroke-width:2.6}
+.toast button{border:0;background:transparent;color:var(--text3);cursor:pointer;min-height:28px}
+@keyframes tin{from{transform:translateY(8px);opacity:0}}
+.spin{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* dialog-ish inline confirm */
+.confirm{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--text2a)}
+
+/* bottom bar on phones */
+.tabbar{display:none}
+@media (max-width:860px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{display:none}
+  .tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));background:rgba(28,28,30,.85);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-top:1px solid var(--border)}
+  .tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:50px;border:0;background:transparent;color:var(--text3);font-size:11px;font-weight:500;cursor:pointer}
+  .tabbar button[aria-current="page"]{color:var(--blue)}
+  .grid2,.render-grid{grid-template-columns:minmax(0,1fr)}
+  .kv{grid-template-columns:minmax(0,1fr);gap:2px 0}
+  .kv dd{margin-bottom:10px}
+  .toasts{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+  .top{padding:10px 16px}
+  .hero{padding:20px;min-height:140px}
+}
+@media (max-width:520px){
+  .rstats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .card{padding:16px}
+  .lib-item{grid-template-columns:40px minmax(0,1fr)}
+  .lib-item .sw{width:40px;height:40px}
+  .lib-actions{grid-column:1 / -1;justify-content:flex-end}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="app">
+  <aside class="side" aria-label="Main">
+    <div class="brand"><svg width="34" height="34" viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="lg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#5856D6"/><stop offset=".55" stop-color="#007AFF"/><stop offset="1" stop-color="#AF52DE"/></linearGradient></defs><path d="M4 30c4 0 5-14 9-14s4 22 8 22 4-32 8-32 4 26 8 26 4-10 7-10" fill="none" stroke="url(#lg)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Alexandria</b></div>
+    <nav class="nav" id="sidenav"></nav>
+    <div class="side-foot"><div class="eyebrow" style="margin-bottom:4px">Mode</div><span id="modeNote">Checking…</span></div>
+  </aside>
+
+  <main class="main">
+    <div class="top">
+      <div><h1 id="viewTitle">Studio</h1><div class="sub">Music Design Studio — Standalone</div></div>
+      <div class="spacer"></div>
+      <span class="pill" id="enginePill"><span class="dot"></span><span>Disconnected</span></span>
+      <button class="btn btn-ghost btn-sm" data-action="connect" id="connectBtn"><svg class="i"><use href="#i-cpu"/></svg><span>Connect Engine</span></button>
+    </div>
+
+    <div class="wrap">
+      <!-- STUDIO -->
+      <section class="view" id="view-studio">
+        <div class="hero" style="margin-bottom:20px">
+          <canvas id="aurora" aria-hidden="true"></canvas>
+          <div class="eyebrow" style="color:var(--text2a)">AI-assisted music creation · local inference</div>
+          <h2>Music Design Studio <span>— Standalone</span></h2>
+          <div class="flow"><span>Describe</span><i>→</i><span>Design</span><i>→</i><span>Synthesize</span><i>→</i><span>Own your sound</span></div>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <div class="card-h"><svg class="i"><use href="#i-sliders"/></svg><h3>Creative Brief</h3></div>
+            <p class="t2" style="font-size:14px;margin-bottom:12px">Describe the track as loosely or as precisely as you like. The studio turns it into a full spec: Beat Blueprint, bar-counted structure, tagged lyrics, and a verified style prompt.</p>
+            <div class="rel">
+              <textarea id="brief" class="input" maxlength="2000" placeholder="e.g. late-night Afro-R&B about a lighthouse keeper waiting on a ship that's months overdue. Hopeful, warm, slow-burning."></textarea>
+              <span class="counter num" id="briefCount">0/2000</span>
+            </div>
+            <div class="fields" style="margin-top:14px">
+              <div class="field"><label for="title">Working title</label><input id="title" class="input" placeholder="Optional"></div>
+              <div class="field"><label for="category">Category</label><select id="category" class="select"></select></div>
+              <div class="field"><label for="structure">Structure</label><select id="structure" class="select"></select></div>
+              <div class="field"><label for="profile">Vocal profile</label><select id="profile" class="select"></select></div>
+              <div class="field"><label for="duet">Duet partner</label><select id="duet" class="select"></select></div>
+              <div class="field"><label for="mic">Vocal-chain mic</label><select id="mic" class="select"></select></div>
+            </div>
+            <p class="t3" id="micBlurb" style="font-size:13px;margin-top:8px"></p>
+            <div class="row" style="margin-top:16px">
+              <button class="btn btn-indigo grow" data-action="design" id="designBtn"><svg class="i"><use href="#i-sparkles"/></svg><span>Design Spec</span></button>
+              <button class="btn btn-primary grow" data-action="synth" id="synthBtn"><svg class="i"><use href="#i-play"/></svg><span>Synthesize Audio</span></button>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <button class="btn btn-ghost btn-sm" data-action="import-spec"><svg class="i"><use href="#i-upload"/></svg>Import spec</button>
+              <button class="btn btn-ghost btn-sm" data-action="clear-brief"><svg class="i"><use href="#i-x"/></svg>Clear</button>
+              <input type="file" id="specFile" accept=".json,application/json" hidden>
+            </div>
+            <p class="t3" id="designNote" style="font-size:13px;margin-top:10px"></p>
+          </div>
+
+          <div class="card">
+            <div class="card-h"><svg class="i"><use href="#i-sparkles"/></svg><h3>Instant Inspiration</h3></div>
+            <div class="insp" id="inspList"></div>
+          </div>
+        </div>
+
+        <div class="card" id="specCard" style="margin-top:20px"></div>
+
+        <div class="card" style="margin-top:20px">
+          <div class="card-h"><svg class="i"><use href="#i-wave"/></svg><h3 id="renderTitle">Rendering Your Track</h3><div class="spacer"></div><span class="pill" id="renderPill"><span class="dot"></span><span>Idle</span></span></div>
+          <div class="render-grid">
+            <div style="min-width:0">
+              <p class="t2" id="renderSub" style="font-size:14px">Synthesizing runs on your own machine through the Alexandria bridge. You can also load a finished render to preview it here.</p>
+              <div class="prog"><i id="renderBar"></i></div>
+              <canvas class="wave" id="wave" aria-label="Waveform"></canvas>
+              <div class="player">
+                <button class="playbtn" id="playBtn" data-action="play" disabled aria-label="Play"><svg class="i"><use href="#i-play"/></svg></button>
+                <div style="min-width:0;flex:1"><b id="audioName" style="display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">No audio loaded</b><small class="t3 num" id="audioTime">0:00 / 0:00</small></div>
+                <button class="btn btn-ghost btn-sm" data-action="load-audio"><svg class="i"><use href="#i-upload"/></svg>Load audio</button>
+                <button class="btn btn-ghost btn-sm" data-action="save-audio" id="saveAudioBtn" hidden><svg class="i"><use href="#i-download"/></svg>Save</button>
+                <input type="file" id="audioFile" accept="audio/*" hidden>
+              </div>
+            </div>
+            <div style="min-width:0">
+              <div class="rstats">
+                <div><b>Elapsed</b><span id="rsElapsed">0:00</span></div>
+                <div><b>Remaining</b><span id="rsRemain">—</span></div>
+                <div><b>Step</b><span id="rsStep">0 / 4</span></div>
+                <div><b>Model</b><span id="rsModel">—</span></div>
+              </div>
+              <ol class="steps" id="steps" style="margin-top:16px"></ol>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIBRARY -->
+      <section class="view" id="view-library" hidden>
+        <div class="card">
+          <div class="card-h"><svg class="i"><use href="#i-note"/></svg><h3>Spec Library</h3><div class="spacer"></div><span class="t3" id="libStore" style="font-size:13px"></span></div>
+          <div class="toolbar" style="margin-bottom:14px">
+            <div class="search"><svg class="i"><use href="#i-search"/></svg><input id="libSearch" class="input" placeholder="Search titles, genres, keys…"></div>
+            <div class="seg" role="tablist" id="libFilter"></div>
+          </div>
+          <div class="lib" id="libList"></div>
+        </div>
+      </section>
+
+      <!-- ENGINES -->
+      <section class="view" id="view-engines" hidden>
+        <div class="card">
+          <div class="card-h"><svg class="i"><use href="#i-cpu"/></svg><h3>Engine Architecture</h3></div>
+          <p class="t2" style="font-size:15px;max-width:72ch">Local inference. Full control. The studio writes the spec; the Alexandria bridge on your computer hands it to an open model and returns the audio. Your brief, your prompt and your audio stay on your machine.</p>
+          <div class="arch" style="margin:16px 0">
+            <div class="node"><b>Text / Brief</b><small>Spec, tags, lyrics</small></div>
+            <div class="arrow">→</div>
+            <div class="node core"><b id="archEngine">YuE</b><small>Local inference engine</small></div>
+            <div class="arrow">→</div>
+            <div class="node"><b>Audio</b><small>WAV / MP3 in your renders folder</small></div>
+          </div>
+          <div class="grid2">
+            <div>
+              <div class="eyebrow">Model inference (simplified)</div>
+              <div class="formula">y = f(x, t, θ)</div>
+              <div class="legend"><span>x</span><span>Text input: style tags and section-tagged lyrics</span><span>t</span><span>Generation steps (token steps for YuE, diffusion steps for ACE-Step)</span><span>θ</span><span>Model weights, loaded locally</span><span>y</span><span>Generated audio</span></div>
+            </div>
+            <div class="eng-cards" style="grid-template-columns:minmax(0,1fr)">
+              <div class="eng"><h4>YuE</h4><p>Two-stage language model over audio codec tokens: a 7B stage-1 model writes the song's tokens section by section, a 1B stage-2 model fills in acoustic detail. It reads <b>short space-separated tags</b> (genre, instrument, mood, gender, timbre), not long prose, and about 30 seconds of audio per lyric section.</p></div>
+              <div class="eng"><h4>ACE-Step</h4><p>Diffusion model. Version 1.5 pairs an optional language-model planner with a diffusion transformer, has Windows launch scripts, and runs on small GPUs (its smallest setup targets 6 GB or less). It takes the comma-separated style prompt directly, plus tagged lyrics, BPM, key and duration.</p></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><svg class="i"><use href="#i-link"/></svg><h3>Connection</h3><div class="spacer"></div><span class="pill" id="enginePill2"><span class="dot"></span><span>Disconnected</span></span></div>
+          <div id="hostedNote" class="infobox" style="margin-bottom:14px"></div>
+          <div class="fields">
+            <div class="field"><label for="engType">Engine</label><select id="engType" class="select"><option value="ace">ACE-Step 1.5 (Local) — recommended</option><option value="yue">YuE (Local, needs 24 GB+ GPU)</option><option value="custom">Custom command</option></select></div>
+            <div class="field" style="grid-column:span 2"><label for="engUrl">Bridge address</label><input id="engUrl" class="input mono" value="http://127.0.0.1:7870"></div>
+          </div>
+          <div class="row" style="margin-top:14px">
+            <button class="btn btn-primary" data-action="connect"><svg class="i"><use href="#i-cpu"/></svg>Test connection</button>
+            <button class="btn btn-ghost" data-action="offline-copy" id="offlineBtn"><svg class="i"><use href="#i-download"/></svg>Save offline copy</button>
+            <button class="btn btn-ghost" data-action="copy-bridge-cmd"><svg class="i"><use href="#i-copy"/></svg>Copy bridge command</button>
+            <a class="btn btn-ghost" id="signOut" href="/logout" hidden>Sign out</a>
+          </div>
+          <div class="eyebrow" style="margin:18px 0 8px">Start the bridge</div>
+          <pre class="block" id="bridgeCmd"></pre>
+          <p class="t3" style="font-size:13px;margin-top:8px">Keep <code class="k">alexandria.html</code>, <code class="k">alexandria_bridge.py</code> and <code class="k">start_alexandria.bat</code> in one folder. The bridge opens the studio at <span class="mono">http://127.0.0.1:7870</span> and finds ACE-Step 1.5 on its own once ACE-Step's API server is running.</p>
+        </div>
+      </section>
+
+      <!-- PRESETS -->
+      <section class="view" id="view-presets" hidden>
+        <div class="card">
+          <div class="card-h"><svg class="i"><use href="#i-layers"/></svg><h3>Preset Library</h3></div>
+          <p class="t2" style="font-size:14px;margin-bottom:14px">Starting briefs for each lane. Pick one to load it into the Studio.</p>
+          <div class="presets" id="presetGrid"></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><svg class="i"><use href="#i-mic"/></svg><h3>Vocal Profiles</h3><div class="spacer"></div><button class="btn btn-ghost btn-sm" data-action="new-profile"><svg class="i"><use href="#i-plus"/></svg>New profile</button></div>
+          <p class="t2" style="font-size:14px;margin-bottom:14px">Profiles go into the style prompt word for word and are never trimmed to fit the character limit.</p>
+          <div id="profileEditor" hidden class="profile" style="margin-bottom:12px">
+            <div class="fields"><div class="field"><label for="pName">Name</label><input id="pName" class="input" maxlength="24"></div></div>
+            <div class="field" style="margin-top:10px"><label for="pText">Descriptors</label><textarea id="pText" class="input" maxlength="700"></textarea></div>
+            <div class="row" style="margin-top:10px"><button class="btn btn-primary btn-sm" data-action="save-profile">Save profile</button><button class="btn btn-ghost btn-sm" data-action="cancel-profile">Cancel</button><span class="t3 num" id="pCount" style="font-size:13px"></span></div>
+          </div>
+          <div class="profiles" id="profileList"></div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="view" id="view-settings" hidden>
+        <div class="card">
+          <div class="card-h"><svg class="i"><use href="#i-gear"/></svg><h3>House Rules</h3></div>
+          <dl class="kv">
+            <dt>Style prompt</dt><dd><b class="num">2,000</b> characters maximum, counted by the app on every spec. Vocal profiles and beat-switch descriptors are protected; trims follow dedupe → connectives → merged overlaps → weakest descriptor.</dd>
+            <dt>Runtime</dt><dd><b class="num">3:05 – 3:35</b>, computed from bar counts at tempo (4/4).</dd>
+            <dt>Tag canon</dt><dd>Cold open (no <code class="k">[Intro]</code> opener). Always <code class="k">[Chorus]</code>, never <code class="k">[Hook]</code>. The app corrects both automatically.</dd>
+            <dt>Package</dt><dd>Every spec carries a style prompt, lyrics, Weirdness, Style Influence and a Beat Blueprint.</dd>
+          </dl>
+        </div>
+        <div class="card">
+          <div class="card-h"><svg class="i"><use href="#i-sliders"/></svg><h3>Render Defaults</h3></div>
+          <div class="fields">
+            <div class="field"><label for="setSeed">Seed (blank = random)</label><input id="setSeed" class="input num" inputmode="numeric" placeholder="Random"></div>
+            <div class="field"><label for="setDuration">Duration</label><select id="setDuration" class="select"><option value="auto">From structure</option><option value="60">1:00 sketch</option><option value="120">2:00</option><option value="200">3:20</option></select></div>
+          </div>
+          <div class="row" style="margin-top:14px"><button class="btn btn-ghost btn-sm" data-action="save-settings">Save defaults</button></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+<nav class="tabbar" id="tabbar" aria-label="Main"></nav>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
+  <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 2 2 7l10 5 10-5z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M12 3l1.8 4.6L18 9.5l-4.2 1.9L12 16l-1.8-4.6L6 9.5l4.2-1.9z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8zM5 3l.6 1.4L7 5l-1.4.6L5 7l-.6-1.4L3 5l1.4-.6z"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4.5" width="4" height="15" rx="1" fill="currentColor"/><rect x="14" y="4.5" width="4" height="15" rx="1" fill="currentColor"/></symbol>
+  <symbol id="i-wave" viewBox="0 0 24 24"><path d="M2 12h2M6 8v8M10 4v16M14 7v10M18 10v4M22 12h0"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 3h11l3 3v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M7 3v5h8V3M7 21v-7h10v7"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h0"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h0"/></symbol>
+  <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12"/></symbol>
+  <symbol id="i-loader" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></symbol>
+</svg>
+
+<script>
+(() => {
+"use strict";
+/* ============================================================
+   Alexandria — Music Design Studio (Standalone)
+   Spec design via Claude (claude.ai copy); local synthesis through
+   alexandria_bridge.py (YuE / ACE-Step / custom command).
+   ============================================================ */
+const CHAR_LIMIT = 2000;
+const RUNTIME_MIN = 185, RUNTIME_MAX = 215; // 3:05–3:35
+const CATEGORIES = ["Song", "Commercial", "Film Score", "Theatrical"];
+const STRUCTURE_TEMPLATES = ["Auto (let the studio choose)", "Pop / R&B", "Hip-hop", "Trap-soul / alt-R&B", "Beat / instrumental"];
+const STRUCTURE_FORMS = {
+  "Pop / R&B": "Verse -> Pre-Chorus -> Chorus -> Verse -> Pre-Chorus -> Chorus -> Bridge -> Chorus -> Outro (intro <=4 bars or cold open)",
+  "Hip-hop": "Chorus -> Verse (16) -> Chorus -> Verse (16) -> Chorus -> Bridge/Outro (chorus-first or <=4-bar intro)",
+  "Trap-soul / alt-R&B": "mood-first: Verse/Flow -> Chorus -> Verse -> Chorus -> Vamp/Outro, verse/chorus lines deliberately blurred",
+  "Beat / instrumental": "Main loop A -> Variation B -> Breakdown -> A-prime -> Outro",
+};
+const BUILTIN_PROFILES = [
+  { id: "mimi", name: "Mimi", lane: "Afro-R&B lead", text: "warm honeyed mezzo with contralto depth, breathy ASMR-close verses blooming into full-throated gospel belt, agile ornamental melisma with precise multisyllabic runs, hazy conversational phrasing sliding behind the beat, airy Afro-pop lilt with light head-voice flips, silky controlled falsetto, raspy-sweet edges on sustains, vulnerable smoky low register, crisp percussive diction on rhythmic passages, lush stacked harmonies with whisper doubles, dynamic arc from intimate murmur to soaring crescendo" },
+  { id: "rapgod", name: "RapGod", lane: "Melodic rap / trap", text: "smooth conversational baritone gliding between melodic rap-sung croon and precise multisyllabic rap, elastic character voices with pitch-bent theatrical inflections and dynamic register jumps, warbling auto-tuned drawl with hypnotic slurred cadences, psychedelic layered ad-libs drenched in reverb, distorted rage-energy vocal stacks, raspy bass-heavy low register with deadpan wit flipping into airy falsetto, moody late-night phrasing sliding behind the beat, urgent chest-voice conviction on climactic bars, gravelly toxic-croon sustains, playful pitched vocal alter-egos as texture, triumphant chant-style hooks with crowd-stack doubles" },
+  { id: "suede", name: "SUEDE", lane: "Duet partner for Mimi", text: "smoky velvet baritone with easy tenor lift, grainy low-register warmth, buttery falsetto answers, laid-back behind-the-beat runs, husky call-and-response ad-libs woven under Mimi's lead" },
+  { id: "onyx", name: "ONYX", lane: "Memphis alto, duet partner for RapGod", text: "compact Memphis alto built for duet stacking" },
+  { id: "satin", name: "SATIN", lane: "Soprano", text: "bright agile soprano" },
+  { id: "sable", name: "SABLE", lane: "Alto", text: "smoky powerhouse alto" },
+];
+const MIC_PROFILES = [
+  { key: "auto", label: "Auto — engine casts per lane", blurb: "No mic chosen: the mastering engine casts the vocal chair by lane.", sound: "" },
+  { key: "c414", label: "AKG C414 XLS/XLII", blurb: "Multipattern large-diaphragm condenser.", sound: "detailed open top end, neutral even midrange, natural airy presence" },
+  { key: "sm7b", label: "Shure SM7B / SM7dB", blurb: "Cardioid dynamic, the classic close lead-vocal mic.", sound: "smooth dense midrange, tamed sibilance, warm close-proximity body" },
+  { key: "u87", label: "Neumann U 87 Ai", blurb: "Large-diaphragm condenser, studio standard.", sound: "silky upper-mid presence, polished full-bodied studio sheen" },
+  { key: "251", label: "Telefunken ELA M 251", blurb: "Tube large-diaphragm condenser.", sound: "lush tube warmth, creamy airy top, rich harmonic bloom" },
+  { key: "c800g", label: "Sony C-800G", blurb: "Tube condenser favored for modern pop and hip-hop leads.", sound: "bright crisp hyper-detailed top, forward modern pop sheen" },
+];
+const PRESETS = [
+  { id: "cinematic", name: "Cinematic Intro", sub: "Orchestral + electronic", cat: "Film Score", st: "Beat / instrumental", colors: ["#1B3A6B", "#7FB2FF", "#E8F0FF"], brief: "Cinematic opening cue: low brass swells and staccato strings over a pulsing analog synth arpeggio, slow build from hush to a wide orchestral-electronic peak, heroic but restrained, ends on an unresolved suspended chord." },
+  { id: "lofi", name: "Lo-fi Study", sub: "Chill beats, warm texture", cat: "Song", st: "Beat / instrumental", colors: ["#5A3A22", "#E3A65C", "#2B1B10"], brief: "Lo-fi study beat: dusty swung boom-bap drums, detuned Rhodes 7th chords, vinyl crackle, soft upright bass, sidechained rain ambience, calm late-afternoon focus." },
+  { id: "synthwave", name: "Synthwave Drive", sub: "Retro pads, modern mix", cat: "Song", st: "Pop / R&B", colors: ["#3B0F5C", "#FF4FA3", "#FF9500"], brief: "Synthwave night-drive anthem: gated reverb snare, pulsing octave bass, glassy polysynth leads, wide chorus pads, a breathy alto vocal about leaving a small town at 2 a.m., euphoric chorus lift." },
+  { id: "ambient", name: "Ambient Exploration", sub: "Atmospheric, evolving", cat: "Film Score", st: "Beat / instrumental", colors: ["#0E2A3A", "#4FC3C9", "#9AD8E0"], brief: "Ambient exploration piece: evolving granular pads, distant bowed metal, slow tape-warped piano fragments, no drums until a soft heartbeat kick in the final third, vast and patient." },
+  { id: "afrorb", name: "Afro-R&B Slow Burn", sub: "Log drums, honeyed lead", cat: "Song", st: "Pop / R&B", colors: ["#3A1E0E", "#FFB347", "#5856D6"], brief: "Afro-R&B slow burn about choosing yourself after a long-distance love fades: soft log drums, shaker sixteenths, highlife guitar plucks, lush Rhodes, intimate verses rising to a gospel-tinged final chorus." },
+  { id: "crunk", name: "Memphis Bounce", sub: "Distorted 808s, chant hooks", cat: "Song", st: "Hip-hop", colors: ["#2A0A0A", "#FF3B30", "#8E8E93"], brief: "Memphis crunk-trap bounce: 140 BPM half-time, distorted knocking 808s, sparse ominous bell melody, chant-style call-and-response chorus, confident block-party energy." },
+];
+
+/* ---------- example spec (shown until the first real spec) ---------- */
+const EXAMPLE_SPEC = {
+  example: true, id: "example", category: "Song", title: "Harbor Lights",
+  concept: "A lighthouse keeper's slow-burning Afro-R&B love letter to a ship that's late: patient, warm, quietly certain.",
+  directions: [],
+  genre: "Afro-R&B", bpm: 96, key: "F minor → A♭ major (choruses)", time_feel: "Laid-back straight eighths with a shuffled shaker",
+  palette: "Soft log drums, rimshot snaps, shaker, sub-bass glides, muted highlife guitar, Rhodes with 9th extensions, warm pad bed",
+  groove: "Kick on 1 and the and-of-2, log-drum pulses answering on the offbeats, snare on 3 only in verses, full backbeat in choruses",
+  arrangement: "Cold open on vocal and Rhodes, drums enter bar 5, pre-choruses thin to guitar and shaker, final pre-chorus drops to Rhodes and vocal before the last chorus lands full",
+  mix: "Dry intimate lead with plate-reverb harmonies, tape saturation on the bus, mono low end, guitar panned wide",
+  beat_blueprint: { kick: "Round, short sub-kick; 1 and and-of-2, ghost on 4-and in choruses", snare: "Rimshot snap on 3 in verses; layered clap and snap backbeat in choruses", hats: "Shaker sixteenths with swing; open hat on the and-of-4 into each chorus", low_end: "Sub-bass glides between roots, ducked under the kick", percussion: "Log-drum melodic pulses, finger snaps in the bridge", dropout: "All drums cut for the final pre-chorus; the last chorus re-enters on the downbeat with full kit" },
+  structure: [
+    { section: "Verse 1", bars: 16, energy: 3, notes: "Vocal and Rhodes for 4 bars, then drums" },
+    { section: "Pre-Chorus", bars: 8, energy: 5, notes: "Guitar and shaker" },
+    { section: "Chorus", bars: 8, energy: 7, notes: "Full backbeat, stacked harmonies" },
+    { section: "Verse 2", bars: 16, energy: 5, notes: "Log drums busier" },
+    { section: "Pre-Chorus", bars: 8, energy: 6, notes: "" },
+    { section: "Chorus", bars: 8, energy: 8, notes: "" },
+    { section: "Bridge", bars: 8, energy: 4, notes: "Half-time feel, snaps" },
+    { section: "Chorus", bars: 8, energy: 10, notes: "Drums drop out for 2 bars, then full kit, belt" },
+    { section: "Outro", bars: 4, energy: 3, notes: "Rhodes and whisper doubles" },
+  ],
+  lyrics: "[Verse 1]\nSalt on the window, I'm counting the swells\nOil in the lantern, the tide has its tells\nYou said by the summer, the summer said no\nBut I keep the light turning so you'll know where to go\n\n[Pre-Chorus]\nAnd if the fog rolls in thick as a wall\nI'll be the one thing that's standing at all\n\n[Chorus]\nHarbor lights, harbor lights\nI leave them burning every night\nHowever long the water's wide\nI'm still here on the other side\n\n[Verse 2]\nLetters get soft when they sit in the damp\nI read 'em by heart in the glow of the lamp\nThe gulls know your name now, I say it so much\nThe rope at the jetty still warm from your touch\n\n[Pre-Chorus]\nAnd if the fog rolls in thick as a wall\nI'll be the one thing that's standing at all\n\n[Chorus]\nHarbor lights, harbor lights\nI leave them burning every night\nHowever long the water's wide\nI'm still here on the other side\n\n[Bridge]\nI don't need a promise, I just need a sail\nOne white little corner past the edge of the swell\n\n[Chorus]\nHarbor lights, harbor lights\nI leave them burning every night\nHowever long the water's wide\nI'm still here on the other side\n\n[Outro]\nStill here, still bright\nHarbor lights",
+  style_pre_vocal: "Afro-R&B, 96 BPM laid-back bounce, soft log-drum pulses under rimshot snaps, shuffled shaker sixteenths, warm sub-bass glides, muted highlife guitar plucks, lush Rhodes 9th chords in F minor lifting to A-flat major on choruses",
+  vocal_descriptors: "",
+  style_post_vocal: "wide plate reverb on harmonies, dry intimate lead, warm tape saturation, mono-focused low end, beat drops to Rhodes and vocal for the final pre-chorus, golden-hour harbor mood",
+  yue_tags: "afrobeats r&b log-drum rhodes guitar warm hopeful female mezzo-soprano breathy",
+  weirdness: 32, style_influence: 68,
+  levers: ["Darker: drop to D minor, swap Rhodes for detuned Wurlitzer, thin the shaker", "More anthemic: double the final chorus to 16 bars and add a choir stack (re-check runtime)", "More intimate: cap the bridge at head voice and lower Weirdness to 28%", "Club-ready: lift to 104 BPM and add a four-on-the-floor kick to the last chorus only"],
+  profileIds: ["mimi"], mic: "auto",
+};
+
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const icon = (id, cls = "i") => `<svg class="${cls}"><use href="#i-${id}"/></svg>`;
+const fmt = s => { s = Math.max(0, Math.round(s)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
+const ls = {
+  get(k, d) { try { const v = localStorage.getItem("alx:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("alx:" + k, JSON.stringify(v)); } catch {} },
+};
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+let isLocalHost = /^(127\.0\.0\.1|localhost|\[::1\])$/.test(location.hostname) || location.protocol === "file:";
+
+function computeRuntime(structure, bpm, beatsPerBar = 4) {
+  const bars = (structure || []).reduce((a, s) => a + (Number(s.bars) || 0), 0);
+  const secs = bpm > 0 ? bars * beatsPerBar * 60 / bpm : 0;
+  return { bars, secs, ok: secs >= RUNTIME_MIN && secs <= RUNTIME_MAX };
+}
+function applyTagCanon(lyrics) {
+  const notes = [];
+  let out = String(lyrics || "");
+  if (/\[\s*hook/i.test(out)) { out = out.replace(/\[\s*hook([^\]]*)\]/gi, "[Chorus$1]"); notes.push("[Hook] → [Chorus]"); }
+  const m = out.match(/^\s*\[\s*intro[^\]]*\]\s*\n?/i);
+  if (m) { out = out.slice(m[0].length).replace(/^\s+/, ""); notes.push("removed opening [Intro] (cold open)"); }
+  return { lyrics: out, notes };
+}
+function getProfile(id) { return allProfiles().find(p => p.id === id); }
+function protectedText(spec) { return (spec.profileIds || []).map(getProfile).filter(Boolean).map(p => p.text); }
+function composeStyle(spec) {
+  const vocal = protectedText(spec);
+  const parts = [spec.style_pre_vocal, ...(vocal.length ? vocal : [spec.vocal_descriptors]), spec.style_post_vocal].map(s => String(s || "").trim().replace(/,\s*$/, "")).filter(Boolean);
+  return parts.join(", ");
+}
+function budgetFor(profileIds) {
+  const vocal = profileIds.map(getProfile).filter(Boolean).map(p => p.text);
+  const protectedLen = vocal.reduce((a, t) => a + t.length, 0);
+  const seps = (vocal.length + 1) * 2; // ", " joins around each block
+  return CHAR_LIMIT - protectedLen - seps;
+}
+function toYueLyrics(lyrics) {
+  const blocks = [];
+  let cur = null;
+  for (const line of String(lyrics || "").split(/\r?\n/)) {
+    const t = line.match(/^\s*\[([^\]]+)\]\s*$/);
+    if (t) {
+      const name = t[1].toLowerCase().replace(/\d+/g, "").replace(/\s+/g, "-").replace(/-+$/, "").trim();
+      cur = { tag: name, lines: [] }; blocks.push(cur);
+    } else if (line.trim()) { if (!cur) { cur = { tag: "verse", lines: [] }; blocks.push(cur); } cur.lines.push(line.trim()); }
+  }
+  return { text: blocks.map(b => `[${b.tag}]\n${b.lines.join("\n")}`).join("\n\n"), sections: blocks.length };
+}
+
+/* ---------- state ---------- */
+const state = {
+  view: ls.get("view", "studio"),
+  spec: null,
+  seg: "spec",
+  customProfiles: [],
+  library: [],
+  libFilter: "All",
+  libSearch: "",
+  engine: { status: "disconnected", info: null },
+  render: { status: "idle", step: 0, progress: 0, start: 0, model: "", job: null, blob: null },
+  settings: Object.assign({ seed: "", duration: "auto", engType: "ace", engUrl: "http://127.0.0.1:7870" }, ls.get("settings", {})),
+  confirmDel: null,
+  editingProfile: null,
+  trimming: false,
+};
+function allProfiles() { return [...BUILTIN_PROFILES, ...state.customProfiles]; }
+
+/* ---------- capabilities ---------- */
+let sample = null, db = null, downloads = null, userId = null;
+const caps = (async () => {
+  if (!window.claude?.use) return;
+  try { [sample, downloads] = await Promise.all([claude.use("sample"), claude.use("downloads")]); } catch {}
+  try {
+    const [d, u] = await Promise.all([claude.use("db"), claude.use("user")]);
+    if (d && u) { const id = await u.id(); if (id) { db = d; userId = id; } }
+  } catch {}
+})();
+
+/* ---------- storage: db when signed in on claude.ai, browser storage otherwise ---------- */
+const store = {
+  where() { return db ? "Saved to your Alexandria library (private to you)" : "Saved in this browser"; },
+  async loadAll() {
+    if (db) {
+      try {
+        const [s, p] = await Promise.all([
+          db.collection(`data/users/${userId}/specs`).orderBy("savedAt", "desc").limit(500).get(),
+          db.collection(`data/users/${userId}/profiles`).get(),
+        ]);
+        state.library = s.docs.map(d => ({ ...d.data(), id: d.id }));
+        state.customProfiles = p.docs.map(d => ({ ...d.data(), id: d.id }));
+        return;
+      } catch (e) { toast("err", "Couldn't load your library", "Showing what's saved in this browser instead."); }
+    }
+    state.library = ls.get("library", []);
+    state.customProfiles = ls.get("profiles", []);
+  },
+  async saveSpec(spec) {
+    const rec = JSON.parse(JSON.stringify(spec)); delete rec.example; rec.savedAt = Date.now(); rec.id = rec.id && rec.id !== "example" ? rec.id : uid();
+    if (db) await db.collection(`data/users/${userId}/specs`).doc(rec.id).set(rec);
+    else ls.set("library", [rec, ...ls.get("library", []).filter(x => x.id !== rec.id)].slice(0, 300));
+    state.library = [rec, ...state.library.filter(x => x.id !== rec.id)];
+    return rec;
+  },
+  async deleteSpec(id) {
+    if (db) await db.collection(`data/users/${userId}/specs`).doc(id).delete();
+    else ls.set("library", ls.get("library", []).filter(x => x.id !== id));
+    state.library = state.library.filter(x => x.id !== id);
+  },
+  async saveProfile(p) {
+    if (db) await db.collection(`data/users/${userId}/profiles`).doc(p.id).set(p);
+    else ls.set("profiles", [...ls.get("profiles", []).filter(x => x.id !== p.id), p]);
+    state.customProfiles = [...state.customProfiles.filter(x => x.id !== p.id), p];
+  },
+  async deleteProfile(id) {
+    if (db) await db.collection(`data/users/${userId}/profiles`).doc(id).delete();
+    else ls.set("profiles", ls.get("profiles", []).filter(x => x.id !== id));
+    state.customProfiles = state.customProfiles.filter(x => x.id !== id);
+  },
+};
+
+/* ---------- toasts ---------- */
+function toast(kind, title, sub = "", ms = 5000) {
+  const colors = { ok: "var(--green)", info: "var(--blue)", warn: "var(--yellow)", err: "var(--red)" };
+  const ic = { ok: "check", info: "info", warn: "alert", err: "x" }[kind] || "info";
+  const el = document.createElement("div");
+  el.className = "toast " + kind;
+  el.innerHTML = `<span class="ic" style="background:${colors[kind]}">${icon(ic)}</span><div><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</div><button aria-label="Dismiss">${icon("x")}</button>`;
+  el.querySelector("button").onclick = () => el.remove();
+  $("#toasts").appendChild(el);
+  setTimeout(() => el.remove(), ms);
+}
+
+/* ---------- navigation ---------- */
+const VIEWS = [["studio", "Studio", "home"], ["library", "Library", "note"], ["engines", "Engines", "cpu"], ["presets", "Presets", "layers"], ["settings", "Settings", "gear"]];
+function renderNav() {
+  const html = VIEWS.map(([k, label, ic]) => `<button data-nav="${k}" ${state.view === k ? 'aria-current="page"' : ""}>${icon(ic)}<span>${label}</span></button>`).join("");
+  $("#sidenav").innerHTML = html; $("#tabbar").innerHTML = html;
+}
+function go(view) {
+  state.view = view; ls.set("view", view);
+  VIEWS.forEach(([k]) => $("#view-" + k).hidden = k !== view);
+  $("#viewTitle").textContent = VIEWS.find(v => v[0] === view)[1];
+  renderNav();
+  if (view === "library") renderLibrary();
+  if (view === "presets") { renderPresets(); renderProfiles(); }
+  window.scrollTo({ top: 0 });
+}
+
+/* ---------- studio form ---------- */
+function fillSelect(el, items, value) { el.innerHTML = items.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join(""); if (value != null) el.value = value; }
+function renderForm() {
+  const draft = ls.get("draft", {});
+  fillSelect($("#category"), CATEGORIES.map(c => [c, c]), draft.category || "Song");
+  fillSelect($("#structure"), STRUCTURE_TEMPLATES.map(c => [c, c]), draft.structure || STRUCTURE_TEMPLATES[0]);
+  renderProfileSelects(draft.profile ?? "mimi", draft.duet ?? "");
+  fillSelect($("#mic"), MIC_PROFILES.map(m => [m.key, m.label]), draft.mic || "auto");
+  $("#brief").value = draft.brief || ""; $("#title").value = draft.title || "";
+  updateBriefCount(); updateMicBlurb();
+  $("#inspList").innerHTML = PRESETS.slice(0, 4).map(p => `<button data-preset="${p.id}"><span class="sw" style="background:linear-gradient(135deg,${p.colors[0]},${p.colors[1]})"></span><span><b>${esc(p.name)}</b><small>${esc(p.sub)}</small></span></button>`).join("");
+}
+function renderProfileSelects(pv, dv) {
+  const prof = $("#profile"), duet = $("#duet");
+  pv = pv ?? prof.value; dv = dv ?? duet.value;
+  const opts = allProfiles().map(p => [p.id, p.name]);
+  fillSelect(prof, [["", "None — model writes the vocal"], ["instrumental", "Instrumental"], ...opts], pv);
+  fillSelect(duet, [["", "No duet"], ...opts], dv);
+  if (prof.value !== pv) prof.value = "";
+  if (duet.value !== dv) duet.value = "";
+}
+function updateBriefCount() { $("#briefCount").textContent = `${$("#brief").value.length}/2000`; }
+function updateMicBlurb() { const m = MIC_PROFILES.find(x => x.key === $("#mic").value); $("#micBlurb").textContent = m ? m.blurb + (m.sound ? ` Adds to mix notes: ${m.sound}.` : "") : ""; }
+function saveDraft() { ls.set("draft", { brief: $("#brief").value, title: $("#title").value, category: $("#category").value, structure: $("#structure").value, profile: $("#profile").value, duet: $("#duet").value, mic: $("#mic").value }); }
+function selectedProfileIds() {
+  const p = $("#profile").value, d = $("#duet").value;
+  return [p, d].filter(x => x && x !== "instrumental").filter((x, i, a) => a.indexOf(x) === i);
+}
+
+/* ---------- design spec via Claude ---------- */
+function buildPrompt() {
+  const brief = $("#brief").value.trim();
+  const profileIds = selectedProfileIds();
+  const instrumental = $("#profile").value === "instrumental";
+  const budget = budgetFor(profileIds);
+  const mic = MIC_PROFILES.find(m => m.key === $("#mic").value);
+  const st = $("#structure").value;
+  const form = STRUCTURE_FORMS[st] ? `Use this section form: ${STRUCTURE_FORMS[st]}.` : "Choose the section form that fits the brief.";
+  const profiles = profileIds.map(getProfile);
+  return `You are the Alexandria Music Design Studio, a music-design collaborator. Turn the brief into a production-ready spec for AI music tools (Suno, Udio, YuE, ACE-Step). Describe sound with craft vocabulary; never use artist, producer, or brand names anywhere.
+
+BRIEF: ${brief}
+WORKING TITLE: ${$("#title").value.trim() || "(invent one)"}
+CATEGORY: ${$("#category").value}
+STRUCTURE: ${form}
+VOCAL: ${instrumental ? "Instrumental. No vocal descriptors, lyrics must be an empty string." : profiles.length ? `The app inserts these protected vocal profiles verbatim between your two style fields; do not restate or paraphrase them: ${profiles.map(p => `${p.name}${p.lane ? " (" + p.lane + ")" : ""}`).join(" + ")}. Write lyrics suited to ${profiles.length > 1 ? "a duet with call-and-response" : "this voice"}.` : "Write your own vocal descriptors in vocal_descriptors (delivery, register, phrasing, harmonies)."}
+${mic && mic.sound ? `VOCAL CHAIN: put this sonic character into the mix notes and style_post_vocal as descriptors (no brand names): ${mic.sound}.` : ""}
+
+HOUSE RULES (all mandatory):
+1. Style prompt order is genre -> tempo/feel -> drums -> harmony -> vocal -> space/mood. style_pre_vocal covers genre, tempo, drums, harmony. style_post_vocal covers space, mix, beat-switch or dropout moments, and ends with a mood closer.
+2. Character budget: style_pre_vocal + ${profiles.length || instrumental ? "" : "vocal_descriptors + "}style_post_vocal must total at most ${budget} characters including spaces; use only what the track needs, there is no need to fill the budget, and end with a mood closer. Comma-separated descriptors, no sentences, no line breaks.
+3. Runtime: total bars x 4 x 60 / bpm must land between 185 and 215 seconds. Choose bar counts to hit it exactly.
+4. Lyrics tag canon: cold open (never start with [Intro]); always [Chorus], never [Hook]. Use [Verse 1], [Pre-Chorus], [Chorus], [Bridge], [Outro] style tags. Concrete imagery, internal rhyme, consistent meter, a chorus that states the emotional thesis.
+5. Every structure section in lyrics must match the structure list, in order.
+6. Beat Blueprint is required: kick, snare, hats, low_end, percussion, dropout (one deliberate dropout or beat-switch moment).
+7. yue_tags: 6-12 short lowercase space-separated tags for the YuE model covering genre, instrument, mood, vocal gender and timbre${instrumental ? " (no vocal tags)" : ""}.
+8. weirdness and style_influence are integers 0-100.
+9. directions: if the brief is open-ended, give two one-line alternative directions (A sparser/more intimate, B fuller/more anthemic); if it is already tight, return an empty array.
+
+Return only JSON with exactly these keys:
+{"title":string,"concept":string,"directions":[{"name":string,"summary":string}],"genre":string,"bpm":number,"key":string,"time_feel":string,"palette":string,"groove":string,"arrangement":string,"mix":string,"beat_blueprint":{"kick":string,"snare":string,"hats":string,"low_end":string,"percussion":string,"dropout":string},"structure":[{"section":string,"bars":number,"energy":number (1-10),"notes":string}],"lyrics":string,"style_pre_vocal":string,"vocal_descriptors":string,"style_post_vocal":string,"yue_tags":string,"weirdness":number,"style_influence":number,"levers":[string, 3 to 6 items]}`;
+}
+
+async function designSpec() {
+  const brief = $("#brief").value.trim();
+  if (brief.length < 8) { toast("warn", "Add a brief first", "A sentence about the mood, genre or story is enough."); $("#brief").focus(); return; }
+  await caps;
+  if (!sample) { if (isLocalHost) toast("warn", "Design Spec runs in the claude.ai copy", "This offline copy can't reach Claude. Design on claude.ai, press Export, then Import spec here."); else toast("warn", "Couldn't connect to Claude", "Reload the page and allow Alexandria to use Claude when asked. If you declined before, turn it on in the artifact's Permissions menu.", 10000); return; }
+  const btn = $("#designBtn");
+  btn.disabled = true; btn.innerHTML = `${icon("loader", "i spin")}<span>Designing…</span>`;
+  $("#designNote").textContent = "Writing the spec: structure, Beat Blueprint, lyrics and style prompt.";
+  try {
+    const out = await sample.json(buildPrompt(), { modelTier: "complex", cache: false, onText: ({ text }) => { $("#designNote").textContent = text && text.length > 20 ? `Writing… ${text.length.toLocaleString()} characters so far` : "Thinking…"; } });
+    const spec = normalizeSpec(out);
+    state.spec = spec; state.seg = "spec";
+    renderSpec();
+    const s = composeStyle(spec);
+    toast("ok", "Design spec generated", `${spec.structure.length} sections · ${s.length}/${CHAR_LIMIT} characters`);
+    if (s.length > CHAR_LIMIT) smartTrim();
+    $("#designNote").textContent = "";
+    $("#specCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (e) {
+    const msg = { not_granted: "Allow Alexandria to ask Claude when prompted, then try again.", rate_limited: "You've hit a usage limit. Wait a minute and try again.", invalid_json: "The reply wasn't a complete spec. Press Design Spec to ask again.", cancelled: "Cancelled." }[e?.code] || "Something went wrong reaching Claude. Try again in a moment.";
+    toast("err", "Couldn't design the spec", msg, 8000);
+    $("#designNote").textContent = "";
+  } finally {
+    btn.disabled = false; btn.innerHTML = `${icon("sparkles")}<span>Design Spec</span>`;
+  }
+}
+
+function normalizeSpec(o) {
+  o = o || {};
+  const canon = applyTagCanon(o.lyrics || "");
+  if (canon.notes.length) setTimeout(() => toast("info", "Tag canon applied", canon.notes.join("; ")), 400);
+  const spec = {
+    id: uid(), category: $("#category").value, title: String(o.title || $("#title").value || "Untitled").slice(0, 80),
+    concept: String(o.concept || ""), directions: Array.isArray(o.directions) ? o.directions.slice(0, 2) : [],
+    genre: String(o.genre || ""), bpm: Number(o.bpm) || 0, key: String(o.key || ""), time_feel: String(o.time_feel || ""),
+    palette: String(o.palette || ""), groove: String(o.groove || ""), arrangement: String(o.arrangement || ""), mix: String(o.mix || ""),
+    beat_blueprint: Object.assign({ kick: "", snare: "", hats: "", low_end: "", percussion: "", dropout: "" }, o.beat_blueprint || {}),
+    structure: (Array.isArray(o.structure) ? o.structure : []).map(s => ({ section: String(s.section || ""), bars: Math.max(0, Math.round(Number(s.bars) || 0)), energy: Math.min(10, Math.max(1, Math.round(Number(s.energy) || 5))), notes: String(s.notes || "") })),
+    lyrics: canon.lyrics,
+    style_pre_vocal: String(o.style_pre_vocal || ""), vocal_descriptors: String(o.vocal_descriptors || ""), style_post_vocal: String(o.style_post_vocal || ""),
+    yue_tags: String(o.yue_tags || ""), weirdness: Math.round(Number(o.weirdness) || 0), style_influence: Math.round(Number(o.style_influence) || 0),
+    levers: Array.isArray(o.levers) ? o.levers.map(String).slice(0, 6) : [],
+    profileIds: o.profileIds || selectedProfileIds(), mic: o.mic || $("#mic").value, brief: o.brief || $("#brief").value.trim(),
+  };
+  if (spec.profileIds.length) spec.vocal_descriptors = "";
+  return spec;
+}
+
+/* Smart Trim — rephrase only the unprotected parts, verify client-side, up to two passes, never destructive */
+async function smartTrim() {
+  const spec = state.spec; if (!spec || state.trimming) return;
+  await caps;
+  if (!sample) { toast("warn", "Smart Trim runs in the claude.ai copy", "Trim by hand here; the meter updates as you go."); return; }
+  state.trimming = true; renderSpec();
+  const budget = budgetFor(spec.profileIds || []);
+  let pre = spec.style_pre_vocal, post = spec.style_post_vocal, voc = spec.vocal_descriptors;
+  let passes = 0, ok = false;
+  try {
+    while (passes < 2 && !ok) {
+      passes++;
+      const out = await sample.json(`Shorten these style-prompt descriptor lists for an AI music tool. Combined length of all fields must be at most ${budget} characters including spaces (target ${budget - 25}). Trim order, strictly: 1) remove duplicate or near-duplicate descriptors, 2) remove connective words, 3) merge overlapping descriptors, 4) cut the weakest descriptor. Never cut beat-switch, dropout, or tempo/BPM descriptors. Keep comma-separated descriptor style, keep genre first in pre, keep the mood closer last in post. No artist or brand names.
+Return only JSON {"pre":string,"vocal":string,"post":string}.
+<<<PROTECTED>>> vocal profiles are inserted separately by the app and must not appear in your output.
+pre: ${pre}
+vocal: ${voc}
+post: ${post}`, { modelTier: "quick", cache: false });
+      pre = String(out.pre || pre); post = String(out.post || post); voc = spec.profileIds?.length ? "" : String(out.vocal ?? voc);
+      ok = composeStyle({ ...spec, style_pre_vocal: pre, style_post_vocal: post, vocal_descriptors: voc }).length <= CHAR_LIMIT;
+    }
+    if (ok) {
+      Object.assign(spec, { style_pre_vocal: pre, style_post_vocal: post, vocal_descriptors: voc });
+      toast("ok", "Smart Trim complete", `${composeStyle(spec).length}/${CHAR_LIMIT} characters, vocal profile untouched`);
+    } else toast("warn", "Still over the limit", "Your prompt is unchanged. Edit the descriptor fields in the Prompt tab or run Smart Trim again.", 8000);
+  } catch (e) {
+    toast("err", "Smart Trim failed", "Your prompt is unchanged.");
+  } finally { state.trimming = false; renderSpec(); }
+}
+
+/* ---------- spec rendering ---------- */
+function energyBars(n) { return `<span class="ebar" aria-label="Energy ${n} of 10">${Array.from({ length: 10 }, (_, i) => `<i class="${i < n ? "on" : ""} ${i < n && n >= 8 ? "hot" : ""}"></i>`).join("")}</span>`; }
+function renderSpec() {
+  const spec = state.spec || EXAMPLE_SPEC;
+  const style = composeStyle(spec);
+  const len = style.length, over = len > CHAR_LIMIT;
+  const rt = computeRuntime(spec.structure, spec.bpm);
+  const prof = (spec.profileIds || []).map(getProfile).filter(Boolean);
+  const missingProfile = (spec.profileIds || []).some(id => !getProfile(id));
+  const segs = [["spec", "Spec"], ["beat", "Beat Blueprint"], ["structure", "Structure"], ["lyrics", "Lyrics"], ["prompt", "Style Prompt"]];
+  const peak = Math.max(...spec.structure.map(s => s.energy), 0);
+  let body = "";
+  if (state.seg === "spec") {
+    body = `<dl class="kv">
+      <dt>Genre</dt><dd>${esc(spec.genre)}</dd><dt>Tempo / feel</dt><dd><span class="num">${spec.bpm} BPM</span> · ${esc(spec.time_feel)}</dd>
+      <dt>Key / mode</dt><dd>${esc(spec.key)}</dd><dt>Palette</dt><dd>${esc(spec.palette)}</dd><dt>Groove</dt><dd>${esc(spec.groove)}</dd>
+      <dt>Arrangement</dt><dd>${esc(spec.arrangement)}</dd><dt>Space & mix</dt><dd>${esc(spec.mix)}</dd>
+      <dt>Vocal</dt><dd>${prof.length ? prof.map(p => `<b>${esc(p.name)}</b>`).join(" + ") + " (verbatim)" : esc(spec.vocal_descriptors || "Instrumental")}</dd>
+      <dt>Generation</dt><dd>Weirdness <b class="num">${spec.weirdness}%</b> · Style Influence <b class="num">${spec.style_influence}%</b></dd>
+    </dl>
+    ${spec.directions?.length ? `<div class="panel"><div class="eyebrow" style="margin-bottom:8px">Two directions</div><div class="bp">${spec.directions.map((d, i) => `<div><b>Direction ${"AB"[i]} · ${esc(d.name)}</b>${esc(d.summary)}</div>`).join("")}</div></div>` : ""}
+    ${spec.levers?.length ? `<div class="panel"><div class="eyebrow" style="margin-bottom:8px">Refinement levers</div><ul class="levers">${spec.levers.map(l => `<li>${esc(l)}</li>`).join("")}</ul></div>` : ""}`;
+  } else if (state.seg === "beat") {
+    const b = spec.beat_blueprint || {};
+    body = `<div class="bp">${[["Kick", b.kick], ["Snare / clap", b.snare], ["Hats / shaker", b.hats], ["Low end / 808", b.low_end], ["Percussion", b.percussion], ["Dropout / beat switch", b.dropout]].map(([k, v]) => `<div><b>${k}</b>${esc(v || "—")}</div>`).join("")}</div>
+    <div class="panel"><div class="eyebrow">Energy map</div>
+      <div class="energy">${spec.structure.map(s => `<div class="col ${s.energy === peak ? "peak" : ""}" title="${esc(s.section)}: ${s.energy}/10"><i style="height:${s.energy * 10}%"></i></div>`).join("")}</div>
+      <div class="elabels">${spec.structure.map(s => `<span title="${esc(s.section)}">${esc(s.section)}</span>`).join("")}</div>
+    </div>`;
+  } else if (state.seg === "structure") {
+    let bar = 1, t = 0;
+    const rows = spec.structure.map(s => { const start = bar, ts = t; bar += s.bars; t += spec.bpm ? s.bars * 240 / spec.bpm : 0; return `<tr><td><b>${esc(s.section)}</b></td><td class="n">${s.bars}</td><td class="n">${start}–${bar - 1}</td><td class="n">${fmt(ts)}</td><td>${energyBars(s.energy)}</td><td class="t2">${esc(s.notes)}</td></tr>`; }).join("");
+    body = `<div class="tablewrap"><table class="struct"><thead><tr><th>Section</th><th>Bars</th><th>Bar range</th><th>Starts</th><th>Energy</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="t2 num" style="font-size:14px;margin-top:10px">${rt.bars} bars × 4 beats × 60 ÷ ${spec.bpm} BPM = ${rt.secs.toFixed(1)} s (${fmt(rt.secs)}). Target 3:05–3:35.</p>`;
+  } else if (state.seg === "lyrics") {
+    body = `<div class="row" style="margin-bottom:10px"><button class="btn btn-ghost btn-sm" data-copy="lyrics">${icon("copy")}Copy lyrics</button><button class="btn btn-ghost btn-sm" data-copy="yue-lyrics">${icon("copy")}Copy YuE lyrics</button></div><pre class="block">${esc(spec.lyrics || "(instrumental)")}</pre>`;
+  } else {
+    const vocalHtml = prof.length ? prof.map(p => `<span class="vp">${esc(p.text)}</span>`).join(", ") : esc(spec.vocal_descriptors);
+    const parts = [esc(spec.style_pre_vocal), vocalHtml, esc(spec.style_post_vocal)].filter(Boolean).join(", ");
+    body = `<div class="row" style="margin-bottom:10px">
+        <button class="btn btn-ghost btn-sm" data-copy="style">${icon("copy")}Copy style prompt</button>
+        <button class="btn btn-ghost btn-sm" data-copy="yue-tags">${icon("copy")}Copy YuE tags</button>
+        ${over ? `<button class="btn btn-orange btn-sm" data-action="smart-trim" ${state.trimming ? "disabled" : ""}>${state.trimming ? icon("loader", "i spin") : icon("scissors")}Smart Trim</button>` : ""}
+      </div>
+      <pre class="block prompt-parts">${parts}</pre>
+      <div class="meter-row"><div class="meter ${over ? "over" : ""}"><i style="width:${Math.min(100, len / CHAR_LIMIT * 100)}%"></i></div><span class="num" style="font-size:14px;font-weight:600;color:${over ? "#FF6961" : "var(--text)"}">${len} / ${CHAR_LIMIT}</span></div>
+      <p class="t3" style="font-size:13px">Counted by the app, spaces included. Highlighted text is the protected vocal profile.</p>
+      ${missingProfile ? `<div class="warnbox">${icon("alert")}<span>A vocal profile this spec used isn't in your catalog, so it's missing from the prompt. Re-create it under Presets → Vocal Profiles.</span></div>` : ""}
+      <div class="panel"><div class="eyebrow" style="margin-bottom:8px">Edit descriptors</div>
+        <div class="field"><label for="ePre">Genre → harmony</label><textarea class="input" id="ePre" style="min-height:84px">${esc(spec.style_pre_vocal)}</textarea></div>
+        ${prof.length ? "" : `<div class="field" style="margin-top:8px"><label for="eVoc">Vocal</label><textarea class="input" id="eVoc" style="min-height:64px">${esc(spec.vocal_descriptors)}</textarea></div>`}
+        <div class="field" style="margin-top:8px"><label for="ePost">Space → mood</label><textarea class="input" id="ePost" style="min-height:84px">${esc(spec.style_post_vocal)}</textarea></div>
+        <div class="field" style="margin-top:8px"><label for="eYue">YuE tags</label><input class="input mono" id="eYue" value="${esc(spec.yue_tags)}"></div>
+      </div>`;
+  }
+  $("#specCard").innerHTML = `
+    <div class="spec-title">${spec.example ? '<span class="tag-ex">Example</span>' : ""}<h3>${esc(spec.title)}</h3><span class="chip">${esc(spec.category || "Song")}</span><div class="spacer"></div>
+      <button class="btn btn-ghost btn-sm" data-action="save-spec" ${spec.example ? "disabled" : ""}>${icon("save")}Save</button>
+      <button class="btn btn-ghost btn-sm" data-action="export-md">${icon("download")}Export</button>
+    </div>
+    <p class="concept">${esc(spec.concept)}</p>
+    <div class="metrics">
+      <span class="pill ${over ? "err" : "ok"}"><span class="dot"></span><span class="num">${len}/${CHAR_LIMIT} chars</span></span>
+      <span class="pill ${rt.ok ? "ok" : "warn"}"><span class="dot"></span><span class="num">${fmt(rt.secs)} · ${rt.bars} bars</span></span>
+      <span class="chip num">${spec.bpm} BPM</span><span class="chip">${esc(spec.key)}</span>
+      <span class="chip num">Weirdness ${spec.weirdness}%</span><span class="chip num">Style ${spec.style_influence}%</span>
+    </div>
+    ${spec.example ? `<div class="infobox" style="margin-bottom:14px">${icon("info")}<span>This is an example spec so you can see the format. Write a brief and press Design Spec to make your own.</span></div>` : ""}
+    <div class="seg" role="tablist">${segs.map(([k, l]) => `<button role="tab" data-seg="${k}" aria-selected="${state.seg === k}">${l}</button>`).join("")}</div>
+    <div class="panel">${body}</div>`;
+  if (state.seg === "prompt") {
+    const bind = (id, key) => { const el = $("#" + id); if (el) el.addEventListener("input", () => { spec[key] = el.value; updatePromptLive(); }); };
+    bind("ePre", "style_pre_vocal"); bind("eVoc", "vocal_descriptors"); bind("ePost", "style_post_vocal"); bind("eYue", "yue_tags");
+    ["ePre", "eVoc", "ePost"].forEach(id => { const el = $("#" + id); if (el) el.addEventListener("change", () => renderSpec()); });
+  }
+}
+function updatePromptLive() {
+  const spec = state.spec || EXAMPLE_SPEC; const len = composeStyle(spec).length; const over = len > CHAR_LIMIT;
+  const m = $("#specCard .meter"); if (!m) return;
+  m.classList.toggle("over", over); m.firstElementChild.style.width = Math.min(100, len / CHAR_LIMIT * 100) + "%";
+  m.nextElementSibling.textContent = `${len} / ${CHAR_LIMIT}`; m.nextElementSibling.style.color = over ? "#FF6961" : "var(--text)";
+}
+
+function specMarkdown(spec) {
+  const style = composeStyle(spec); const rt = computeRuntime(spec.structure, spec.bpm); const b = spec.beat_blueprint || {};
+  return `# ${spec.title}\n\n## Concept\n${spec.concept}\n\n## Full Spec\n- Genre: ${spec.genre}\n- Tempo: ${spec.bpm} BPM, ${spec.time_feel}\n- Key: ${spec.key}\n- Palette: ${spec.palette}\n- Groove: ${spec.groove}\n- Arrangement: ${spec.arrangement}\n- Space & mix: ${spec.mix}\n- Weirdness: ${spec.weirdness}% · Style Influence: ${spec.style_influence}%\n\n## Beat Blueprint\n- Kick: ${b.kick}\n- Snare: ${b.snare}\n- Hats: ${b.hats}\n- Low end: ${b.low_end}\n- Percussion: ${b.percussion}\n- Dropout: ${b.dropout}\n\n## Structure (${rt.bars} bars, ${fmt(rt.secs)})\n${spec.structure.map(s => `- ${s.section}: ${s.bars} bars, energy ${s.energy}/10${s.notes ? " — " + s.notes : ""}`).join("\n")}\n\n## Lyrics\n\`\`\`\n${spec.lyrics}\n\`\`\`\n\n## Style Prompt (${style.length}/${CHAR_LIMIT} characters, verified)\n\`\`\`\n${style}\n\`\`\`\n\n## YuE tags\n\`\`\`\n${spec.yue_tags}\n\`\`\`\n\n## Refinement levers\n${(spec.levers || []).map(l => "- " + l).join("\n")}\n`;
+}
+
+/* ---------- file save (claude.ai: downloads capability; local: blob link) ---------- */
+async function saveFile(filename, data, type = "text/plain") {
+  await caps;
+  if (downloads) {
+    try { const r = await downloads.save({ filename, data }); if (r.status === "saved") toast("ok", "Saved " + filename); return; }
+    catch (e) {
+      if (e?.code === "declined") return;
+      if (e?.code === "rejected_extension" || e?.code === "extension_not_enabled") { toast("warn", "That file type can't be saved here", filename); return; }
+      if (e?.code === "rate_limited") { toast("warn", "A save is already open", "Finish that one, then try again."); return; }
+    }
+  }
+  if (isLocalHost) {
+    const url = URL.createObjectURL(data instanceof Blob ? data : new Blob([data], { type }));
+    const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000); return;
+  }
+  toast("warn", "Saving isn't available in this view", "Use Copy instead, or open the offline copy.");
+}
+async function copyText(text, label) {
+  try { await navigator.clipboard.writeText(text); toast("ok", label + " copied", text.length + " characters"); }
+  catch { toast("warn", "Copy was blocked", "Select the text in the box and copy it manually."); }
+}
+
+/* ---------- engine / bridge ---------- */
+function setEnginePill(status, label) {
+  const cls = { connected: "ok", disconnected: "", error: "err", checking: "proc" }[status] || "";
+  ["#enginePill", "#enginePill2"].forEach(sel => { const el = $(sel); el.className = "pill " + cls; el.lastElementChild.textContent = label; });
+  $("#connectBtn span").textContent = status === "connected" ? "Engine connected" : "Connect Engine";
+}
+const engineName = t => ({ yue: "YuE", ace: "ACE-Step 1.5", custom: "Custom" }[t] || t);
+async function testEngine(quiet) {
+  const url = $("#engUrl").value.trim().replace(/\/+$/, "");
+  state.settings.engUrl = url; state.settings.engType = $("#engType").value; ls.set("settings", state.settings);
+  setEnginePill("checking", "Checking…");
+  try {
+    const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 4000);
+    const r = await fetch(url + "/health", { signal: ctl.signal }); clearTimeout(to);
+    if (r.status === 401) { location.href = url + "/login"; return false; }
+    const info = await r.json();
+    if (!info.ok) throw new Error("bad");
+    state.engine = { status: "connected", info };
+    let eng = $("#engType").value;
+    if (!info.engines?.[eng]) {
+      const alt = ["ace", "yue", "custom"].find(k => info.engines?.[k]);
+      if (alt) { $("#engType").value = alt; $("#engType").dispatchEvent(new Event("change")); toast("info", `Switched to ${engineName(alt)}`, `${engineName(eng)} isn't set up on this computer; ${engineName(alt)} is.`); eng = alt; }
+    }
+    const avail = info.engines?.[eng];
+    if (avail) setEnginePill("connected", `Connected: ${engineName(eng)}`); else { const el = $("#enginePill"); setEnginePill("connected", `Bridge only`); ["#enginePill", "#enginePill2"].forEach(x => $(x).className = "pill warn"); }
+    if (!quiet) toast(avail ? "ok" : "warn", avail ? "Engine connected" : "Bridge connected, engine not set up", avail ? `${engineName(eng)} is ready for inference.` : eng === "ace" ? "Start ACE-Step 1.5's API server (start_api_server.bat). The bridge finds it on its own; then press Test connection again." : `Restart the bridge with ${eng === "yue" ? "--yue-dir" : "--custom-cmd"} to enable ${engineName(eng)}.`, 10000);
+    return true;
+  } catch (e) {
+    state.engine = { status: "disconnected", info: null };
+    setEnginePill("disconnected", "Disconnected");
+    if (!quiet) toast(isLocalHost ? "err" : "warn", isLocalHost ? "Can't reach the bridge" : "Local engines need the offline copy", isLocalHost ? `Nothing answered at ${url}. Is alexandria_bridge.py running?` : "claude.ai pages can't call programs on your computer. Save the offline copy and open it from the bridge.", 9000);
+    return false;
+  }
+}
+
+const STEP_NAMES = ["Parse creative brief", "Generate design spec", "Synthesize audio", "Finalize mix & export"];
+function renderSteps(active, status, errStep) {
+  $("#steps").innerHTML = STEP_NAMES.map((n, i) => {
+    let cls = "", st = "Queued";
+    if (i < active || status === "done") { cls = "done"; st = "Complete"; }
+    else if (i === active && status === "running") { cls = "active"; st = i === 2 && state.render.progress ? `Rendering… ${Math.round(state.render.progress)}%` : "Running…"; }
+    else if (i === errStep && status === "error") { cls = "err"; st = "Failed"; }
+    return `<li class="${cls}"><span class="b">${cls === "done" ? '<svg class="i" style="width:12px;height:12px;color:#fff;stroke-width:3"><use href="#i-check"/></svg>' : ""}</span>${i + 1}. ${n}<span class="st">${st}</span></li>`;
+  }).join("");
+}
+function setRenderPill(kind, label) { const el = $("#renderPill"); el.className = "pill " + kind; el.lastElementChild.textContent = label; }
+let tick = null;
+function updateRenderStats() {
+  const r = state.render;
+  const el = r.start ? (Date.now() - r.start) / 1000 : 0;
+  $("#rsElapsed").textContent = fmt(el);
+  $("#rsRemain").textContent = r.status === "running" && r.progress > 3 ? fmt(el / r.progress * (100 - r.progress)) : r.status === "done" ? "0:00" : "—";
+  $("#rsStep").textContent = `${Math.min(4, r.step + (r.status === "done" ? 0 : 1))} / 4`;
+  $("#rsModel").textContent = r.model || "—";
+  $("#renderBar").style.width = (r.status === "done" ? 100 : r.overall || 0) + "%";
+  drawWave();
+}
+
+async function synthesize() {
+  const spec = state.spec;
+  if (!spec) { toast("warn", "Design a spec first", "Synthesize renders the current spec. The example is only for reference."); return; }
+  if (composeStyle(spec).length > CHAR_LIMIT) { toast("warn", `Style prompt is over ${CHAR_LIMIT} characters`, "Run Smart Trim or edit it in the Style Prompt tab first."); state.seg = "prompt"; renderSpec(); return; }
+  if (state.engine.status !== "connected" && !(await testEngine(false))) return;
+  await testEngine(true);
+  const eng = $("#engType").value, url = state.settings.engUrl;
+  if (!state.engine.info?.engines?.[eng]) {
+    toast("warn", "No music engine is running", eng === "ace" ? "Start ACE-Step 1.5's API server (start_api_server.bat), wait until it's ready, then press Synthesize again." : `${engineName(eng)} isn't set up in the bridge. Choose ACE-Step 1.5 under Engines.`, 12000);
+    go("engines"); return;
+  }
+  const rt = computeRuntime(spec.structure, spec.bpm);
+  const yue = toYueLyrics(spec.lyrics);
+  const job = {
+    engine: eng, title: spec.title, style_prompt: composeStyle(spec), yue_tags: spec.yue_tags, lyrics: spec.lyrics, yue_lyrics: yue.text,
+    yue_segments: Math.max(1, yue.sections), duration: state.settings.duration === "auto" ? Math.round(rt.secs) : Number(state.settings.duration),
+    seed: state.settings.seed === "" ? null : Number(state.settings.seed), bpm: spec.bpm, key: spec.key,
+  };
+  Object.assign(state.render, { status: "running", step: 0, progress: 0, overall: 2, start: Date.now(), model: engineName(eng), job: null, blob: null });
+  setRenderPill("run", "Rendering"); $("#renderSub").textContent = `Sending “${spec.title}” to ${engineName(eng)} on your machine.`;
+  renderSteps(0, "running"); clearInterval(tick); tick = setInterval(updateRenderStats, 500);
+  state.render.step = 1; state.render.overall = 6; renderSteps(1, "running");
+  try {
+    const r = await fetch(url + "/render", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(job) });
+    if (r.status === 401) { location.href = url + "/login"; return; }
+    if (!r.ok) { const t = await r.text(); let m = t; try { m = JSON.parse(t).error || t; } catch {} throw new Error(m || "The bridge refused the job"); }
+    const { job_id } = await r.json();
+    state.render.job = job_id; state.render.step = 2; state.render.overall = 10; renderSteps(2, "running");
+    for (;;) {
+      await new Promise(res => setTimeout(res, 1500));
+      const s = await (await fetch(`${url}/jobs/${job_id}`)).json();
+      state.render.progress = s.progress || 0; state.render.overall = 10 + (s.progress || 0) * 0.85;
+      if (s.message) $("#renderSub").textContent = s.message;
+      renderSteps(2, "running");
+      if (s.status === "error") throw new Error(s.message || "Render failed");
+      if (s.status === "done") break;
+    }
+    state.render.step = 3; state.render.overall = 97; renderSteps(3, "running");
+    const blob = await (await fetch(`${url}/jobs/${job_id}/audio`)).blob();
+    state.render.blob = blob;
+    await loadAudio(blob, `${spec.title}.${blob.type.includes("mpeg") ? "mp3" : blob.type.includes("flac") ? "flac" : blob.type.includes("ogg") ? "ogg" : "wav"}`);
+    Object.assign(state.render, { status: "done", step: 4 }); renderSteps(4, "done"); setRenderPill("ok", "Complete");
+    $("#renderSub").textContent = `Rendered with ${engineName(eng)}. The file is also in the bridge's renders folder.`;
+    toast("ok", "Render complete", `${spec.title} · ${engineName(eng)}`);
+  } catch (e) {
+    state.render.status = "error"; renderSteps(state.render.step, "error", state.render.step); setRenderPill("err", "Failed");
+    const msg = String(e.message || e).slice(0, 220);
+    $("#renderSub").textContent = msg;
+    toast("err", "Render failed", /out of memory|OOM/i.test(msg) ? "Out of memory. Try a shorter clip or lower stage-2 batch size." : msg, 9000);
+  } finally { clearInterval(tick); updateRenderStats(); }
+}
+
+/* ---------- audio + waveform ---------- */
+const audio = new Audio();
+let peaks = null;
+async function loadAudio(blob, name) {
+  audio.src = URL.createObjectURL(blob);
+  $("#audioName").textContent = name; $("#playBtn").disabled = false;
+  $("#saveAudioBtn").hidden = !state.render.blob;
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext; const ac = new AC();
+    const buf = await ac.decodeAudioData(await blob.arrayBuffer());
+    const ch = buf.getChannelData(0), n = 160, step = Math.floor(ch.length / n); peaks = [];
+    for (let i = 0; i < n; i++) { let m = 0; for (let j = i * step; j < (i + 1) * step; j += 32) m = Math.max(m, Math.abs(ch[j] || 0)); peaks.push(m); }
+    const mx = Math.max(...peaks, 0.01); peaks = peaks.map(p => p / mx); ac.close?.();
+  } catch { peaks = null; }
+  drawWave(); updateTime();
+}
+function drawWave() {
+  const c = $("#wave"); const dpr = window.devicePixelRatio || 1; const w = c.clientWidth, h = c.clientHeight; if (!w) return;
+  if (c.width !== w * dpr) { c.width = w * dpr; c.height = h * dpr; }
+  const g = c.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+  const n = Math.max(40, Math.floor(w / 5)); const bw = w / n;
+  const prog = audio.duration ? audio.currentTime / audio.duration : (state.render.status === "running" ? (state.render.overall || 0) / 100 : 0);
+  const grad = g.createLinearGradient(0, 0, w, 0); grad.addColorStop(0, "#007AFF"); grad.addColorStop(.6, "#5856D6"); grad.addColorStop(1, "#AF52DE");
+  for (let i = 0; i < n; i++) {
+    let a;
+    if (peaks) a = peaks[Math.floor(i / n * peaks.length)];
+    else { const x = i / n; a = 0.25 + 0.55 * Math.abs(Math.sin(x * 23.1) * Math.sin(x * 7.3 + 1.2)) * (0.6 + 0.4 * Math.sin(x * 3.1)); }
+    const bh = Math.max(3, a * (h - 8));
+    g.fillStyle = i / n <= prog ? grad : (peaks ? "rgba(235,235,245,.28)" : "rgba(235,235,245,.12)");
+    g.beginPath(); g.roundRect ? g.roundRect(i * bw + 1, (h - bh) / 2, Math.max(1.5, bw - 2), bh, 2) : g.rect(i * bw + 1, (h - bh) / 2, Math.max(1.5, bw - 2), bh); g.fill();
+  }
+}
+function updateTime() { $("#audioTime").textContent = `${fmt(audio.currentTime || 0)} / ${fmt(audio.duration || 0)}`; }
+audio.addEventListener("timeupdate", () => { updateTime(); drawWave(); });
+audio.addEventListener("ended", () => setPlayIcon(false));
+audio.addEventListener("loadedmetadata", updateTime);
+function setPlayIcon(p) { $("#playBtn").innerHTML = icon(p ? "pause" : "play"); $("#playBtn").setAttribute("aria-label", p ? "Pause" : "Play"); }
+
+/* ---------- library ---------- */
+function specColors(s) { const p = PRESETS.find(x => (s.genre || "").toLowerCase().includes(x.name.split(" ")[0].toLowerCase())); const h = [...(s.title || "x")].reduce((a, c) => a + c.charCodeAt(0), 0) % 360; return p ? p.colors : [`hsl(${h} 60% 30%)`, `hsl(${(h + 50) % 360} 80% 60%)`]; }
+function renderLibrary() {
+  $("#libStore").textContent = store.where();
+  const filters = ["All", ...CATEGORIES];
+  $("#libFilter").innerHTML = filters.map(f => `<button role="tab" data-libfilter="${f}" aria-selected="${state.libFilter === f}">${f}</button>`).join("");
+  const q = state.libSearch.toLowerCase();
+  const items = state.library.filter(s => (state.libFilter === "All" || s.category === state.libFilter) && (!q || [s.title, s.genre, s.key, s.concept].join(" ").toLowerCase().includes(q)));
+  if (!state.library.length) { $("#libList").innerHTML = `<div class="empty">${icon("note")}<b>No saved specs yet</b><span>Design a spec in the Studio, then press Save. It will show up here.</span></div>`; return; }
+  if (!items.length) { $("#libList").innerHTML = `<div class="empty"><b>Nothing matches</b><span>Try another search or category.</span></div>`; return; }
+  $("#libList").innerHTML = items.map(s => { const c = specColors(s); const rt = computeRuntime(s.structure, s.bpm); const len = composeStyle(s).length; return `<div class="lib-item">
+    <span class="sw" style="background:linear-gradient(135deg,${c[0]},${c[1]})"></span>
+    <div style="min-width:0"><b>${esc(s.title)}</b><small class="num">${esc(s.genre)} · ${s.bpm} BPM · ${esc(s.key)} · ${fmt(rt.secs)} · ${len}/${CHAR_LIMIT} chars · ${new Date(s.savedAt).toLocaleDateString()}</small></div>
+    <div class="lib-actions">${state.confirmDel === s.id
+      ? `<span class="confirm">Delete for good?<button class="btn btn-danger btn-sm" data-delspec="${s.id}">Delete</button><button class="btn btn-ghost btn-sm" data-action="cancel-del">Keep</button></span>`
+      : `<button class="btn btn-ghost btn-sm" data-openspec="${s.id}">Open</button><button class="iconbtn" data-askdel="${s.id}" aria-label="Delete ${esc(s.title)}">${icon("trash")}</button>`}</div></div>`; }).join("");
+}
+
+/* ---------- presets & profiles ---------- */
+function paintPresetArt(canvas, colors, seed) {
+  const dpr = window.devicePixelRatio || 1, w = canvas.clientWidth || 200, h = canvas.clientHeight || 112;
+  canvas.width = w * dpr; canvas.height = h * dpr; const g = canvas.getContext("2d"); g.scale(dpr, dpr);
+  const bg = g.createLinearGradient(0, 0, w, h); bg.addColorStop(0, colors[0]); bg.addColorStop(1, "#05050a"); g.fillStyle = bg; g.fillRect(0, 0, w, h);
+  for (let k = 0; k < 4; k++) {
+    g.beginPath(); g.lineWidth = 2 + k; g.strokeStyle = k % 2 ? colors[2] : colors[1]; g.globalAlpha = 0.55 - k * 0.1;
+    for (let x = 0; x <= w; x += 4) { const y = h * 0.6 + Math.sin(x / (18 + k * 9) + seed + k) * (14 + k * 6) * Math.sin(x / w * Math.PI); x ? g.lineTo(x, y) : g.moveTo(x, y); }
+    g.stroke();
+  }
+  g.globalAlpha = 1;
+}
+function renderPresets() {
+  $("#presetGrid").innerHTML = PRESETS.map(p => `<button class="preset" data-preset="${p.id}"><span class="art"><canvas></canvas></span><div class="meta"><b>${esc(p.name)}</b><small>${esc(p.sub)}</small></div></button>`).join("");
+  $$("#presetGrid .preset").forEach((el, i) => paintPresetArt(el.querySelector("canvas"), PRESETS[i].colors, i * 1.7));
+}
+function renderProfiles() {
+  $("#profileList").innerHTML = allProfiles().map(p => `<div class="profile"><header><b>${esc(p.name)}</b>${p.lane ? `<span class="chip">${esc(p.lane)}</span>` : ""}<span class="t3 num" style="font-size:13px">${p.text.length} chars</span><div class="spacer"></div>
+    ${BUILTIN_PROFILES.includes(p) ? `<span class="t3" style="font-size:12px">Built-in</span>` : `<button class="btn btn-ghost btn-sm" data-editprofile="${p.id}">Edit</button><button class="iconbtn" data-delprofile="${p.id}" aria-label="Delete ${esc(p.name)}">${icon("trash")}</button>`}
+    </header><p>${esc(p.text)}</p></div>`).join("");
+}
+function loadPreset(id) {
+  const p = PRESETS.find(x => x.id === id); if (!p) return;
+  $("#brief").value = p.brief; $("#category").value = p.cat; $("#structure").value = p.st;
+  if (p.st === "Beat / instrumental") $("#profile").value = "instrumental";
+  else if (id === "crunk") $("#profile").value = "rapgod";
+  else if (id === "afrorb") $("#profile").value = "mimi";
+  updateBriefCount(); saveDraft();
+  if (state.view !== "studio") go("studio");
+  toast("info", `${p.name} loaded`, "Adjust the brief, then press Design Spec.");
+  $("#brief").focus();
+}
+
+/* ---------- offline copy ---------- */
+async function offlineCopy() {
+  const html = "<!doctype html>\n" + document.documentElement.outerHTML;
+  await saveFile("alexandria.html", html, "text/html");
+}
+function bridgeCommand() {
+  const t = $("#engType").value;
+  if (t === "ace") return `1. In your ACE-Step-1.5 folder, double-click start_api_server.bat and wait until it says it's running.\n2. Double-click start_alexandria.bat (or run: python alexandria_bridge.py).`;
+  const flag = t === "yue" ? `--yue-dir C:\\path\\to\\YuE` : `--custom-cmd "python my_engine.py --tags {tags_file} --lyrics {lyrics_file} --out {out_dir}"`;
+  return `python alexandria_bridge.py ${flag} --port 7870`;
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", async e => {
+  const t = e.target.closest("[data-action],[data-nav],[data-seg],[data-preset],[data-copy],[data-openspec],[data-askdel],[data-delspec],[data-libfilter],[data-editprofile],[data-delprofile]");
+  if (!t) return;
+  const d = t.dataset;
+  if (d.nav) return go(d.nav);
+  if (d.seg) { state.seg = d.seg; return renderSpec(); }
+  if (d.preset) return loadPreset(d.preset);
+  if (d.libfilter) { state.libFilter = d.libfilter; return renderLibrary(); }
+  if (d.openspec) { const s = state.library.find(x => x.id === d.openspec); if (s) { state.spec = JSON.parse(JSON.stringify(s)); state.seg = "spec"; go("studio"); renderSpec(); } return; }
+  if (d.askdel) { state.confirmDel = d.askdel; return renderLibrary(); }
+  if (d.delspec) { try { await store.deleteSpec(d.delspec); toast("ok", "Spec deleted"); } catch { toast("err", "Couldn't delete", "Try again."); } state.confirmDel = null; return renderLibrary(); }
+  if (d.editprofile) { const p = getProfile(d.editprofile); state.editingProfile = p.id; $("#pName").value = p.name; $("#pText").value = p.text; $("#profileEditor").hidden = false; $("#pCount").textContent = p.text.length + " chars"; return; }
+  if (d.delprofile) { await store.deleteProfile(d.delprofile); renderProfiles(); renderProfileSelects(); return toast("ok", "Profile deleted"); }
+  if (d.copy) {
+    const spec = state.spec || EXAMPLE_SPEC;
+    const map = { style: [composeStyle(spec), "Style prompt"], lyrics: [spec.lyrics, "Lyrics"], "yue-tags": [spec.yue_tags, "YuE tags"], "yue-lyrics": [toYueLyrics(spec.lyrics).text, "YuE lyrics"] };
+    return copyText(...map[d.copy]);
+  }
+  switch (d.action) {
+    case "design": return designSpec();
+    case "synth": return synthesize();
+    case "connect": go("engines"); return testEngine(false);
+    case "smart-trim": return smartTrim();
+    case "clear-brief": $("#brief").value = ""; $("#title").value = ""; updateBriefCount(); saveDraft(); return;
+    case "import-spec": return $("#specFile").click();
+    case "load-audio": return $("#audioFile").click();
+    case "save-audio": if (state.render.blob) return saveFile($("#audioName").textContent, state.render.blob); return;
+    case "play": if (audio.paused) { try { await audio.play(); setPlayIcon(true); } catch { toast("warn", "Playback was blocked", "Press play again."); } } else { audio.pause(); setPlayIcon(false); } return;
+    case "save-spec": { if (!state.spec) return; try { const rec = await store.saveSpec(state.spec); state.spec.id = rec.id; toast("ok", "Saved to Library", state.spec.title); } catch { toast("err", "Couldn't save", "Your spec is still here. Try again."); } return; }
+    case "export-md": { const spec = state.spec || EXAMPLE_SPEC; const name = (spec.title || "spec").replace(/[^\w\- ]+/g, "").trim() || "spec"; await saveFile(name + ".md", specMarkdown(spec), "text/markdown"); await saveFile(name + ".json", JSON.stringify(spec, null, 2), "application/json"); return; }
+    case "cancel-del": state.confirmDel = null; return renderLibrary();
+    case "offline-copy": return offlineCopy();
+    case "copy-bridge-cmd": return copyText(bridgeCommand(), "Bridge command");
+    case "new-profile": state.editingProfile = null; $("#pName").value = ""; $("#pText").value = ""; $("#pCount").textContent = ""; $("#profileEditor").hidden = false; $("#pName").focus(); return;
+    case "cancel-profile": $("#profileEditor").hidden = true; return;
+    case "save-profile": {
+      const name = $("#pName").value.trim(), text = $("#pText").value.trim().replace(/[.\s]+$/, "");
+      if (!name || text.length < 10) return toast("warn", "Add a name and descriptors", "Descriptors need at least a few words.");
+      if (allProfiles().some(p => p.name.toLowerCase() === name.toLowerCase() && p.id !== state.editingProfile)) return toast("warn", "That name is taken", "Pick a different profile name.");
+      const p = { id: state.editingProfile || "p_" + uid(), name, text, lane: "Custom" };
+      try { await store.saveProfile(p); } catch { return toast("err", "Couldn't save the profile", "Try again."); }
+      $("#profileEditor").hidden = true; renderProfiles(); renderProfileSelects(); return toast("ok", "Profile saved", `${name} · ${text.length} chars`);
+    }
+    case "save-settings": state.settings.seed = $("#setSeed").value.trim().replace(/\D/g, ""); state.settings.duration = $("#setDuration").value; ls.set("settings", state.settings); return toast("ok", "Defaults saved");
+  }
+});
+$("#brief").addEventListener("input", () => { updateBriefCount(); saveDraft(); });
+["#title", "#category", "#structure", "#profile", "#duet", "#mic"].forEach(s => $(s).addEventListener("change", () => { saveDraft(); updateMicBlurb(); }));
+$("#libSearch").addEventListener("input", e => { state.libSearch = e.target.value; renderLibrary(); });
+$("#pText").addEventListener("input", e => $("#pCount").textContent = e.target.value.length + " chars");
+$("#engType").addEventListener("change", () => { $("#bridgeCmd").textContent = bridgeCommand(); $("#archEngine").textContent = engineName($("#engType").value); state.settings.engType = $("#engType").value; ls.set("settings", state.settings); if (state.engine.status === "connected") setEnginePill("connected", `Connected: ${engineName($("#engType").value)}`); });
+$("#specFile").addEventListener("change", async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  try { const o = JSON.parse(await f.text()); const s = normalizeSpec(o); s.category = o.category || s.category; s.title = o.title || s.title; state.spec = s; state.seg = "spec"; renderSpec(); toast("ok", "Spec imported", s.title); }
+  catch { toast("err", "That file isn't a spec", "Import a .json file exported from Alexandria."); }
+});
+$("#audioFile").addEventListener("change", async e => { const f = e.target.files[0]; e.target.value = ""; if (!f) return; state.render.blob = null; await loadAudio(f, f.name); toast("ok", "Audio loaded", f.name); });
+window.addEventListener("resize", () => drawWave());
+
+/* ---------- aurora hero (one ambient moment) ---------- */
+function aurora() {
+  const c = $("#aurora"); const g = c.getContext("2d"); const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let t0 = performance.now();
+  function frame(now) {
+    const dpr = window.devicePixelRatio || 1, w = c.clientWidth, h = c.clientHeight;
+    if (c.width !== Math.round(w * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
+    g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+    const t = (now - t0) / 1000;
+    const bands = [["#5856D6", .9], ["#007AFF", .8], ["#AF52DE", .55], ["#FF9500", .18]];
+    g.globalCompositeOperation = "lighter";
+    bands.forEach(([col, a], k) => {
+      for (let line = 0; line < 14; line++) {
+        g.beginPath(); g.strokeStyle = col; g.globalAlpha = a * (0.11 + 0.07 * Math.sin(line + k)); g.lineWidth = 1.6;
+        for (let x = 0; x <= w; x += 6) {
+          const u = x / w;
+          const y = h * (0.38 + k * 0.07) + Math.sin(u * 6.2 + t * (0.35 + k * 0.08) + line * 0.18 + k) * h * 0.16 * Math.sin(u * Math.PI) + Math.sin(u * 17 + t * 0.9 + k) * 5 + line * 2.2;
+          x ? g.lineTo(x, y) : g.moveTo(x, y);
+        }
+        g.stroke();
+      }
+    });
+    g.globalCompositeOperation = "source-over"; g.globalAlpha = 1;
+    const fade = g.createLinearGradient(0, 0, 0, h); fade.addColorStop(0, "rgba(5,5,10,0)"); fade.addColorStop(1, "rgba(5,5,10,.85)"); g.fillStyle = fade; g.fillRect(0, 0, w, h);
+    if (!reduce && !document.hidden) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && !reduce) requestAnimationFrame(frame); });
+}
+
+/* ---------- boot ---------- */
+async function boot() {
+  renderNav(); renderForm();
+  $("#engType").value = state.settings.engType; $("#engUrl").value = isLocalHost && location.protocol.startsWith("http") ? location.origin : state.settings.engUrl;
+  $("#setSeed").value = state.settings.seed; $("#setDuration").value = state.settings.duration;
+  $("#archEngine").textContent = engineName(state.settings.engType);
+  $("#bridgeCmd").textContent = bridgeCommand();
+  renderSpec(); renderSteps(0, "idle"); updateRenderStats(); setEnginePill("disconnected", "Disconnected");
+  // Served by the bridge itself (local or RunPod)? Then talk to it on this same address.
+  if (location.protocol.startsWith("http")) {
+    try {
+      const r = await fetch("/health", { cache: "no-store" });
+      if (r.status === 401) { location.href = "/login"; return; }
+      const h = await r.json();
+      if (h && h.ok) { isLocalHost = true; $("#engUrl").value = location.origin; state.settings.engUrl = location.origin; $("#signOut").hidden = false; }
+    } catch {}
+  }
+  go(state.view); aurora();
+  await caps;
+  $("#modeNote").textContent = sample ? "claude.ai — Design Spec via Claude. Synthesis needs the offline copy." : isLocalHost ? "Offline copy — local engines available. Import specs from claude.ai." : "claude.ai — not connected to Claude yet. Reload and allow access.";
+  $("#hostedNote").innerHTML = `${icon("info")}<span>${isLocalHost ? "You're running the offline copy, so the studio can talk to the bridge on this computer directly." : "This copy can reach the bridge on your computer when your browser allows it. If Test connection fails here, use <b>Save offline copy</b>, put it next to <span class=\"mono\">alexandria_bridge.py</span>, and open the studio from the bridge."}</span>`;
+  $("#offlineBtn").hidden = isLocalHost;
+  if (!sample) { $("#designNote").textContent = isLocalHost ? "Offline copy: Design Spec runs on claude.ai. Export a spec there, then use Import spec here." : "Couldn't connect to Claude in this view. Reload the page and allow Alexandria to use Claude when asked."; }
+  await store.loadAll();
+  renderProfileSelects(ls.get("draft", {}).profile ?? "mimi", ls.get("draft", {}).duet ?? "");
+  if (state.view === "library") renderLibrary();
+  if (state.view === "presets") renderProfiles();
+  if (isLocalHost) testEngine(true);
+}
+boot();
+})();
+</script>
