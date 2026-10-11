@@ -49,7 +49,7 @@ mkdir -p "$W/ace-checkpoints"
 
 echo "==> Alexandria studio and bridge"
 mkdir -p "$APP/renders"
-cp "$HERE/alexandria_bridge.py" "$HERE/alexandria.html" "$HERE/start.sh" "$APP/"
+cp "$HERE/alexandria_bridge.py" "$HERE/alexandria.html" "$HERE/start.sh" "$HERE/selftest.py" "$APP/"
 if [ -f "$HERE/alexandria_auth.json" ] && [ ! -f "$APP/alexandria_auth.json" ]; then
   cp "$HERE/alexandria_auth.json" "$APP/"
 fi

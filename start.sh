@@ -64,6 +64,10 @@ nohup python3 alexandria_bridge.py --host 0.0.0.0 --port 7870 --no-browser --ace
 sleep 2
 cat "$APP/logs/bridge.log"
 echo
+if [ "${ALEX_SELFTEST:-0}" = "1" ]; then
+  echo "==> Self-test running in the background (results appear in the pod log as SELFTEST lines)"
+  ACE_URL="$ACE_URL" python3 "$APP/selftest.py" 2>&1 | tee "$APP/logs/selftest.log" &
+fi
 if [ -n "${RUNPOD_POD_ID:-}" ]; then
   echo "Open:  https://${RUNPOD_POD_ID}-7870.proxy.runpod.net"
 else
