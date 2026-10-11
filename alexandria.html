@@ -622,7 +622,7 @@ input[type="range"]{accent-color:var(--blue)}
   <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></symbol>
 </svg>
 
-<script>
+<script id="alx-app">
 (() => {
 "use strict";
 /* ============================================================
@@ -1782,7 +1782,15 @@ Listener notes: ${notes || "none"}`, { modelTier: "default", cache: false });
 
 /* ---------- offline copy ---------- */
 async function offlineCopy() {
-  const html = "<!doctype html>\n" + document.documentElement.outerHTML;
+  // Save a clean studio: only our own markup, styles and script, reset to its starting state.
+  const doc = document.documentElement.cloneNode(true);
+  doc.querySelectorAll("script:not(#alx-app)").forEach(el => el.remove());
+  doc.querySelectorAll("#toasts > *, #idleBar").forEach(el => el.id === "idleBar" ? el.setAttribute("hidden", "") : el.remove());
+  doc.querySelectorAll("#fusion, #presetEditor, #voiceLab, #profileEditor, #specFile, #audioFile, #profileImport, #voiceFile").forEach(el => el.setAttribute("hidden", ""));
+  const head = doc.querySelector("head");
+  const ours = [...doc.querySelectorAll("title, style")].filter(el => el.closest("body") || el.tagName === "TITLE");
+  if (head) { head.innerHTML = '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'; ours.forEach(el => head.appendChild(el)); }
+  const html = "<!doctype html>\n" + doc.outerHTML;
   await saveFile("alexandria.html", html, "text/html");
 }
 function bridgeCommand() {
