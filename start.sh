@@ -32,6 +32,30 @@ else
     || echo "   ACE-Step hasn't answered yet; the studio will report it until it does. Check $APP/logs/ace-step.log"
 fi
 
+# ---------- AI writer: Ollama + open model, kept on the volume, listening only inside the pod ----------
+OLLAMA_DIR="$W/ollama"
+export OLLAMA_MODELS="$OLLAMA_DIR/models" OLLAMA_HOST="127.0.0.1:11434" OLLAMA_KEEP_ALIVE="${ALEX_LLM_KEEP_ALIVE:-10m}"
+ALEX_LLM_MODEL="${ALEX_LLM_MODEL:-qwen3.6:27b}"; export ALEX_LLM_MODEL
+if [ "${ALEX_LLM_DISABLE:-0}" != "1" ]; then
+  if [ ! -x "$OLLAMA_DIR/bin/ollama" ]; then
+    echo "==> Installing Ollama onto the volume"
+    command -v zstd >/dev/null || { apt-get update -qq && apt-get install -y -qq zstd >/dev/null; }
+    mkdir -p "$OLLAMA_DIR" && curl -fsSL https://ollama.com/download/ollama-linux-amd64.tar.zst | tar x --zstd -C "$OLLAMA_DIR" \
+      || echo "   Ollama install failed; the AI writer will use Claude if it's set up."
+  fi
+  if [ -x "$OLLAMA_DIR/bin/ollama" ]; then
+    mkdir -p "$OLLAMA_MODELS"
+    if ! curl -fs http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then
+      nohup "$OLLAMA_DIR/bin/ollama" serve > "$APP/logs/ollama.log" 2>&1 &
+      for i in $(seq 1 30); do curl -fs http://127.0.0.1:11434/api/tags >/dev/null 2>&1 && break; sleep 1; done
+    fi
+    if ! "$OLLAMA_DIR/bin/ollama" list 2>/dev/null | awk '{print $1}' | grep -qx "$ALEX_LLM_MODEL"; then
+      echo "==> Downloading the open model $ALEX_LLM_MODEL in the background (first time only)"
+      nohup "$OLLAMA_DIR/bin/ollama" pull "$ALEX_LLM_MODEL" > "$APP/logs/ollama-pull.log" 2>&1 &
+    fi
+  fi
+fi
+
 pkill -f "alexandria_bridge.py" 2>/dev/null || true
 echo "==> Starting the studio on port 7870"
 cd "$APP"

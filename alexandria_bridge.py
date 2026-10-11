@@ -52,7 +52,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-STORE_NAMES = {"specs", "profiles", "presets", "genres"}
+STORE_NAMES = {"specs", "profiles", "presets", "genres", "lyrics"}
 
 # Export formats: key -> (extension, mime, ffmpeg output arguments). Surround versions are upmixed from the stereo render.
 UPMIX = ["-af", "surround=chl_out=5.1:lfe_low=120,aresample=48000"]
@@ -76,6 +76,119 @@ EXPORT_FORMATS = {
     "mp4_aac":   (".mp4",  "audio/mp4",  ["-ar", "48000", "-ac", "2", "-c:a", "aac", "-b:a", "256k", "-movflags", "+faststart"]),
     "mkv_ac3":   (".mkv",  "audio/x-matroska", UPMIX + ["-c:a", "ac3", "-b:a", "640k"]),
 }
+
+
+# ---------- AI writer: open model on this machine first (Ollama), Claude API as the fallback ----------
+LLM_JOBS = {}
+LLM_LOCK = threading.Lock()
+
+
+def ollama_url():
+    return os.environ.get("ALEX_OLLAMA_URL", "http://127.0.0.1:11434").rstrip("/")
+
+
+def local_model():
+    return os.environ.get("ALEX_LLM_MODEL", "qwen3.6:27b")
+
+
+def claude_key():
+    k = os.environ.get("ALEX_ANTHROPIC_KEY") or os.environ.get("ANTHROPIC_API_KEY") or ""
+    return "" if k.startswith("{{") else k   # an unresolved RunPod secret placeholder means "not set"
+
+
+def llm_status():
+    st = {"local": {"up": False, "model": local_model(), "ready": False}, "claude": {"configured": bool(claude_key()),
+          "model": os.environ.get("ALEX_CLAUDE_MODEL", "claude-sonnet-5-5")}}
+    try:
+        tags = http_json(ollama_url() + "/api/tags", timeout=2) or {}
+        st["local"]["up"] = True
+        names = {m.get("name") for m in tags.get("models", [])} | {m.get("model") for m in tags.get("models", [])}
+        st["local"]["ready"] = local_model() in names or (local_model() + ":latest") in names
+    except Exception:
+        pass
+    st["available"] = st["local"]["ready"] or st["claude"]["configured"]
+    return st
+
+
+def _strip_json(text):
+    t = (text or "").strip()
+    m = re.search(r"```(?:json)?\s*(.*?)```", t, re.S)
+    if m:
+        t = m.group(1).strip()
+    if not t.startswith(("{", "[")):
+        i = min([x for x in (t.find("{"), t.find("[")) if x >= 0] or [0])
+        t = t[i:]
+    return t
+
+
+def ask_local(prompt, schema, want_json, max_tokens, temperature):
+    body = {"model": local_model(), "messages": [{"role": "user", "content": prompt}], "stream": False, "think": False,
+            "options": {"temperature": temperature, "num_ctx": 16384, "num_predict": max_tokens}}
+    if schema:
+        body["format"] = schema
+    elif want_json:
+        body["format"] = "json"
+    res = http_json(ollama_url() + "/api/chat", body, timeout=900)
+    return ((res or {}).get("message") or {}).get("content", "")
+
+
+def ask_claude(prompt, want_json, max_tokens, temperature):
+    key = claude_key()
+    if not key:
+        raise RuntimeError("Claude fallback isn't set up (no Anthropic API key on this machine).")
+    body = {"model": os.environ.get("ALEX_CLAUDE_MODEL", "claude-sonnet-5-5"), "max_tokens": max_tokens, "temperature": temperature,
+            "messages": [{"role": "user", "content": prompt + ("\n\nReturn only the JSON object, no commentary." if want_json else "")}]}
+    req = urllib.request.Request(os.environ.get("ALEX_ANTHROPIC_URL", "https://api.anthropic.com").rstrip("/") + "/v1/messages", data=json.dumps(body).encode(), method="POST",
+                                 headers={"Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01",
+                                          "User-Agent": "alexandria-bridge/1.4"})
+    try:
+        with urllib.request.urlopen(req, timeout=300) as r:
+            res = json.loads(r.read().decode())
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"Claude API returned {e.code}: {e.read().decode(errors='replace')[:200]}")
+    return "".join(b.get("text", "") for b in res.get("content", []) if b.get("type") == "text")
+
+
+def llm_worker(job_id, req):
+    prompt = str(req.get("prompt") or "")
+    schema = req.get("schema") if isinstance(req.get("schema"), dict) else None
+    want_json = bool(req.get("json") or schema)
+    max_tokens = int(req.get("max_tokens") or (4096 if want_json else 1024))
+    temperature = float(req.get("temperature") if req.get("temperature") is not None else 0.7)
+    prefer = req.get("prefer") or "local"
+    order = ["claude", "local"] if prefer == "claude" else ["local", "claude"]
+    errors = []
+    for provider in order:
+        try:
+            if provider == "local":
+                st = llm_status()["local"]
+                if not st["ready"]:
+                    raise RuntimeError("the open model isn't downloaded yet" if st["up"] else "the open model server isn't running")
+                with LLM_LOCK:
+                    LLM_JOBS[job_id].update(status="running", provider="local", message=f"Writing with {local_model()}…")
+                text = ask_local(prompt, schema, want_json, max_tokens, temperature)
+                model = local_model()
+            else:
+                with LLM_LOCK:
+                    LLM_JOBS[job_id].update(status="running", provider="claude", message="Writing with Claude…")
+                text = ask_claude(prompt, want_json, max_tokens, temperature)
+                model = os.environ.get("ALEX_CLAUDE_MODEL", "claude-sonnet-5-5")
+            if want_json:  # must parse and carry the required keys, or try the next provider
+                try:
+                    val = json.loads(_strip_json(text))
+                except ValueError:
+                    raise RuntimeError("its reply wasn't valid JSON")
+                missing = [k for k in (schema or {}).get("required", []) if not isinstance(val, dict) or k not in val]
+                if missing:
+                    raise RuntimeError("its reply was missing " + ", ".join(missing[:4]))
+                text = _strip_json(text)
+            with LLM_LOCK:
+                LLM_JOBS[job_id].update(status="done", text=text, provider=provider, model=model, fallback_reasons=errors)
+            return
+        except Exception as e:  # noqa: BLE001
+            errors.append(f"{provider}: {str(e)[:200]}")
+    with LLM_LOCK:
+        LLM_JOBS[job_id].update(status="error", message="No AI writer could answer. " + " | ".join(errors))
 
 
 def ffmpeg_path():
@@ -598,11 +711,18 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             return self.wfile.write(data)
         if path == "/health":
-            return self.send_json({"ok": True, "version": "1.2", "store": True,
+            return self.send_json({"ok": True, "version": "1.4", "store": True,
                                    "idle": {"enabled": bool(ARGS.idle_stop_minutes), "seconds_left": idle_seconds_left(),
                                             "minutes": ARGS.idle_stop_minutes, "key": bool(runpod_key()),
                                             "error": IDLE_STATE["error"]},
                                    "engines": {"yue": bool(ARGS.yue_dir), "ace": ace_alive(), "custom": bool(ARGS.custom_cmd)}})
+        if path == "/llm/status":
+            return self.send_json(llm_status())
+        m = re.fullmatch(r"/llm/([a-f0-9]{12})", path)
+        if m:
+            with LLM_LOCK:
+                job = dict(LLM_JOBS.get(m.group(1)) or {})
+            return self.send_json(job or {"status": "error", "message": "No such writing job"}, 200 if job else 404)
         if path == "/formats":
             return self.send_json({"ffmpeg": bool(ffmpeg_path()), "formats": list(EXPORT_FORMATS)})
         m = re.fullmatch(r"/store/([a-z]+)", path)
@@ -628,7 +748,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Content-Length", str(len(data)))
             self.end_headers()
             return self.wfile.write(data)
-        m = re.fullmatch(r"/logs/(bootstrap|ace-step|bridge)", path)
+        m = re.fullmatch(r"/logs/(bootstrap|ace-step|bridge|ollama|ollama-pull)", path)
         if m:
             f = Path(ARGS.out).parent / "logs" / f"{m.group(1)}.log"
             text = "\n".join(f.read_text(errors="replace").splitlines()[-300:]) if f.exists() else f"(no {f.name} yet)"
@@ -696,6 +816,18 @@ class Handler(BaseHTTPRequestHandler):
             return self.do_login()
         if not self.authed():
             return self.deny(self.path)
+        if self.path.split("?")[0] == "/llm":
+            try:
+                req = json.loads(self.rfile.read(min(int(self.headers.get("Content-Length") or 0), 2 * 1024 * 1024)) or b"{}")
+            except json.JSONDecodeError:
+                return self.send_json({"error": "Body must be JSON"}, 400)
+            job_id = uuid.uuid4().hex[:12]
+            with LLM_LOCK:
+                LLM_JOBS[job_id] = {"status": "queued", "message": "Queued", "started": time.time()}
+                for old in [k for k, v in LLM_JOBS.items() if time.time() - v.get("started", 0) > 3600]:
+                    LLM_JOBS.pop(old, None)
+            threading.Thread(target=llm_worker, args=(job_id, req), daemon=True).start()
+            return self.send_json({"id": job_id})
         if self.path.split("?")[0] == "/export":
             q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
             fmt = (q.get("fmt") or [""])[0]
@@ -805,6 +937,9 @@ def main():
     engines = [n for n, on in (("YuE", ARGS.yue_dir), (f"ACE-Step {ARGS.ace_version} at {ace}", ace), ("custom", ARGS.custom_cmd)) if on]
     print(f"Sign-in: {'password required' if AUTH else 'off (local only)'}")
     print(f"Alexandria Bridge on http://{ARGS.host}:{ARGS.port}  engines: {', '.join(engines) or 'none found yet'}")
+    ls_ = llm_status()
+    print(f"AI writer: open model {local_model()} {'ready' if ls_['local']['ready'] else ('server up, model not downloaded yet' if ls_['local']['up'] else 'not running')}; "
+          f"Claude fallback {'configured' if ls_['claude']['configured'] else 'not configured'}")
     if not engines:
         print("  No music engine is running. Start ACE-Step 1.5's API server (start_api_server.bat);")
         print("  the bridge will find it on http://127.0.0.1:8001 without a restart.")

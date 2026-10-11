@@ -416,6 +416,21 @@ input[type="range"]{accent-color:var(--blue)}
           </div>
           <div class="lib" id="libList"></div>
         </div>
+        <div class="card">
+          <div class="card-h"><svg class="i"><use href="#i-mic"/></svg><h3>My lyrics</h3><span class="t3 num" id="lyricsCount" style="font-size:13px"></span><div class="spacer"></div>
+            <button class="btn btn-ghost btn-sm" data-action="upload-lyrics"><svg class="i"><use href="#i-upload"/></svg>Upload files</button>
+            <button class="btn btn-ghost btn-sm" data-action="paste-lyric"><svg class="i"><use href="#i-plus"/></svg>Paste a song</button>
+            <input type="file" id="lyricsFiles" accept=".txt,.md,.lrc,text/plain,text/markdown" multiple hidden>
+          </div>
+          <p class="t2" style="font-size:14px;margin-bottom:10px">Your own songs teach the AI writer your voice. When it writes a spec, it studies the few lyrics closest to your brief and writes new lines in your style. It never reuses your lines.</p>
+          <label class="check" style="margin:0 0 12px"><input type="checkbox" id="useMyLyrics"> Use my lyrics as style examples</label>
+          <div id="lyricEditor" class="editor" hidden>
+            <div class="fields"><div class="field"><label for="lyTitle">Song title</label><input id="lyTitle" class="input" maxlength="80"></div><div class="field"><label for="lyTags">Tags (optional)</label><input id="lyTags" class="input" maxlength="80" placeholder="e.g. Afro-R&B, love, Mimi"></div></div>
+            <div class="field" style="margin-top:10px"><label for="lyText">Lyrics</label><textarea id="lyText" class="input" style="min-height:200px" maxlength="20000" placeholder="[Verse 1]&#10;…"></textarea></div>
+            <div class="row" style="margin-top:10px"><button class="btn btn-primary btn-sm" data-action="save-lyric">Save song</button><button class="btn btn-ghost btn-sm" data-action="cancel-lyric">Cancel</button></div>
+          </div>
+          <div class="lib" id="lyricsList"></div>
+        </div>
       </section>
 
       <!-- ENGINES -->
@@ -487,7 +502,7 @@ input[type="range"]{accent-color:var(--blue)}
             </div>
             <div class="row" style="margin-top:12px">
               <button class="btn btn-primary btn-sm" data-action="build-fusion"><svg class="i"><use href="#i-sliders"/></svg>Build brief</button>
-              <button class="btn btn-indigo btn-sm" data-action="claude-fusion" id="claudeFusionBtn"><svg class="i"><use href="#i-sparkles"/></svg>Write it with Claude</button>
+              <button class="btn btn-indigo btn-sm" data-action="claude-fusion" id="claudeFusionBtn"><svg class="i"><use href="#i-sparkles"/></svg>Write it with AI</button>
             </div>
             <div class="field" style="margin-top:12px"><label for="fusionBrief">Fusion brief</label><textarea id="fusionBrief" class="input" maxlength="2000" placeholder="Pick genres, then press Build brief."></textarea></div>
             <div class="row" style="margin-top:10px">
@@ -536,7 +551,7 @@ input[type="range"]{accent-color:var(--blue)}
               <label class="check"><input type="checkbox" id="voiceConsent"> This is my own voice, or I have the singer's permission to use it.</label>
               <div class="row" style="margin-top:10px">
                 <button class="btn btn-primary btn-sm" data-action="voice-to-profile"><svg class="i"><use href="#i-check"/></svg>Create profile</button>
-                <button class="btn btn-indigo btn-sm" data-action="voice-claude" id="voiceClaudeBtn"><svg class="i"><use href="#i-sparkles"/></svg>Create with Claude's wording</button>
+                <button class="btn btn-indigo btn-sm" data-action="voice-claude" id="voiceClaudeBtn"><svg class="i"><use href="#i-sparkles"/></svg>Create with AI wording</button>
                 <button class="btn btn-ghost btn-sm" data-action="close-voicelab">Close</button>
               </div>
             </div>
@@ -548,7 +563,7 @@ input[type="range"]{accent-color:var(--blue)}
               <div class="field"><label for="pName">Name</label><input id="pName" class="input" maxlength="24"></div>
               <div class="field"><label for="pLane">Lane / role</label><input id="pLane" class="input" maxlength="40" placeholder="e.g. Gospel lead, duet partner"></div>
             </div>
-            <div class="row" style="margin-top:10px"><input id="pIdea" class="input grow" maxlength="200" placeholder="Short idea for Claude, e.g. gritty Southern baritone with gospel runs"><button class="btn btn-indigo btn-sm" data-action="profile-claude" id="profileClaudeBtn"><svg class="i"><use href="#i-sparkles"/></svg>Write it with Claude</button></div>
+            <div class="row" style="margin-top:10px"><input id="pIdea" class="input grow" maxlength="200" placeholder="Short idea, e.g. gritty Southern baritone with gospel runs"><button class="btn btn-indigo btn-sm" data-action="profile-claude" id="profileClaudeBtn"><svg class="i"><use href="#i-sparkles"/></svg>Write it with AI</button></div>
             <div class="field" style="margin-top:10px"><label for="pText">Descriptors</label><textarea id="pText" class="input" maxlength="1200"></textarea></div>
             <div class="row" id="pVoiceRow" style="margin-top:8px" hidden><span class="chip" id="pVoiceChip"></span><button class="btn btn-ghost btn-sm" data-action="remove-voiceref">Remove voice reference</button></div>
             <div class="row" style="margin-top:10px"><button class="btn btn-primary btn-sm" data-action="save-profile">Save profile</button><button class="btn btn-ghost btn-sm" data-action="cancel-profile">Cancel</button><span class="t3 num" id="pCount" style="font-size:13px"></span></div>
@@ -561,8 +576,9 @@ input[type="range"]{accent-color:var(--blue)}
       <!-- SETTINGS -->
       <section class="view" id="view-settings" hidden>
         <div class="card">
-          <div class="card-h"><svg class="i"><use href="#i-note"/></svg><h3>What's new</h3><span class="chip">v1.3</span></div>
+          <div class="card-h"><svg class="i"><use href="#i-note"/></svg><h3>What's new</h3><span class="chip">v1.4</span></div>
           <dl class="kv">
+            <dt>v1.4</dt><dd>Every AI feature works on the engine: an open-source model runs on your pod (Qwen3.6 27B by default) with Claude as the fallback. My lyrics: upload or paste your own songs and the writer studies the closest ones to write in your voice. Automatic runtime repair for specs.</dd>
             <dt>v1.3</dt><dd>Export in 18 formats: WAV and AIFF masters, FLAC, ALAC, MP3, AAC, Ogg Vorbis, Opus, CD (Red Book), Dolby Digital, Dolby Digital Plus, Dolby TrueHD, DTS, 5.1 WAV, MP4 and MKV.</dd>
             <dt>v1.2</dt><dd>Full player controls (top, ±10 s, end, loop, speed, volume, click or drag the waveform to choose where to play from, keyboard shortcuts). Editable preset library with a Mix genres builder and your own genres. Vocal profiles: edit, duplicate, delete, import, export, and create from a vocal sample. On the engine, your library is saved on the pod's storage.</dd>
             <dt>v1.1</dt><dd>RunPod engine: password sign-in, idle auto-stop after 30 minutes with an in-studio countdown, engine log viewer.</dd>
@@ -836,12 +852,109 @@ const caps = (async () => {
   } catch {}
 })();
 
+/* ---------- AI writer: Claude on claude.ai; on the engine, the open model first with Claude as the fallback ---------- */
+const ai = {
+  status: null,
+  async refresh() {
+    await caps;
+    if (sample) return (this.status = { mode: "claude", label: "Claude", available: true });
+    if (bridgeMode) {
+      try {
+        const st = await (await fetch("/llm/status", { cache: "no-store" })).json();
+        const local = st.local?.ready, claudeOk = st.claude?.configured;
+        return (this.status = { mode: "engine", available: !!st.available, local: st.local, claude: st.claude,
+          label: local ? `${st.local.model} on your engine${claudeOk ? " (Claude as fallback)" : ""}` : claudeOk ? "Claude (open model not ready)" : "none" });
+      } catch {}
+    }
+    return (this.status = { mode: "none", available: false, label: "none" });
+  },
+  async ready() { if (!this.status || !this.status.available) await this.refresh(); return this.status.available; },
+  unavailableMsg() {
+    if (this.status?.mode === "engine") {
+      const l = this.status.local || {};
+      return l.up ? "The open model is still downloading on your engine (first start only). Try again in a few minutes." : "The engine's AI writer isn't running yet. Restart the pod, or set up the Claude fallback.";
+    }
+    return isLocalHost ? "This offline copy has no AI writer. Use the engine studio or the claude.ai copy." : "Reload the page and allow Alexandria to use Claude when asked.";
+  },
+  /* run(prompt, { json, schema, tier, onProgress }) -> { text, value, provider, model } */
+  async run(prompt, o = {}) {
+    if (!(await this.ready())) throw Object.assign(new Error(this.unavailableMsg()), { code: "no_ai" });
+    if (this.status.mode === "claude") {
+      const opts = { modelTier: o.tier || "default", cache: false, onText: o.onProgress ? ({ text }) => o.onProgress(text) : undefined };
+      if (o.json || o.schema) { const value = await sample.json(prompt, opts); return { value, text: JSON.stringify(value), provider: "claude", model: "Claude" }; }
+      const out = await sample(prompt, opts); return { text: out.text || "", provider: "claude", model: "Claude" };
+    }
+    const r = await fetch("/llm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt, json: !!(o.json || o.schema), schema: o.schema || null, max_tokens: o.maxTokens || (o.json || o.schema ? 6000 : 1200), temperature: o.temperature ?? 0.7 }) });
+    if (r.status === 401) { location.href = "/login"; throw new Error("Signed out"); }
+    const { id } = await r.json(); const t0 = Date.now();
+    for (;;) {
+      await new Promise(res => setTimeout(res, 1500));
+      const j = await (await fetch(`/llm/${id}`, { cache: "no-store" })).json();
+      o.onProgress?.(null, `${j.message || "Writing…"} ${Math.round((Date.now() - t0) / 1000)}s`);
+      if (j.status === "done") {
+        const out = { text: j.text, provider: j.provider, model: j.model, fallbackReasons: j.fallback_reasons || [] };
+        if (o.json || o.schema) out.value = JSON.parse(j.text);
+        return out;
+      }
+      if (j.status === "error") throw new Error(j.message || "The AI writer failed.");
+      if (Date.now() - t0 > 15 * 60 * 1000) throw new Error("The AI writer took longer than 15 minutes.");
+    }
+  },
+};
+const providerNote = r => r.provider === "claude" ? (ai.status?.mode === "engine" ? `Written by Claude (fallback${r.fallbackReasons?.length ? "; open model: " + r.fallbackReasons[0].replace(/^local: /, "") : ""})` : "Written by Claude") : `Written by ${r.model} on your engine`;
+function aiErr(e) {
+  const code = e?.code;
+  return code === "not_granted" ? "Allow Alexandria to ask Claude when prompted, then try again." : code === "rate_limited" ? "You've hit a usage limit. Wait a minute and try again."
+    : code === "invalid_json" ? "The reply wasn't complete. Try again." : String(e?.message || e || "Try again in a moment.").slice(0, 220);
+}
+
+/* ---------- your own lyrics as style examples ---------- */
+const lyricWords = t => (String(t).toLowerCase().match(/[a-z']{4,}/g) || []);
+function pickLyricExamples(query, n = 3, maxEach = 900) {
+  if (!ls.get("useMyLyrics", true)) return [];
+  const all = store.cache.lyrics || []; if (!all.length) return [];
+  const q = new Set(lyricWords(query));
+  const scored = all.map(l => { const w = lyricWords(l.title + " " + (l.tags || "") + " " + l.text); let hit = 0; for (const x of new Set(w)) if (q.has(x)) hit++; return { l, score: hit + Math.random() * 0.5 }; });
+  return scored.sort((a, b) => b.score - a.score).slice(0, n).map(({ l }) => ({ title: l.title, text: l.text.length > maxEach ? l.text.slice(0, maxEach) + "\n…" : l.text }));
+}
+function lyricExamplesBlock(query) {
+  const ex = pickLyricExamples(query); if (!ex.length) return "";
+  return `\nTHE ARTIST'S OWN PAST LYRICS (study and match this writer's voice: vocabulary, imagery, rhyme habits, meter, point of view, emotional register. Never copy or reuse their lines; write new ones in their voice):\n${ex.map(e => `--- "${e.title}" ---\n${e.text}`).join("\n")}\n--- end of examples ---\n`;
+}
+function renderLyricsLib() {
+  const list = store.cache.lyrics || [];
+  $("#useMyLyrics").checked = ls.get("useMyLyrics", true);
+  $("#lyricsList").innerHTML = list.length ? list.map(l => `<div class="lib-item" style="grid-template-columns:minmax(0,1fr) auto">
+    <div style="min-width:0"><b>${esc(l.title)}</b><small class="num">${lyricWords(l.text).length} words${l.tags ? " · " + esc(l.tags) : ""} · added ${new Date(l.addedAt || Date.now()).toLocaleDateString()}</small></div>
+    <div class="lib-actions">${state.confirmLyric === l.id ? `<span class="confirm">Delete?<button class="btn btn-danger btn-sm" data-dellyric="${esc(l.id)}">Delete</button><button class="btn btn-ghost btn-sm" data-action="cancel-dellyric">Keep</button></span>` : `<button class="iconbtn" data-asklyric="${esc(l.id)}" aria-label="Delete ${esc(l.title)}">${icon("trash")}</button>`}</div></div>`).join("")
+    : `<div class="empty">${icon("note")}<b>No lyrics yet</b><span>Upload .txt or .md files, or paste a song. The AI writer studies them to write in your voice.</span></div>`;
+  $("#lyricsCount").textContent = list.length ? `${list.length} song${list.length === 1 ? "" : "s"} · ${list.reduce((a, l) => a + lyricWords(l.text).length, 0).toLocaleString()} words` : "";
+}
+/* A file's title: a leading "# Title" or a short first line set apart from the lyrics; otherwise the file name. */
+function splitLyricFile(name, raw) {
+  let text = String(raw || "").replace(/\r\n/g, "\n").replace(/^\[\d{1,2}:\d{2}(?:\.\d+)?\]/gm, "").replace(/^\[(ti|ar|al|by|length|offset|re|ve):.*\]$/gim, "").trim();
+  const lines = text.split("\n"), first = (lines[0] || "").trim(), next = (lines[1] || "").trim();
+  let title = "";
+  if (/^#{1,3}\s+\S/.test(first)) title = first.replace(/^#+\s*/, "");
+  else if (first && first.length <= 60 && !/^\[.*\]$/.test(first) && !/[,;]$/.test(first) && (next === "" || /^\[.*\]$/.test(next))) title = first;
+  if (title) text = lines.slice(1).join("\n").trim();
+  else title = name.replace(/\.(txt|md|lrc)$/i, "").replace(/[_-]+/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  return { title: title.slice(0, 80), text };
+}
+async function addLyric(title, text, tags) {
+  text = String(text || "").replace(/\r\n/g, "\n").trim(); title = String(title || "").trim() || text.split("\n").find(x => x.trim() && !/^\[/.test(x))?.slice(0, 60) || "Untitled";
+  if (text.length < 40) throw new Error(`"${title}" is too short to learn from.`);
+  if (text.length > 20000) text = text.slice(0, 20000);
+  const rec = { id: "ly_" + uid(), title: title.slice(0, 80), text, tags: String(tags || "").slice(0, 80), addedAt: Date.now() };
+  await store.put("lyrics", rec); return rec;
+}
+
 /* ---------- storage: claude.ai account (db) · engine volume (bridge) · this browser (local) ---------- */
-const COLLECTIONS = ["specs", "profiles", "presets", "genres"];
-const LOCAL_KEY = { specs: "library", profiles: "profiles", presets: "presets", genres: "genres" };
+const COLLECTIONS = ["specs", "profiles", "presets", "genres", "lyrics"];
+const LOCAL_KEY = { specs: "library", profiles: "profiles", presets: "presets", genres: "genres", lyrics: "lyrics" };
 const store = {
   backend: "local",
-  cache: { specs: [], profiles: [], presets: [], genres: [] },
+  cache: { specs: [], profiles: [], presets: [], genres: [], lyrics: [] },
   where() { return { db: "Saved to your Alexandria library on claude.ai (private to you)", bridge: "Saved on your engine's storage", local: "Saved in this browser" }[this.backend]; },
   async loadAll() {
     this.backend = db ? "db" : bridgeMode ? "bridge" : "local";
@@ -924,7 +1037,7 @@ function go(view) {
   VIEWS.forEach(([k]) => $("#view-" + k).hidden = k !== view);
   $("#viewTitle").textContent = VIEWS.find(v => v[0] === view)[1];
   renderNav();
-  if (view === "library") renderLibrary();
+  if (view === "library") { renderLibrary(); renderLyricsLib(); }
   if (view === "presets") { renderPresets(); renderProfiles(); }
   window.scrollTo({ top: 0 });
 }
@@ -981,6 +1094,7 @@ STRUCTURE: ${form}
 VOCAL: ${instrumental ? "Instrumental. No vocal descriptors, lyrics must be an empty string." : profiles.length ? `The app inserts these protected vocal profiles verbatim between your two style fields; do not restate or paraphrase them: ${profiles.map(p => `${p.name}${p.lane ? " (" + p.lane + ")" : ""}`).join(" + ")}. Write lyrics suited to ${profiles.length > 1 ? "a duet with call-and-response" : "this voice"}.` : "Write your own vocal descriptors in vocal_descriptors (delivery, register, phrasing, harmonies)."}
 ${mic && mic.sound ? `VOCAL CHAIN: put this sonic character into the mix notes and style_post_vocal as descriptors (no brand names): ${mic.sound}.` : ""}
 
+${lyricExamplesBlock(brief + " " + ($("#title").value || ""))}
 HOUSE RULES (all mandatory):
 1. Style prompt order is genre -> tempo/feel -> drums -> harmony -> vocal -> space/mood. style_pre_vocal covers genre, tempo, drums, harmony. style_post_vocal covers space, mix, beat-switch or dropout moments, and ends with a mood closer.
 2. Character budget: style_pre_vocal + ${profiles.length || instrumental ? "" : "vocal_descriptors + "}style_post_vocal must total at most ${budget} characters including spaces; use only what the track needs, there is no need to fill the budget, and end with a mood closer. Comma-separated descriptors, no sentences, no line breaks.
@@ -999,24 +1113,24 @@ Return only JSON with exactly these keys:
 async function designSpec() {
   const brief = $("#brief").value.trim();
   if (brief.length < 8) { toast("warn", "Add a brief first", "A sentence about the mood, genre or story is enough."); $("#brief").focus(); return; }
-  await caps;
-  if (!sample) { if (isLocalHost) toast("warn", "Design Spec runs in the claude.ai copy", "This offline copy can't reach Claude. Design on claude.ai, press Export, then Import spec here."); else toast("warn", "Couldn't connect to Claude", "Reload the page and allow Alexandria to use Claude when asked. If you declined before, turn it on in the artifact's Permissions menu.", 10000); return; }
+  if (!(await ai.ready())) { toast("warn", "No AI writer available here", ai.unavailableMsg(), 10000); return; }
   const btn = $("#designBtn");
   btn.disabled = true; btn.innerHTML = `${icon("loader", "i spin")}<span>Designing…</span>`;
   $("#designNote").textContent = "Writing the spec: structure, Beat Blueprint, lyrics and style prompt.";
   try {
-    const out = await sample.json(buildPrompt(), { modelTier: "complex", cache: false, onText: ({ text }) => { $("#designNote").textContent = text && text.length > 20 ? `Writing… ${text.length.toLocaleString()} characters so far` : "Thinking…"; } });
-    const spec = normalizeSpec(out);
+    const res = await ai.run(buildPrompt(), { schema: SPEC_SCHEMA, tier: "complex", onProgress: (text, msg) => { $("#designNote").textContent = msg || (text && text.length > 20 ? `Writing… ${text.length.toLocaleString()} characters so far` : "Thinking…"); } });
+    const spec = normalizeSpec(res.value);
+    spec.writtenBy = res.model;
+    await repairRuntime(spec);
     state.spec = spec; state.seg = "spec";
     renderSpec();
     const s = composeStyle(spec);
-    toast("ok", "Design spec generated", `${spec.structure.length} sections · ${s.length}/${CHAR_LIMIT} characters`);
+    toast("ok", "Design spec generated", `${spec.structure.length} sections · ${s.length}/${CHAR_LIMIT} characters · ${providerNote(res)}`, 8000);
     if (s.length > CHAR_LIMIT) smartTrim();
     $("#designNote").textContent = "";
     $("#specCard").scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (e) {
-    const msg = { not_granted: "Allow Alexandria to ask Claude when prompted, then try again.", rate_limited: "You've hit a usage limit. Wait a minute and try again.", invalid_json: "The reply wasn't a complete spec. Press Design Spec to ask again.", cancelled: "Cancelled." }[e?.code] || "Something went wrong reaching Claude. Try again in a moment.";
-    toast("err", "Couldn't design the spec", msg, 8000);
+    toast("err", "Couldn't design the spec", aiErr(e), 10000);
     $("#designNote").textContent = "";
   } finally {
     btn.disabled = false; btn.innerHTML = `${icon("sparkles")}<span>Design Spec</span>`;
@@ -1044,11 +1158,38 @@ function normalizeSpec(o) {
   return spec;
 }
 
+/* JSON shape the open model is held to (Ollama structured output) */
+const S_STR = { type: "string" }, S_NUM = { type: "number" };
+const SPEC_SCHEMA = { type: "object", required: ["title", "concept", "directions", "genre", "bpm", "key", "time_feel", "palette", "groove", "arrangement", "mix", "beat_blueprint", "structure", "lyrics", "style_pre_vocal", "vocal_descriptors", "style_post_vocal", "yue_tags", "weirdness", "style_influence", "levers"],
+  properties: { title: S_STR, concept: S_STR, directions: { type: "array", items: { type: "object", required: ["name", "summary"], properties: { name: S_STR, summary: S_STR } } },
+    genre: S_STR, bpm: S_NUM, key: S_STR, time_feel: S_STR, palette: S_STR, groove: S_STR, arrangement: S_STR, mix: S_STR,
+    beat_blueprint: { type: "object", required: ["kick", "snare", "hats", "low_end", "percussion", "dropout"], properties: { kick: S_STR, snare: S_STR, hats: S_STR, low_end: S_STR, percussion: S_STR, dropout: S_STR } },
+    structure: { type: "array", items: { type: "object", required: ["section", "bars", "energy", "notes"], properties: { section: S_STR, bars: S_NUM, energy: S_NUM, notes: S_STR } } },
+    lyrics: S_STR, style_pre_vocal: S_STR, vocal_descriptors: S_STR, style_post_vocal: S_STR, yue_tags: S_STR, weirdness: S_NUM, style_influence: S_NUM, levers: { type: "array", items: S_STR } } };
+const TRIM_SCHEMA = { type: "object", required: ["pre", "vocal", "post"], properties: { pre: S_STR, vocal: S_STR, post: S_STR } };
+const BARS_SCHEMA = { type: "object", required: ["bars"], properties: { bars: { type: "array", items: S_NUM } } };
+
+/* If the runtime misses 3:05–3:35, ask the writer to re-balance bar counts (twice at most), then fix the math locally as a last resort. */
+async function repairRuntime(spec) {
+  if (!spec.bpm || !spec.structure.length || computeRuntime(spec.structure, spec.bpm).ok) return;
+  for (let pass = 0; pass < 2 && !computeRuntime(spec.structure, spec.bpm).ok; pass++) {
+    try {
+      const res = await ai.run(`A song at ${spec.bpm} BPM in 4/4 has these sections with bar counts: ${spec.structure.map(s => `${s.section}=${s.bars}`).join(", ")}. Total runtime must be between 185 and 215 seconds (seconds = total bars x 4 x 60 / BPM). Return new whole-number bar counts for the same sections in the same order, keeping each section's role (verses longest, intro/outro short, multiples of 2 or 4). Return only JSON {"bars":[...]}.`, { schema: BARS_SCHEMA, tier: "quick", temperature: 0.2, maxTokens: 400 });
+      const bars = res.value?.bars;
+      if (Array.isArray(bars) && bars.length === spec.structure.length) bars.forEach((b, i) => spec.structure[i].bars = Math.max(1, Math.round(Number(b) || spec.structure[i].bars)));
+    } catch { break; }
+  }
+  if (!computeRuntime(spec.structure, spec.bpm).ok) {
+    const target = 200 * spec.bpm / 240, total = spec.structure.reduce((a, s) => a + s.bars, 0) || 1;
+    spec.structure.forEach(s => s.bars = Math.max(2, Math.round(s.bars * target / total / 2) * 2));
+    if (computeRuntime(spec.structure, spec.bpm).ok) setTimeout(() => toast("info", "Bar counts adjusted", "Scaled the structure to land inside 3:05–3:35."), 600);
+  }
+}
+
 /* Smart Trim — rephrase only the unprotected parts, verify client-side, up to two passes, never destructive */
 async function smartTrim() {
   const spec = state.spec; if (!spec || state.trimming) return;
-  await caps;
-  if (!sample) { toast("warn", "Smart Trim runs in the claude.ai copy", "Trim by hand here; the meter updates as you go."); return; }
+  if (!(await ai.ready())) { toast("warn", "No AI writer available here", ai.unavailableMsg() + " You can also trim by hand; the meter updates as you go.", 10000); return; }
   state.trimming = true; renderSpec();
   const budget = budgetFor(spec.profileIds || []);
   let pre = spec.style_pre_vocal, post = spec.style_post_vocal, voc = spec.vocal_descriptors;
@@ -1056,12 +1197,13 @@ async function smartTrim() {
   try {
     while (passes < 2 && !ok) {
       passes++;
-      const out = await sample.json(`Shorten these style-prompt descriptor lists for an AI music tool. Combined length of all fields must be at most ${budget} characters including spaces (target ${budget - 25}). Trim order, strictly: 1) remove duplicate or near-duplicate descriptors, 2) remove connective words, 3) merge overlapping descriptors, 4) cut the weakest descriptor. Never cut beat-switch, dropout, or tempo/BPM descriptors. Keep comma-separated descriptor style, keep genre first in pre, keep the mood closer last in post. No artist or brand names.
+      const res = await ai.run(`Shorten these style-prompt descriptor lists for an AI music tool. Combined length of all fields must be at most ${budget} characters including spaces (target ${budget - 25}). Trim order, strictly: 1) remove duplicate or near-duplicate descriptors, 2) remove connective words, 3) merge overlapping descriptors, 4) cut the weakest descriptor. Never cut beat-switch, dropout, or tempo/BPM descriptors. Keep comma-separated descriptor style, keep genre first in pre, keep the mood closer last in post. No artist or brand names.
 Return only JSON {"pre":string,"vocal":string,"post":string}.
 <<<PROTECTED>>> vocal profiles are inserted separately by the app and must not appear in your output.
 pre: ${pre}
 vocal: ${voc}
-post: ${post}`, { modelTier: "quick", cache: false });
+post: ${post}`, { schema: TRIM_SCHEMA, tier: "quick", temperature: 0.3 });
+      const out = res.value || {};
       pre = String(out.pre || pre); post = String(out.post || post); voc = spec.profileIds?.length ? "" : String(out.vocal ?? voc);
       ok = composeStyle({ ...spec, style_pre_vocal: pre, style_post_vocal: post, vocal_descriptors: voc }).length <= CHAR_LIMIT;
     }
@@ -1639,17 +1781,17 @@ function buildFusionBrief() {
 }
 async function claudeFusion() {
   const gs = fusionGenres(); if (!gs.length) return toast("warn", "Pick at least one genre");
-  await caps; if (!sample) return toast("warn", "Claude isn't available in this copy", "Use Build brief here, or open the claude.ai copy.");
+  if (!(await ai.ready())) return toast("warn", "No AI writer available here", ai.unavailableMsg() + " Build brief works without it.");
   const btn = $("#claudeFusionBtn"); btn.disabled = true; btn.innerHTML = `${icon("loader", "i spin")}Writing…`;
   try {
     const v = $("#fVocal").value, prof = v && v !== "instrumental" ? getProfile(v) : null;
-    const out = await sample(`Write a creative music brief (3 to 4 sentences) for a genre fusion. Use craft vocabulary for drums, groove, harmony, palette, arrangement arc and mood. Never use artist, producer or brand names. Return only the brief.
+    const out = await ai.run(`Write a creative music brief (3 to 4 sentences) for a genre fusion. Use craft vocabulary for drums, groove, harmony, palette, arrangement arc and mood. Never use artist, producer or brand names. Return only the brief.
 Genres to fuse: ${gs.map(g => `${g.name} (${[g.drums, g.harmony, g.palette].filter(Boolean).join("; ")})`).join(" + ")}
 Tempo: ${$("#fBpm").value} BPM. Mood: ${$("#fMood").value}. Energy: ${$("#fEnergy").value}.
-Vocal: ${v === "instrumental" ? "instrumental" : prof ? prof.name + " — " + prof.text.slice(0, 200) : "the studio chooses"}.`, { modelTier: "default", cache: false });
-    $("#fusionBrief").value = (out.text || "").trim();
-  } catch (e) { toast("err", "Couldn't write the brief", e?.code === "rate_limited" ? "Usage limit reached. Wait a minute and try again." : "Try Build brief instead."); }
-  finally { btn.disabled = false; btn.innerHTML = `${icon("sparkles")}Write it with Claude`; }
+Vocal: ${v === "instrumental" ? "instrumental" : prof ? prof.name + " — " + prof.text.slice(0, 200) : "the studio chooses"}.`, { tier: "default" });
+    $("#fusionBrief").value = (out.text || "").trim(); toast("ok", "Brief written", providerNote(out));
+  } catch (e) { toast("err", "Couldn't write the brief", aiErr(e) + " Build brief works without the AI."); }
+  finally { btn.disabled = false; btn.innerHTML = `${icon("sparkles")}Write it with AI`; }
 }
 async function addGenre() {
   const name = $("#newGenre").value.trim(); if (!name) return toast("warn", "Type a genre name first");
@@ -1769,16 +1911,16 @@ async function importProfiles(file) {
 async function claudeProfile() {
   const idea = $("#pIdea").value.trim() || $("#pText").value.trim();
   if (!idea) return toast("warn", "Describe the voice first", "A few words in the idea box is enough.");
-  await caps; if (!sample) return toast("warn", "Claude isn't available in this copy", "Write the descriptors yourself here, or use the claude.ai copy.");
+  if (!(await ai.ready())) return toast("warn", "No AI writer available here", ai.unavailableMsg());
   const btn = $("#profileClaudeBtn"); btn.disabled = true; btn.innerHTML = `${icon("loader", "i spin")}Writing…`;
   try {
     const example = BUILTIN_PROFILES[0].text;
-    const out = await sample(`Write one vocal profile for an AI music style prompt: a single comma-separated descriptor stack of 300 to 550 characters, in craft vocabulary (tone, register, texture, phrasing, ornamentation, dynamics, harmonies, ad-libs). Never use artist names. No sentences, no line breaks. Return only the descriptors.
+    const out = await ai.run(`Write one vocal profile for an AI music style prompt: a single comma-separated descriptor stack of 300 to 550 characters, in craft vocabulary (tone, register, texture, phrasing, ornamentation, dynamics, harmonies, ad-libs). Never use artist names. No sentences, no line breaks. Return only the descriptors.
 Example of the house style: ${example}
-Voice to describe: ${idea}`, { modelTier: "default", cache: false });
-    $("#pText").value = (out.text || "").trim().replace(/^["']|["']$/g, "").replace(/[.\s]+$/, ""); updateProfileCount();
-  } catch (e) { toast("err", "Couldn't write the profile", e?.code === "rate_limited" ? "Usage limit reached. Wait a minute and try again." : "Try again in a moment."); }
-  finally { btn.disabled = false; btn.innerHTML = `${icon("sparkles")}Write it with Claude`; }
+Voice to describe: ${idea}`, { tier: "default" });
+    $("#pText").value = (out.text || "").trim().replace(/^["']|["']$/g, "").replace(/[.\s]+$/, ""); updateProfileCount(); toast("ok", "Profile written", providerNote(out));
+  } catch (e) { toast("err", "Couldn't write the profile", aiErr(e)); }
+  finally { btn.disabled = false; btn.innerHTML = `${icon("sparkles")}Write it with AI`; }
 }
 
 /* ---------- voice analysis (runs in the browser) ---------- */
@@ -1901,19 +2043,18 @@ async function voiceToProfile(withClaude) {
   const notes = $("#voiceNotes").value.trim();
   if (notes) text += `, ${notes.replace(/[.\s]+$/, "")}`;
   if (withClaude) {
-    await caps;
-    if (!sample) toast("warn", "Claude isn't available in this copy", "Using the measured descriptors instead.");
+    if (!(await ai.ready())) toast("warn", "No AI writer available here", "Using the measured descriptors instead.");
     else {
       const btn = $("#voiceClaudeBtn"); btn.disabled = true; btn.innerHTML = `${icon("loader", "i spin")}Writing…`;
       try {
-        const out = await sample(`Turn these measurements of a singer's voice into one vocal profile for an AI music style prompt: a comma-separated descriptor stack of 300 to 550 characters in craft vocabulary (tone, register, texture, phrasing, ornamentation, dynamics). No artist names, no numbers or Hz values, no sentences. Return only the descriptors.
+        const out = await ai.run(`Turn these measurements of a singer's voice into one vocal profile for an AI music style prompt: a comma-separated descriptor stack of 300 to 550 characters in craft vocabulary (tone, register, texture, phrasing, ornamentation, dynamics). No artist names, no numbers or Hz values, no sentences. Return only the descriptors.
 House style example: ${BUILTIN_PROFILES[0].text}
 Measurements: ${JSON.stringify(v.analysis)}
 Measured summary: ${describeVoice(v.analysis)}
-Listener notes: ${notes || "none"}`, { modelTier: "default", cache: false });
+Listener notes: ${notes || "none"}`, { tier: "default" });
         if (out.text?.trim()) text = out.text.trim().replace(/^["']|["']$/g, "").replace(/[.\s]+$/, "");
-      } catch { toast("warn", "Claude couldn't write it", "Using the measured descriptors instead."); }
-      finally { btn.disabled = false; btn.innerHTML = `${icon("sparkles")}Create with Claude's wording`; }
+      } catch { toast("warn", "The AI couldn't write it", "Using the measured descriptors instead."); }
+      finally { btn.disabled = false; btn.innerHTML = `${icon("sparkles")}Create with AI wording`; }
     }
   }
   openProfileEditor({ name: "", lane: "From vocal sample", text }, "New profile from your sample", { analysis: v.analysis, pendingVoice: keep && bridgeMode ? v.file : null });
@@ -1941,7 +2082,7 @@ function bridgeCommand() {
 
 /* ---------- events ---------- */
 document.addEventListener("click", async e => {
-  const t = e.target.closest("[data-delgenre],[data-action],[data-nav],[data-seg],[data-preset],[data-copy],[data-openspec],[data-askdel],[data-delspec],[data-libfilter],[data-editprofile],[data-delprofile],[data-askdelprofile],[data-dupprofile],[data-exportprofile],[data-editpreset],[data-duppreset],[data-askdelpreset],[data-delpreset],[data-genre]");
+  const t = e.target.closest("[data-asklyric],[data-dellyric],[data-delgenre],[data-action],[data-nav],[data-seg],[data-preset],[data-copy],[data-openspec],[data-askdel],[data-delspec],[data-libfilter],[data-editprofile],[data-delprofile],[data-askdelprofile],[data-dupprofile],[data-exportprofile],[data-editpreset],[data-duppreset],[data-askdelpreset],[data-delpreset],[data-genre]");
   if (!t) return;
   const d = t.dataset;
   if (d.nav) return go(d.nav);
@@ -1951,6 +2092,8 @@ document.addEventListener("click", async e => {
   if (d.openspec) { const s = state.library.find(x => x.id === d.openspec); if (s) { state.spec = JSON.parse(JSON.stringify(s)); state.seg = "spec"; go("studio"); renderSpec(); } return; }
   if (d.askdel) { state.confirmDel = d.askdel; return renderLibrary(); }
   if (d.delspec) { try { await store.deleteSpec(d.delspec); toast("ok", "Spec deleted"); } catch { toast("err", "Couldn't delete", "Try again."); } state.confirmDel = null; return renderLibrary(); }
+  if (d.asklyric) { state.confirmLyric = d.asklyric; return renderLyricsLib(); }
+  if (d.dellyric) { try { await store.remove("lyrics", d.dellyric); } catch (e) { return toast("err", "Couldn't delete", saveErr(e)); } state.confirmLyric = null; return renderLyricsLib(); }
   if (d.delgenre) {
     e.stopPropagation();
     try { await store.remove("genres", d.delgenre); } catch { return toast("err", "Couldn't delete the genre"); }
@@ -1987,6 +2130,11 @@ document.addEventListener("click", async e => {
     case "load-audio": return $("#audioFile").click();
     case "save-audio": if (state.render.blob) return saveFile($("#audioName").textContent, state.render.blob); return;
     case "play": return togglePlay();
+    case "upload-lyrics": return $("#lyricsFiles").click();
+    case "paste-lyric": $("#lyTitle").value = ""; $("#lyTags").value = ""; $("#lyText").value = ""; $("#lyricEditor").hidden = false; $("#lyTitle").focus(); return;
+    case "cancel-lyric": $("#lyricEditor").hidden = true; return;
+    case "save-lyric": try { const r = await addLyric($("#lyTitle").value, $("#lyText").value, $("#lyTags").value); $("#lyricEditor").hidden = true; renderLyricsLib(); return toast("ok", "Song saved", r.title); } catch (e) { return toast("warn", "Couldn't save the song", e.message || saveErr(e)); }
+    case "cancel-dellyric": state.confirmLyric = null; return renderLyricsLib();
     case "open-export": return openExport();
     case "close-export": $("#exportPanel").hidden = true; return;
     case "do-export": return doExport();
@@ -2044,6 +2192,15 @@ $("#libSearch").addEventListener("input", e => { state.libSearch = e.target.valu
 $("#pText").addEventListener("input", updateProfileCount);
 $("#fBpm").addEventListener("input", e => $("#fBpmVal").textContent = e.target.value);
 $("#exportFmt").addEventListener("change", updateExportNote);
+$("#useMyLyrics").addEventListener("change", e => ls.set("useMyLyrics", e.target.checked));
+$("#lyricsFiles").addEventListener("change", async e => {
+  const files = [...e.target.files]; e.target.value = ""; let ok = 0; const bad = [];
+  for (const f of files) {
+    try { const { title, text } = splitLyricFile(f.name, await f.text()); await addLyric(title, text, ""); ok++; }
+    catch (err) { bad.push(f.name); }
+  }
+  renderLyricsLib(); toast(ok ? "ok" : "warn", `${ok} song${ok === 1 ? "" : "s"} added`, bad.length ? `Skipped: ${bad.slice(0, 3).join(", ")}${bad.length > 3 ? "…" : ""}` : "");
+});
 $("#newGenre").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addGenre(); } });
 $("#profileImport").addEventListener("change", async e => { const f = e.target.files[0]; e.target.value = ""; if (f) await importProfiles(f); });
 $("#voiceFile").addEventListener("change", async e => { const f = e.target.files[0]; e.target.value = ""; if (f) await runVoiceLab(f); });
@@ -2128,12 +2285,14 @@ async function boot() {
   $("#modeNote").textContent = sample ? "claude.ai — Design Spec via Claude. Synthesis needs the offline copy." : isLocalHost ? "Offline copy — local engines available. Import specs from claude.ai." : "claude.ai — not connected to Claude yet. Reload and allow access.";
   $("#hostedNote").innerHTML = `${icon("info")}<span>${isLocalHost ? "You're running the offline copy, so the studio can talk to the bridge on this computer directly." : "This copy can reach the bridge on your computer when your browser allows it. If Test connection fails here, use <b>Save offline copy</b>, put it next to <span class=\"mono\">alexandria_bridge.py</span>, and open the studio from the bridge."}</span>`;
   $("#offlineBtn").hidden = isLocalHost;
-  if (!sample) { $("#designNote").textContent = isLocalHost ? "Offline copy: Design Spec runs on claude.ai. Export a spec there, then use Import spec here." : "Couldn't connect to Claude in this view. Reload the page and allow Alexandria to use Claude when asked."; }
+  if (!sample && !bridgeMode) { $("#designNote").textContent = isLocalHost ? "This copy has no AI writer: use the engine studio or the claude.ai copy for Design Spec, or import a spec here." : "Couldn't connect to Claude in this view. Reload the page and allow Alexandria to use Claude when asked."; }
   await store.loadAll();
   renderProfileSelects(ls.get("draft", {}).profile ?? "mimi", ls.get("draft", {}).duet ?? "");
   renderInspiration();
-  if (state.view === "library") renderLibrary();
+  if (state.view === "library") { renderLibrary(); renderLyricsLib(); }
   if (state.view === "presets") { renderPresets(); renderProfiles(); }
+  await ai.refresh();
+  if (ai.status.mode === "engine") $("#modeNote").textContent = ai.status.available ? `Engine · AI writer: ${ai.status.label}` : "Engine · AI writer not ready yet (first start downloads the model).";
   if (isLocalHost) testEngine(true);
 }
 // Read-only handle for automated tests and debugging in the browser console.

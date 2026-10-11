@@ -41,6 +41,26 @@ samples kept as voice references are stored in `/workspace/alexandria/voices/`, 
 pass the sample to ACE-Step as `reference_audio_path` (ACE-Step calls this style transfer: it steers the sound,
 it is not an exact voice clone). Move profiles between the claude.ai studio and the engine with Export and Import.
 
+## AI writer (Design Spec, Smart Trim, AI wording)
+
+On the engine, the writing features run on an open model on the same GPU: `start.sh` installs
+[Ollama](https://ollama.com) to `/workspace/ollama` and downloads `qwen3.6:27b` (about 19 GB) on the first
+boot, in the background. The studio says "AI writer not ready yet" until the download finishes
+(watch `/logs/ollama-pull`). Set `ALEX_LLM_MODEL` to use another Ollama model, or `ALEX_LLM_DISABLE=1` to skip it.
+
+Claude is the fallback. If the open model isn't ready, fails, or returns an incomplete spec, the bridge asks
+Claude instead, when a key is set: create a RunPod secret named `anthropic-api-key` holding an Anthropic API
+key and set the pod variable `ALEX_ANTHROPIC_KEY={{ RUNPOD_SECRET_anthropic-api-key }}`. Each result says which
+model wrote it. `ALEX_CLAUDE_MODEL` picks the Claude model (default `claude-sonnet-5-5`).
+
+## Your lyrics as style examples
+
+The Library's **My lyrics** card stores your own songs (.txt, .md or .lrc files, or pasted). A first line
+like `# Title`, or a short first line followed by a blank line or a section tag, becomes the title. When the
+writer designs a spec, it gets up to three of your songs closest to the brief and is told to write new lines in
+your voice without reusing yours. Turn it off with **Use my lyrics as style examples**. On the engine the
+lyrics are stored in `/workspace/alexandria/store/`.
+
 ## Export formats
 
 The player's **Export** button converts the current track on the engine with ffmpeg: WAV and AIFF masters
