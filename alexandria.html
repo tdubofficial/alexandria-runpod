@@ -422,11 +422,13 @@ input[type="range"]{accent-color:var(--blue)}
             <button class="btn btn-ghost btn-sm" data-action="paste-lyric"><svg class="i"><use href="#i-plus"/></svg>Paste a song</button>
             <input type="file" id="lyricsFiles" accept=".txt,.md,.lrc,text/plain,text/markdown" multiple hidden>
           </div>
-          <p class="t2" style="font-size:14px;margin-bottom:10px">Your own songs teach the AI writer your voice. When it writes a spec, it studies the few lyrics closest to your brief and writes new lines in your style. It never reuses your lines.</p>
+          <p class="t2" style="font-size:14px;margin-bottom:10px">Your own songs teach the AI writer your voice and your production habits. When it writes a spec, it studies the few songs closest to your brief (lyrics plus BPM, key, length, mood and style prompt) and writes new lines in your style. It never reuses your lines. Artist names in your style prompts are kept here but removed before the writer sees them.</p>
           <label class="check" style="margin:0 0 12px"><input type="checkbox" id="useMyLyrics"> Use my lyrics as style examples</label>
           <div id="lyricEditor" class="editor" hidden>
             <div class="fields"><div class="field"><label for="lyTitle">Song title</label><input id="lyTitle" class="input" maxlength="80"></div><div class="field"><label for="lyTags">Tags (optional)</label><input id="lyTags" class="input" maxlength="80" placeholder="e.g. Afro-R&B, love, Mimi"></div></div>
-            <div class="field" style="margin-top:10px"><label for="lyText">Lyrics</label><textarea id="lyText" class="input" style="min-height:200px" maxlength="20000" placeholder="[Verse 1]&#10;…"></textarea></div>
+            <div class="fields" style="margin-top:10px;grid-template-columns:repeat(4,minmax(0,1fr))"><div class="field"><label for="lyBpm">BPM</label><input id="lyBpm" class="input num" inputmode="numeric" maxlength="3" placeholder="102"></div><div class="field"><label for="lyKey">Key</label><input id="lyKey" class="input" maxlength="24" placeholder="F# Major"></div><div class="field"><label for="lyDur">Duration</label><input id="lyDur" class="input num" maxlength="8" placeholder="3:15"></div><div class="field"><label for="lyMood">Mood / target</label><input id="lyMood" class="input" maxlength="60" placeholder="Upbeat/Hopeful"></div></div>
+            <div class="field" style="margin-top:10px"><label for="lyStyle">Style prompt you used (optional)</label><textarea id="lyStyle" class="input" style="min-height:90px" maxlength="2000" placeholder="Comma-separated sound descriptors"></textarea></div>
+            <div class="field" style="margin-top:10px"><label for="lyText">Lyrics</label><textarea id="lyText" class="input" style="min-height:200px" maxlength="20000" placeholder="[Verse 1]&#10;…&#10;&#10;Tip: paste a whole song sheet (BPM | Key | Duration | Target, Style, Lyrics) and the fields fill in."></textarea></div>
             <div class="row" style="margin-top:10px"><button class="btn btn-primary btn-sm" data-action="save-lyric">Save song</button><button class="btn btn-ghost btn-sm" data-action="cancel-lyric">Cancel</button></div>
           </div>
           <div class="lib" id="lyricsList"></div>
@@ -915,19 +917,19 @@ function pickLyricExamples(query, n = 3, maxEach = 900) {
   if (!ls.get("useMyLyrics", true)) return [];
   const all = store.cache.lyrics || []; if (!all.length) return [];
   const q = new Set(lyricWords(query));
-  const scored = all.map(l => { const w = lyricWords(l.title + " " + (l.tags || "") + " " + l.text); let hit = 0; for (const x of new Set(w)) if (q.has(x)) hit++; return { l, score: hit + Math.random() * 0.5 }; });
-  return scored.sort((a, b) => b.score - a.score).slice(0, n).map(({ l }) => ({ title: l.title, text: l.text.length > maxEach ? l.text.slice(0, maxEach) + "\n…" : l.text }));
+  const scored = all.map(l => { const w = lyricWords(l.title + " " + (l.tags || "") + " " + (l.mood || "") + " " + (l.style || "") + " " + l.text); let hit = 0; for (const x of new Set(w)) if (q.has(x)) hit++; return { l, score: hit + Math.random() * 0.5 }; });
+  return scored.sort((a, b) => b.score - a.score).slice(0, n).map(({ l }) => { const t = stripNames(l.text); const st = stripNames(l.style); return { title: l.title, meta: songMeta(l), style: st.length > 1000 ? st.slice(0, 1000) + "…" : st, text: t.length > maxEach ? t.slice(0, maxEach) + "\n…" : t }; });
 }
 function lyricExamplesBlock(query) {
   const ex = pickLyricExamples(query); if (!ex.length) return "";
-  return `\nTHE ARTIST'S OWN PAST LYRICS (study and match this writer's voice: vocabulary, imagery, rhyme habits, meter, point of view, emotional register. Never copy or reuse their lines; write new ones in their voice):\n${ex.map(e => `--- "${e.title}" ---\n${e.text}`).join("\n")}\n--- end of examples ---\n`;
+  return `\nTHE ARTIST'S OWN PAST SONGS (study and match this writer's voice: vocabulary, imagery, rhyme habits, meter, point of view, emotional register; and their production habits where the brief fits: tempo, key, length, mood, palette. Never copy or reuse their lines; write new ones in their voice):\n${ex.map(e => `--- "${e.title}"${e.meta ? " (" + e.meta + ")" : ""} ---${e.style ? "\nStyle they used: " + e.style : ""}\n${e.text}`).join("\n")}\n--- end of examples ---\n`;
 }
 function renderLyricsLib() {
   const list = store.cache.lyrics || [];
   $("#useMyLyrics").checked = ls.get("useMyLyrics", true);
   $("#lyricsList").innerHTML = list.length ? list.map(l => `<div class="lib-item" style="grid-template-columns:minmax(0,1fr) auto">
-    <div style="min-width:0"><b>${esc(l.title)}</b><small class="num">${lyricWords(l.text).length} words${l.tags ? " · " + esc(l.tags) : ""} · added ${new Date(l.addedAt || Date.now()).toLocaleDateString()}</small></div>
-    <div class="lib-actions">${state.confirmLyric === l.id ? `<span class="confirm">Delete?<button class="btn btn-danger btn-sm" data-dellyric="${esc(l.id)}">Delete</button><button class="btn btn-ghost btn-sm" data-action="cancel-dellyric">Keep</button></span>` : `<button class="iconbtn" data-asklyric="${esc(l.id)}" aria-label="Delete ${esc(l.title)}">${icon("trash")}</button>`}</div></div>`).join("")
+    <div style="min-width:0"><b>${esc(l.title)}</b><small class="num">${songMeta(l) ? esc(songMeta(l)) + " · " : ""}${lyricWords(l.text).length} words${l.style ? " · style prompt" : ""}${l.tags ? " · " + esc(l.tags) : ""} · added ${new Date(l.addedAt || Date.now()).toLocaleDateString()}</small>${namesIn(l.style + " " + l.text).length ? `<small class="t3">Names removed when used as examples: ${esc(namesIn(l.style + " " + l.text).join(", "))}</small>` : ""}</div>
+    <div class="lib-actions">${state.confirmLyric === l.id ? `<span class="confirm">Delete?<button class="btn btn-danger btn-sm" data-dellyric="${esc(l.id)}">Delete</button><button class="btn btn-ghost btn-sm" data-action="cancel-dellyric">Keep</button></span>` : `<button class="iconbtn" data-editlyric="${esc(l.id)}" aria-label="Edit ${esc(l.title)}">${icon("edit")}</button><button class="iconbtn" data-asklyric="${esc(l.id)}" aria-label="Delete ${esc(l.title)}">${icon("trash")}</button>`}</div></div>`).join("")
     : `<div class="empty">${icon("note")}<b>No lyrics yet</b><span>Upload .txt or .md files, or paste a song. The AI writer studies them to write in your voice.</span></div>`;
   $("#lyricsCount").textContent = list.length ? `${list.length} song${list.length === 1 ? "" : "s"} · ${list.reduce((a, l) => a + lyricWords(l.text).length, 0).toLocaleString()} words` : "";
 }
@@ -942,11 +944,53 @@ function splitLyricFile(name, raw) {
   else title = name.replace(/\.(txt|md|lrc)$/i, "").replace(/[_-]+/g, " ").replace(/\b\w/g, c => c.toUpperCase());
   return { title: title.slice(0, 80), text };
 }
-async function addLyric(title, text, tags) {
+/* "Name-like X", "Name-inspired X", "Name-type X", "Name-style X" -> "X": keeps the descriptor, drops the name */
+const NAME_REF = /\b(?:[A-Z][\w'.]*(?:[ -](?:[A-Z][\w'.]*|de|la|van|von))*)[- ](?:like|inspired|type|style|esque)\b[ ,]*/g;
+const stripNames = t => String(t || "").replace(NAME_REF, "").replace(/\(\s*\)/g, "").replace(/[ \t]{2,}/g, " ").replace(/^\s*,\s*/gm, "");
+const namesIn = t => [...new Set((String(t || "").match(NAME_REF) || []).map(m => m.replace(/[- ](?:like|inspired|type|style|esque)\b[ ,]*$/, "").trim()))];
+
+/* Song sheets: SONG n: "Title" / BPM: | Key: | Duration: | Target: / Style: … / Lyrics: … (one or many per paste or file) */
+const isSongSheet = t => /^\s*lyrics\b[^\n]*$/im.test(t) && (/^\s*style\b[^\n]*$/im.test(t) || /\bBPM\s*:/i.test(t));
+function parseSongSheets(raw) {
+  const clean = String(raw || "").replace(/\r\n/g, "\n").split("\n").filter(l => !/^\s*(```\w*|plain|text|for\s+\S+\s+input:?)\s*$/i.test(l)).join("\n");
+  const parts = clean.split(/^(?=\s*SONG\s*\d+\s*[:.-])/im).filter(x => x.trim());
+  return parts.map(chunk => {
+    const lines = chunk.split("\n");
+    const head = (lines[0].match(/^\s*SONG\s*\d+\s*[:.-]\s*(.+)$/i) || [])[1];
+    const title = head ? head.replace(/^["“'‘]|["”'’]$/g, "").trim() : "";
+    const field = re => ((chunk.match(re) || [])[1] || "").trim();
+    const bpm = field(/\bBPM\s*:\s*(\d{2,3})/i), key = field(/\bKey\s*:\s*([^|\n]+)/i).replace(/\s+$/, "");
+    const duration = field(/\bDuration\s*:\s*~?\s*([^|\n]+)/i), mood = field(/\b(?:Target|Mood|Vibe|Feel)\s*:\s*([^|\n]+)/i);
+    const iStyle = lines.findIndex(l => /^\s*style\b/i.test(l)), iLyr = lines.findIndex(l => /^\s*lyrics\b/i.test(l));
+    const rest = l => l.replace(/^\s*(?:style|lyrics)[^:]*:?/i, "").replace(/^\s*\([^)]*\)\s*:?\s*/, "").trim();   // drop "(995 character limit):"
+    let style = "";
+    if (iStyle >= 0) style = [rest(lines[iStyle]), ...lines.slice(iStyle + 1, iLyr > iStyle ? iLyr : undefined)].join(" ").trim();
+    const text = iLyr >= 0 ? [rest(lines[iLyr]), ...lines.slice(iLyr + 1)].join("\n").trim() : "";
+    return { title, text, bpm, key, duration: duration.replace(/\s+$/, ""), mood, style: style.replace(/\s+/g, " ") };
+  }).filter(x => x.text.length >= 40);
+}
+function fillLyricEditor(l) {
+  $("#lyTitle").value = l.title || ""; $("#lyTags").value = l.tags || ""; $("#lyText").value = l.text || "";
+  $("#lyBpm").value = l.bpm || ""; $("#lyKey").value = l.key || ""; $("#lyDur").value = l.duration || ""; $("#lyMood").value = l.mood || ""; $("#lyStyle").value = l.style || "";
+}
+async function addSheets(sheets, tags, fileName = "") {
+  let n = 0;
+  for (const sh of sheets) {
+    const title = sh.title || (fileName ? splitLyricFile(fileName, sh.text).title : "");
+    const same = (store.cache.lyrics || []).find(x => x.title.trim().toLowerCase() === title.trim().toLowerCase());
+    await addLyric(title, sh.text, tags || same?.tags || "", { ...sh, id: same?.id, addedAt: same?.addedAt }); n++;
+  }
+  return n;
+}
+const songMeta = l => [l.bpm && `${l.bpm} BPM`, l.key, l.duration, l.mood].filter(Boolean).join(" · ");
+
+async function addLyric(title, text, tags, meta = {}) {
   text = String(text || "").replace(/\r\n/g, "\n").trim(); title = String(title || "").trim() || text.split("\n").find(x => x.trim() && !/^\[/.test(x))?.slice(0, 60) || "Untitled";
   if (text.length < 40) throw new Error(`"${title}" is too short to learn from.`);
   if (text.length > 20000) text = text.slice(0, 20000);
-  const rec = { id: "ly_" + uid(), title: title.slice(0, 80), text, tags: String(tags || "").slice(0, 80), addedAt: Date.now() };
+  const rec = { id: meta.id || "ly_" + uid(), title: title.slice(0, 80), text, tags: String(tags || "").slice(0, 80), addedAt: meta.addedAt || Date.now(),
+    bpm: String(meta.bpm || "").replace(/\D/g, "").slice(0, 3), key: String(meta.key || "").slice(0, 24), duration: String(meta.duration || "").replace(/^~\s*/, "").slice(0, 8),
+    mood: String(meta.mood || "").slice(0, 60), style: String(meta.style || "").slice(0, 2000) };
   await store.put("lyrics", rec); return rec;
 }
 
@@ -1108,7 +1152,7 @@ HOUSE RULES (all mandatory):
 8. weirdness and style_influence are integers 0-100.
 9. directions: if the brief is open-ended, give two one-line alternative directions (A sparser/more intimate, B fuller/more anthemic); if it is already tight, return an empty array.
 10. levers: 3 to 6 concrete changes that push the track in a named direction (for example "darker: drop the key a third, swap pads for a detuned Rhodes, thin the hats").
-11. If the request includes the artist's own past lyrics, study and match that writer's voice (vocabulary, imagery, rhyme habits, meter, point of view, emotional register). Never copy or reuse their lines; write new ones.
+11. If the request includes the artist's own past songs, study and match that writer's voice (vocabulary, imagery, rhyme habits, meter, point of view, emotional register) and, where the brief fits, their production habits (tempo, key, length, mood, palette). Never copy or reuse their lines; write new ones. Translate any production instruction an AI music tool can't act on (exact Hz tunings, dB values, decay times, "frequencies calibrated for" claims) into audible descriptors.
 
 Return only JSON with exactly these keys:
 {"title":string,"concept":string,"directions":[{"name":string,"summary":string}],"genre":string,"bpm":number,"key":string,"time_feel":string,"palette":string,"groove":string,"arrangement":string,"mix":string,"beat_blueprint":{"kick":string,"snare":string,"hats":string,"low_end":string,"percussion":string,"dropout":string},"structure":[{"section":string,"bars":number,"energy":number (1-10),"notes":string}],"lyrics":string,"style_pre_vocal":string,"vocal_descriptors":string,"style_post_vocal":string,"yue_tags":string,"weirdness":number,"style_influence":number,"levers":[string]}`;
@@ -2106,7 +2150,7 @@ function bridgeCommand() {
 
 /* ---------- events ---------- */
 document.addEventListener("click", async e => {
-  const t = e.target.closest("[data-asklyric],[data-dellyric],[data-delgenre],[data-action],[data-nav],[data-seg],[data-preset],[data-copy],[data-openspec],[data-askdel],[data-delspec],[data-libfilter],[data-editprofile],[data-delprofile],[data-askdelprofile],[data-dupprofile],[data-exportprofile],[data-editpreset],[data-duppreset],[data-askdelpreset],[data-delpreset],[data-genre]");
+  const t = e.target.closest("[data-editlyric],[data-asklyric],[data-dellyric],[data-delgenre],[data-action],[data-nav],[data-seg],[data-preset],[data-copy],[data-openspec],[data-askdel],[data-delspec],[data-libfilter],[data-editprofile],[data-delprofile],[data-askdelprofile],[data-dupprofile],[data-exportprofile],[data-editpreset],[data-duppreset],[data-askdelpreset],[data-delpreset],[data-genre]");
   if (!t) return;
   const d = t.dataset;
   if (d.nav) return go(d.nav);
@@ -2116,6 +2160,7 @@ document.addEventListener("click", async e => {
   if (d.openspec) { const s = state.library.find(x => x.id === d.openspec); if (s) { state.spec = JSON.parse(JSON.stringify(s)); state.seg = "spec"; go("studio"); renderSpec(); } return; }
   if (d.askdel) { state.confirmDel = d.askdel; return renderLibrary(); }
   if (d.delspec) { try { await store.deleteSpec(d.delspec); toast("ok", "Spec deleted"); } catch { toast("err", "Couldn't delete", "Try again."); } state.confirmDel = null; return renderLibrary(); }
+  if (d.editlyric) { const l = (store.cache.lyrics || []).find(x => x.id === d.editlyric); if (!l) return; state.editLyric = l.id; fillLyricEditor(l); $("#lyricEditor").hidden = false; $("#lyricEditor").scrollIntoView({ block: "center", behavior: "smooth" }); return; }
   if (d.asklyric) { state.confirmLyric = d.asklyric; return renderLyricsLib(); }
   if (d.dellyric) { try { await store.remove("lyrics", d.dellyric); } catch (e) { return toast("err", "Couldn't delete", saveErr(e)); } state.confirmLyric = null; return renderLyricsLib(); }
   if (d.delgenre) {
@@ -2155,9 +2200,15 @@ document.addEventListener("click", async e => {
     case "save-audio": if (state.render.blob) return saveFile($("#audioName").textContent, state.render.blob); return;
     case "play": return togglePlay();
     case "upload-lyrics": return $("#lyricsFiles").click();
-    case "paste-lyric": $("#lyTitle").value = ""; $("#lyTags").value = ""; $("#lyText").value = ""; $("#lyricEditor").hidden = false; $("#lyTitle").focus(); return;
+    case "paste-lyric": state.editLyric = null; fillLyricEditor({}); $("#lyricEditor").hidden = false; $("#lyTitle").focus(); return;
     case "cancel-lyric": $("#lyricEditor").hidden = true; return;
-    case "save-lyric": try { const r = await addLyric($("#lyTitle").value, $("#lyText").value, $("#lyTags").value); $("#lyricEditor").hidden = true; renderLyricsLib(); return toast("ok", "Song saved", r.title); } catch (e) { return toast("warn", "Couldn't save the song", e.message || saveErr(e)); }
+    case "save-lyric": try {
+      const raw = $("#lyText").value;
+      if (isSongSheet(raw) && parseSongSheets(raw).length > 1) { const n = await addSheets(parseSongSheets(raw), $("#lyTags").value); $("#lyricEditor").hidden = true; renderLyricsLib(); return toast("ok", `${n} songs saved`, "Read from the song sheet"); }
+      const old = state.editLyric ? (store.cache.lyrics || []).find(x => x.id === state.editLyric) : null;
+      const r = await addLyric($("#lyTitle").value, raw, $("#lyTags").value, { id: old?.id, addedAt: old?.addedAt, bpm: $("#lyBpm").value, key: $("#lyKey").value, duration: $("#lyDur").value, mood: $("#lyMood").value, style: $("#lyStyle").value });
+      state.editLyric = null; $("#lyricEditor").hidden = true; renderLyricsLib(); return toast("ok", old ? "Song updated" : "Song saved", [r.title, songMeta(r)].filter(Boolean).join(" · "));
+    } catch (e) { return toast("warn", "Couldn't save the song", e.message || saveErr(e)); }
     case "cancel-dellyric": state.confirmLyric = null; return renderLyricsLib();
     case "open-export": return openExport();
     case "close-export": $("#exportPanel").hidden = true; return;
@@ -2217,10 +2268,18 @@ $("#pText").addEventListener("input", updateProfileCount);
 $("#fBpm").addEventListener("input", e => $("#fBpmVal").textContent = e.target.value);
 $("#exportFmt").addEventListener("change", updateExportNote);
 $("#useMyLyrics").addEventListener("change", e => ls.set("useMyLyrics", e.target.checked));
+$("#lyText").addEventListener("paste", () => setTimeout(() => {
+  const raw = $("#lyText").value; if (!isSongSheet(raw)) return;
+  const sheets = parseSongSheets(raw); if (sheets.length !== 1) { if (sheets.length > 1) toast("info", `${sheets.length} songs in this sheet`, "Save to add them all."); return; }
+  const sh = sheets[0]; fillLyricEditor({ ...sh, title: $("#lyTitle").value || sh.title, tags: $("#lyTags").value });
+  toast("ok", "Song sheet recognized", [sh.title, songMeta(sh), sh.style ? "style prompt" : ""].filter(Boolean).join(" · "));
+}, 0));
 $("#lyricsFiles").addEventListener("change", async e => {
   const files = [...e.target.files]; e.target.value = ""; let ok = 0; const bad = [];
   for (const f of files) {
-    try { const { title, text } = splitLyricFile(f.name, await f.text()); await addLyric(title, text, ""); ok++; }
+    try { const raw = await f.text();
+      if (isSongSheet(raw)) { const sheets = parseSongSheets(raw); if (!sheets.length) throw new Error("no lyrics found"); ok += await addSheets(sheets, "", f.name); }
+      else { const { title, text } = splitLyricFile(f.name, raw); await addLyric(title, text, ""); ok++; } }
     catch (err) { bad.push(f.name); }
   }
   renderLyricsLib(); toast(ok ? "ok" : "warn", `${ok} song${ok === 1 ? "" : "s"} added`, bad.length ? `Skipped: ${bad.slice(0, 3).join(", ")}${bad.length > 3 ? "…" : ""}` : "");

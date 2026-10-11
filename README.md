@@ -67,6 +67,12 @@ writer designs a spec, it gets up to three of your songs closest to the brief an
 your voice without reusing yours. Turn it off with **Use my lyrics as style examples**. On the engine the
 lyrics are stored in `/workspace/alexandria/store/`.
 
+Each song can also carry its BPM, key, duration, mood/target and the style prompt you used. Paste or upload a
+song sheet (`SONG 1: "Title"`, `BPM: 102 | Key: F# Major | Duration: ~3:15 | Target: Upbeat/Hopeful`, a
+`Style:` block, a `Lyrics:` block; several songs per file is fine) and the fields fill in. Uploading a song with
+a title already in the library updates it. Artist names written as "Name-like", "Name-inspired", "Name-type" or
+"Name-style" stay in your library but are removed before the writer sees the example.
+
 ## Export formats
 
 The player's **Export** button converts the current track on the engine with ffmpeg: WAV and AIFF masters
