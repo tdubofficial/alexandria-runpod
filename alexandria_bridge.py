@@ -138,26 +138,42 @@ def ask_claude(prompt, want_json, max_tokens, temperature, system=""):
     key = claude_key()
     if not key:
         raise RuntimeError("Claude fallback isn't set up (no Anthropic API key on this machine).")
-    # No temperature: current Claude models reject it ("temperature is deprecated for this model").
-    body = {"model": os.environ.get("ALEX_CLAUDE_MODEL", "claude-sonnet-5-5"), "max_tokens": max_tokens,
+    # Current Claude models: no temperature (rejected as deprecated); thinking is adaptive and counts toward
+    # max_tokens, so leave generous room and ask for low effort (a spec is structured writing, not a puzzle).
+    body = {"model": os.environ.get("ALEX_CLAUDE_MODEL", "claude-sonnet-5-5"),
+            "max_tokens": max(int(max_tokens), 16000 if want_json else 4000),
+            "output_config": {"effort": os.environ.get("ALEX_CLAUDE_EFFORT", "low")},
             "messages": [{"role": "user", "content": prompt + ("\n\nReturn only the JSON object, no commentary." if want_json else "")}]}
     if system:
         # Prompt caching: the system prompt is identical on every spec request, so mark it as a cache breakpoint.
-        # Reads cost 0.05x the input price on Sonnet 5.5; entries last 5 minutes and refresh on each hit.
         body["system"] = [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}]
-    req = urllib.request.Request(os.environ.get("ALEX_ANTHROPIC_URL", "https://api.anthropic.com").rstrip("/") + "/v1/messages", data=json.dumps(body).encode(), method="POST",
-                                 headers={"Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01",
-                                          "User-Agent": "alexandria-bridge/1.4"})
+
+    def call(b):
+        req = urllib.request.Request(os.environ.get("ALEX_ANTHROPIC_URL", "https://api.anthropic.com").rstrip("/") + "/v1/messages",
+                                     data=json.dumps(b).encode(), method="POST",
+                                     headers={"Content-Type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01",
+                                              "User-Agent": "alexandria-bridge/1.5"})
+        with urllib.request.urlopen(req, timeout=600) as r:
+            return json.loads(r.read().decode())
     try:
-        with urllib.request.urlopen(req, timeout=300) as r:
-            res = json.loads(r.read().decode())
+        try:
+            res = call(body)
+        except urllib.error.HTTPError as e:
+            msg = e.read().decode(errors="replace")
+            if e.code == 400 and ("output_config" in msg or "effort" in msg):   # model without effort control
+                body.pop("output_config", None)
+                res = call(body)
+            else:
+                raise RuntimeError(f"Claude API returned {e.code}: {msg[:200]}")
     except urllib.error.HTTPError as e:
         raise RuntimeError(f"Claude API returned {e.code}: {e.read().decode(errors='replace')[:200]}")
     u = res.get("usage") or {}
     usage = {k: u.get(k, 0) for k in ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens")}
     print(f"Claude usage: {usage['cache_read_input_tokens']} cached read, {usage['cache_creation_input_tokens']} cache write, "
-        f"{usage['input_tokens']} uncached in, {usage['output_tokens']} out", flush=True)
-    return "".join(b.get("text", "") for b in res.get("content", []) if b.get("type") == "text"), usage
+          f"{usage['input_tokens']} uncached in, {usage['output_tokens']} out, stop={res.get('stop_reason')}", flush=True)
+    if res.get("stop_reason") == "max_tokens":
+        raise RuntimeError("Claude's reply was cut off at the length limit")
+    return "".join(c.get("text", "") for c in res.get("content", []) if c.get("type") == "text"), usage
 
 
 def llm_worker(job_id, req):
