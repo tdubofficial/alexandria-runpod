@@ -33,6 +33,17 @@ To ship an update, push to `main` and restart the pod.
 | `alexandria_bridge.py` | Studio server: sign-in, job queue, talks to ACE-Step |
 | `alexandria.html` | The studio |
 
+## Idle auto-stop
+
+The studio stops its own pod after 30 minutes with no signed-in activity and no song rendering
+(set `ALEX_IDLE_STOP_MINUTES` on the pod to change it, `0` to turn it off). The studio shows a countdown in
+the last 5 minutes with a **Keep working** button. Stopping keeps the network volume; start the pod again
+from RunPod when you need it.
+
+The pod stops itself through RunPod's API (`POST https://api.runpod.io/v2/pods/{id}/action`), so it needs a
+RunPod API key in `ALEX_RUNPOD_API_KEY` (set it to `{{ RUNPOD_SECRET_alexandria-runpod-key }}`) unless
+RunPod provides `RUNPOD_API_KEY` inside the pod. `/health` reports `idle.key` so you can see which.
+
 ## Security
 
 - RunPod's port links are public addresses. Every page and API call requires the password; after 5 wrong tries from one address, sign-in pauses for 10 minutes. Sessions last 12 hours.

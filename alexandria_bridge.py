@@ -61,6 +61,8 @@ SESSIONS = {}          # token -> expiry timestamp
 FAILS = {}             # client ip -> [timestamps of failed logins]
 AUTH_LOCK = threading.Lock()
 SESSION_SECONDS = 12 * 3600
+LAST_ACTIVITY = time.time()   # idle auto-stop clock; any signed-in request or running job resets it
+IDLE_STATE = {"stopping": False, "error": None}
 JOBS = {}
 JOBS_LOCK = threading.Lock()
 RENDER_LOCK = threading.Lock()  # one render at a time: these models want the whole GPU
@@ -341,6 +343,65 @@ def client_ip(handler):
             or handler.client_address[0])
 
 
+def touch():
+    global LAST_ACTIVITY
+    LAST_ACTIVITY = time.time()
+
+
+def busy():
+    with JOBS_LOCK:
+        return any(j.get("status") in ("queued", "running") for j in JOBS.values())
+
+
+def runpod_key():
+    return os.environ.get("ALEX_RUNPOD_API_KEY") or os.environ.get("RUNPOD_API_KEY") or ""
+
+
+def idle_seconds_left():
+    if not ARGS.idle_stop_minutes:
+        return None
+    return max(0, int(ARGS.idle_stop_minutes * 60 - (time.time() - LAST_ACTIVITY)))
+
+
+def stop_this_pod():
+    pod_id, key = os.environ.get("RUNPOD_POD_ID"), runpod_key()
+    if not pod_id or not key:
+        IDLE_STATE["error"] = "Auto-stop needs RUNPOD_POD_ID and a RunPod API key (ALEX_RUNPOD_API_KEY)."
+        print(IDLE_STATE["error"], flush=True)
+        return False
+    req = urllib.request.Request(f"https://api.runpod.io/v2/pods/{pod_id}/action", method="POST",
+                                 data=json.dumps({"action": "stop"}).encode(),
+                                 headers={"Content-Type": "application/json", "Authorization": f"Bearer {key}",
+                                          "User-Agent": "alexandria-bridge/1.1 (+https://github.com/tdubofficial/alexandria-runpod)"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            print(f"Auto-stop: RunPod accepted the stop ({r.status}).", flush=True)
+            return True
+    except urllib.error.HTTPError as e:
+        IDLE_STATE["error"] = f"Auto-stop failed: RunPod returned {e.code} {e.read().decode(errors='replace')[:200]}"
+    except Exception as e:  # noqa: BLE001
+        IDLE_STATE["error"] = f"Auto-stop failed: {e}"
+    print(IDLE_STATE["error"], flush=True)
+    return False
+
+
+def idle_watch():
+    limit = ARGS.idle_stop_minutes * 60
+    print(f"Auto-stop: on, after {ARGS.idle_stop_minutes:g} idle minutes "
+          f"(API key {'found' if runpod_key() else 'MISSING'}, pod {os.environ.get('RUNPOD_POD_ID') or 'unknown'}).", flush=True)
+    while True:
+        time.sleep(20)
+        if busy():
+            touch()
+            continue
+        if time.time() - LAST_ACTIVITY >= limit and not IDLE_STATE["stopping"]:
+            print(f"Auto-stop: idle for {ARGS.idle_stop_minutes:g} minutes; stopping pod.", flush=True)
+            IDLE_STATE["stopping"] = True
+            if not stop_this_pod():
+                IDLE_STATE["stopping"] = False
+                touch()  # try again after another full idle period
+
+
 def check_password(pw):
     h = hashlib.pbkdf2_hmac("sha256", pw.encode(), AUTH["salt"], AUTH["iterations"])
     return hmac.compare_digest(h, AUTH["hash"])
@@ -359,11 +420,15 @@ class Handler(BaseHTTPRequestHandler):
 
     def authed(self):
         if AUTH is None:
+            if not self.path.startswith("/health?passive"):
+                touch()
             return True
         tok = self.session_token()
         with AUTH_LOCK:
             exp = SESSIONS.get(tok) if tok else None
             if exp and exp > time.time():
+                if not self.path.startswith("/health?passive"):
+                    touch()
                 return True
             if tok in SESSIONS:
                 del SESSIONS[tok]
@@ -467,7 +532,10 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             return self.wfile.write(data)
         if path == "/health":
-            return self.send_json({"ok": True, "version": "1.0",
+            return self.send_json({"ok": True, "version": "1.1",
+                                   "idle": {"enabled": bool(ARGS.idle_stop_minutes), "seconds_left": idle_seconds_left(),
+                                            "minutes": ARGS.idle_stop_minutes, "key": bool(runpod_key()),
+                                            "error": IDLE_STATE["error"]},
                                    "engines": {"yue": bool(ARGS.yue_dir), "ace": ace_alive(), "custom": bool(ARGS.custom_cmd)}})
         m = re.fullmatch(r"/logs/(bootstrap|ace-step|bridge)", path)
         if m:
@@ -553,6 +621,8 @@ def main():
     p.add_argument("--auth-file", default=str(HERE / "alexandria_auth.json"),
                    help="Password hash file; when present, every page and API call needs a sign-in")
     p.add_argument("--set-password", action="store_true", help="Prompt for a new password, save its hash, and exit")
+    p.add_argument("--idle-stop-minutes", type=float, default=0,
+                   help="Stop this RunPod pod after this many minutes with no signed-in activity and no render (0 = off)")
     p.add_argument("--verbose", action="store_true")
     ARGS = p.parse_args()
     global AUTH
@@ -584,6 +654,8 @@ def main():
         print("  No music engine is running. Start ACE-Step 1.5's API server (start_api_server.bat);")
         print("  the bridge will find it on http://127.0.0.1:8001 without a restart.")
     print(f"Renders: {ARGS.out}")
+    if ARGS.idle_stop_minutes:
+        threading.Thread(target=idle_watch, daemon=True).start()
     if not ARGS.no_browser and (HERE / "alexandria.html").exists():
         threading.Timer(1.0, lambda: webbrowser.open(f"http://127.0.0.1:{ARGS.port}/")).start()
     ThreadingHTTPServer((ARGS.host, ARGS.port), Handler).serve_forever()

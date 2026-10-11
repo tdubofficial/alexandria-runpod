@@ -228,6 +228,8 @@ code.k{font-family:var(--f-mono);font-size:13px;background:var(--elev);padding:1
 .spin{animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
+/* idle auto-stop banner */
+.idlebar{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:70;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 32px);padding:10px 14px;border-radius:14px;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,204,0,.5);box-shadow:0 10px 30px rgba(0,0,0,.5);font-size:14px;color:var(--text2)}
 /* dialog-ish inline confirm */
 .confirm{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--text2a)}
 
@@ -446,6 +448,7 @@ code.k{font-family:var(--f-mono);font-size:13px;background:var(--elev);padding:1
 </div>
 <nav class="tabbar" id="tabbar" aria-label="Main"></nav>
 <div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="idlebar" id="idleBar" role="status" hidden><span id="idleText"></span><button class="btn btn-primary btn-sm" data-action="keep-alive">Keep working</button></div>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></symbol>
@@ -1208,6 +1211,7 @@ document.addEventListener("click", async e => {
       try { await store.saveProfile(p); } catch { return toast("err", "Couldn't save the profile", "Try again."); }
       $("#profileEditor").hidden = true; renderProfiles(); renderProfileSelects(); return toast("ok", "Profile saved", `${name} · ${text.length} chars`);
     }
+    case "keep-alive": try { await fetch("/health", { cache: "no-store" }); } catch {} $("#idleBar").hidden = true; toast("ok", "Timer reset", "The engine stays on for another full idle period."); return;
     case "save-settings": state.settings.seed = $("#setSeed").value.trim().replace(/\D/g, ""); state.settings.duration = $("#setDuration").value; ls.set("settings", state.settings); return toast("ok", "Defaults saved");
   }
 });
@@ -1254,6 +1258,26 @@ function aurora() {
   document.addEventListener("visibilitychange", () => { if (!document.hidden && !reduce) requestAnimationFrame(frame); });
 }
 
+/* ---------- idle auto-stop (RunPod) ---------- */
+function showIdle(idle) {
+  if (!idle || !idle.enabled) return;
+  const left = idle.seconds_left;
+  const bar = $("#idleBar");
+  if (left != null && left <= 300) {
+    bar.hidden = false;
+    $("#idleText").textContent = left > 0 ? `No activity: the engine stops in ${Math.ceil(left / 60)} min to save money.` : "Stopping the engine now…";
+  } else bar.hidden = true;
+  if (idle.error) $("#modeNote").textContent = idle.error;
+  else if (!idle.key) $("#modeNote").textContent = "Auto-stop is on, but this pod has no RunPod API key, so it can't stop itself.";
+}
+function watchIdle(h) {
+  showIdle(h.idle);
+  setInterval(async () => {
+    try { const r = await fetch("/health?passive=1", { cache: "no-store" }); if (r.status === 401) { location.href = "/login"; return; } showIdle((await r.json()).idle); }
+    catch { $("#idleText").textContent = "The engine isn't answering. It may have stopped; start the pod from RunPod."; $("#idleBar").hidden = false; }
+  }, 60000);
+}
+
 /* ---------- boot ---------- */
 async function boot() {
   renderNav(); renderForm();
@@ -1268,7 +1292,7 @@ async function boot() {
       const r = await fetch("/health", { cache: "no-store" });
       if (r.status === 401) { location.href = "/login"; return; }
       const h = await r.json();
-      if (h && h.ok) { isLocalHost = true; $("#engUrl").value = location.origin; state.settings.engUrl = location.origin; $("#signOut").hidden = false; }
+      if (h && h.ok) { isLocalHost = true; $("#engUrl").value = location.origin; state.settings.engUrl = location.origin; $("#signOut").hidden = false; watchIdle(h); }
     } catch {}
   }
   go(state.view); aurora();
