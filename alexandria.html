@@ -844,9 +844,12 @@ const store = {
     this.cache.specs.sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
     state.library = this.cache.specs;
   },
+  // claude.ai account storage: one private document per viewer, with a collection per kind under it
+  // (data/users/<id>/alexandria/<kind>/<docId>: collections have an odd number of path segments).
+  coll(c) { return db.doc(`data/users/${userId}/alexandria`).collection(c); },
   async read(c) {
     if (this.backend === "db") {
-      const q = c === "specs" ? db.collection(`data/users/${userId}/${c}`).orderBy("savedAt", "desc").limit(500) : db.collection(`data/users/${userId}/${c}`);
+      const q = c === "specs" ? this.coll(c).orderBy("savedAt", "desc").limit(500) : this.coll(c);
       return (await q.get()).docs.map(d => ({ ...d.data(), id: d.id }));
     }
     if (this.backend === "bridge") { const r = await fetch(`/store/${c}`, { cache: "no-store" }); if (!r.ok) throw new Error(r.status); return await r.json(); }
@@ -860,7 +863,7 @@ const store = {
     const prev = this.cache[c];
     this.cache[c] = [rec, ...prev.filter(x => x.id !== rec.id)];
     try {
-      if (this.backend === "db") await db.collection(`data/users/${userId}/${c}`).doc(rec.id).set(rec);
+      if (this.backend === "db") await this.coll(c).doc(rec.id).set(JSON.parse(JSON.stringify(rec)));
       else await this.flush(c);
     } catch (e) { this.cache[c] = prev; throw e; }
     if (c === "specs") state.library = this.cache.specs;
@@ -870,7 +873,7 @@ const store = {
     const prev = this.cache[c];
     this.cache[c] = prev.filter(x => x.id !== id);
     try {
-      if (this.backend === "db") await db.collection(`data/users/${userId}/${c}`).doc(id).delete();
+      if (this.backend === "db") await this.coll(c).doc(id).delete();
       else await this.flush(c);
     } catch (e) { this.cache[c] = prev; throw e; }
     if (c === "specs") state.library = this.cache.specs;
@@ -881,6 +884,14 @@ const store = {
   },
   deleteSpec(id) { return this.remove("specs", id); },
 };
+
+function saveErr(e) {
+  const code = e?.code || "";
+  if (code === "not_granted" || code === "permission_denied") return "Allow Alexandria to save to your account when asked, or turn it on in the artifact's Permissions menu.";
+  if (code === "quota_exceeded") return "Your Alexandria storage is full. Delete some saved specs or profiles.";
+  if (code === "unavailable" || code === "deadline_exceeded") return "Storage didn't answer. Check your connection and try again.";
+  return `Try again. (${String(e?.message || code || e).slice(0, 120)})`;
+}
 
 /* ---------- toasts ---------- */
 function toast(kind, title, sub = "", ms = 5000) {
@@ -1441,7 +1452,7 @@ async function savePreset() {
   if (!name || brief.length < 10) return toast("warn", "Add a name and a brief", "The brief needs at least a sentence.");
   const c1 = $("#prC1").value, c2 = $("#prC2").value;
   const rec = { id: state.editingPreset || "pr_" + uid(), name, sub: $("#prSub").value.trim(), cat: $("#prCat").value, st: $("#prSt").value, profile: $("#prVocal").value, colors: [c1, c2, "#E8F0FF"], brief };
-  try { await store.put("presets", rec); } catch { return toast("err", "Couldn't save the preset", "Try again."); }
+  try { await store.put("presets", rec); } catch (e) { return toast("err", "Couldn't save the preset", saveErr(e)); }
   $("#presetEditor").hidden = true; state.editingPreset = null; renderPresets(); renderForm(true);
   toast("ok", "Preset saved", name);
 }
@@ -1572,7 +1583,7 @@ async function saveProfile() {
   const rec = { id: state.editingProfile || "p_" + uid(), name, lane: $("#pLane").value.trim() || (base?.lane ?? "Custom"), text };
   if (voiceRef) rec.voiceRef = voiceRef;
   if (d.analysis) rec.analysis = d.analysis;
-  try { await store.put("profiles", rec); } catch { return toast("err", "Couldn't save the profile", "Try again."); }
+  try { await store.put("profiles", rec); } catch (e) { return toast("err", "Couldn't save the profile", saveErr(e)); }
   $("#profileEditor").hidden = true; state.profileDraft = null; renderProfiles(); renderProfileSelects();
   toast("ok", "Profile saved", `${name} · ${text.length} chars${voiceRef ? " · with voice reference" : ""}`);
 }
