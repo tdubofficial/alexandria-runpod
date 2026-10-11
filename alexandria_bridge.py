@@ -138,7 +138,8 @@ def ask_claude(prompt, want_json, max_tokens, temperature, system=""):
     key = claude_key()
     if not key:
         raise RuntimeError("Claude fallback isn't set up (no Anthropic API key on this machine).")
-    body = {"model": os.environ.get("ALEX_CLAUDE_MODEL", "claude-sonnet-5-5"), "max_tokens": max_tokens, "temperature": temperature,
+    # No temperature: current Claude models reject it ("temperature is deprecated for this model").
+    body = {"model": os.environ.get("ALEX_CLAUDE_MODEL", "claude-sonnet-5-5"), "max_tokens": max_tokens,
             "messages": [{"role": "user", "content": prompt + ("\n\nReturn only the JSON object, no commentary." if want_json else "")}]}
     if system:
         # Prompt caching: the system prompt is identical on every spec request, so mark it as a cache breakpoint.
