@@ -53,6 +53,52 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 STORE_NAMES = {"specs", "profiles", "presets", "genres"}
+
+# Export formats: key -> (extension, mime, ffmpeg output arguments). Surround versions are upmixed from the stereo render.
+UPMIX = ["-af", "surround=chl_out=5.1:lfe_low=120,aresample=48000"]
+EXPORT_FORMATS = {
+    "wav48_24":  (".wav",  "audio/wav",  ["-ar", "48000", "-ac", "2", "-c:a", "pcm_s24le"]),
+    "aiff48_24": (".aiff", "audio/aiff", ["-ar", "48000", "-ac", "2", "-c:a", "pcm_s24be", "-f", "aiff"]),
+    "wav44_24":  (".wav",  "audio/wav",  ["-ar", "44100", "-ac", "2", "-c:a", "pcm_s24le"]),
+    "wav51":     (".wav",  "audio/wav",  UPMIX + ["-c:a", "pcm_s24le"]),
+    "cd":        (".wav",  "audio/wav",  ["-af", "aresample=44100:dither_method=triangular", "-ac", "2", "-c:a", "pcm_s16le"]),
+    "flac":      (".flac", "audio/flac", ["-ac", "2", "-c:a", "flac", "-compression_level", "8"]),
+    "alac":      (".m4a",  "audio/mp4",  ["-ac", "2", "-c:a", "alac"]),
+    "mp3":       (".mp3",  "audio/mpeg", ["-ar", "44100", "-ac", "2", "-c:a", "libmp3lame", "-b:a", "320k"]),
+    "aac":       (".m4a",  "audio/mp4",  ["-ar", "48000", "-ac", "2", "-c:a", "aac", "-b:a", "256k"]),
+    "ogg":       (".ogg",  "audio/ogg",  ["-ar", "48000", "-ac", "2", "-c:a", "libvorbis", "-q:a", "6"]),
+    "opus":      (".opus", "audio/ogg",  ["-ar", "48000", "-ac", "2", "-c:a", "libopus", "-b:a", "160k"]),
+    "ac3_20":    (".ac3",  "audio/ac3",  ["-ar", "48000", "-ac", "2", "-c:a", "ac3", "-b:a", "448k"]),
+    "ac3_51":    (".ac3",  "audio/ac3",  UPMIX + ["-c:a", "ac3", "-b:a", "640k"]),
+    "eac3_51":   (".ec3",  "audio/eac3", UPMIX + ["-c:a", "eac3", "-b:a", "768k", "-f", "eac3"]),
+    "truehd_51": (".mkv",  "audio/x-matroska", UPMIX + ["-c:a", "truehd", "-strict", "-2"]),
+    "dts_51":    (".dts",  "audio/vnd.dts", UPMIX + ["-c:a", "dca", "-strict", "-2", "-b:a", "1509k"]),
+    "mp4_aac":   (".mp4",  "audio/mp4",  ["-ar", "48000", "-ac", "2", "-c:a", "aac", "-b:a", "256k", "-movflags", "+faststart"]),
+    "mkv_ac3":   (".mkv",  "audio/x-matroska", UPMIX + ["-c:a", "ac3", "-b:a", "640k"]),
+}
+
+
+def ffmpeg_path():
+    import shutil
+    return shutil.which("ffmpeg")
+
+
+def export_audio(src_bytes, src_name, fmt):
+    """Convert one audio file to an export format with ffmpeg; returns (bytes, ext, mime)."""
+    import tempfile
+    ext, mime, args = EXPORT_FORMATS[fmt]
+    ff = ffmpeg_path()
+    if not ff:
+        raise RuntimeError("ffmpeg isn't installed on this machine, so only WAV and AIFF exports are available here.")
+    with tempfile.TemporaryDirectory() as td:
+        src = Path(td, "in" + (Path(src_name).suffix.lower() or ".wav"))
+        dst = Path(td, "out" + ext)
+        src.write_bytes(src_bytes)
+        cmd = [ff, "-hide_banner", "-loglevel", "error", "-y", "-i", str(src), "-vn", "-map_metadata", "-1"] + args + [str(dst)]
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+        if r.returncode != 0 or not dst.exists():
+            raise RuntimeError("Conversion failed: " + (r.stderr.strip().splitlines() or ["unknown error"])[-1][:300])
+        return dst.read_bytes(), ext, mime
 VOICE_EXT = {".wav", ".mp3", ".flac", ".ogg", ".m4a", ".aac", ".webm"}
 STORE_LOCK = threading.Lock()
 
@@ -557,6 +603,8 @@ class Handler(BaseHTTPRequestHandler):
                                             "minutes": ARGS.idle_stop_minutes, "key": bool(runpod_key()),
                                             "error": IDLE_STATE["error"]},
                                    "engines": {"yue": bool(ARGS.yue_dir), "ace": ace_alive(), "custom": bool(ARGS.custom_cmd)}})
+        if path == "/formats":
+            return self.send_json({"ffmpeg": bool(ffmpeg_path()), "formats": list(EXPORT_FORMATS)})
         m = re.fullmatch(r"/store/([a-z]+)", path)
         if m and m.group(1) in STORE_NAMES:
             f = data_dir("store") / f"{m.group(1)}.json"
@@ -648,6 +696,29 @@ class Handler(BaseHTTPRequestHandler):
             return self.do_login()
         if not self.authed():
             return self.deny(self.path)
+        if self.path.split("?")[0] == "/export":
+            q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            fmt = (q.get("fmt") or [""])[0]
+            if fmt not in EXPORT_FORMATS:
+                return self.send_json({"error": "Unknown export format"}, 400)
+            length = int(self.headers.get("Content-Length") or 0)
+            if not 0 < length <= 400 * 1024 * 1024:
+                return self.send_json({"error": "Audio must be under 400 MB"}, 413)
+            body = self.rfile.read(length)
+            try:
+                data, ext, mime = export_audio(body, urllib.parse.unquote(self.headers.get("X-Filename") or "audio.wav"), fmt)
+            except subprocess.TimeoutExpired:
+                return self.send_json({"error": "Conversion took too long"}, 504)
+            except Exception as e:  # noqa: BLE001
+                return self.send_json({"error": str(e)}, 500)
+            name = re.sub(r"[^\w\- ]+", "", (q.get("name") or ["Alexandria"])[0]).strip() or "Alexandria"
+            self.send_response(200)
+            self.send_header("Content-Type", mime)
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Content-Disposition", f'attachment; filename="{name}{ext}"')
+            self.send_header("X-Extension", ext)
+            self.end_headers()
+            return self.wfile.write(data)
         if self.path.split("?")[0] == "/voices":
             length = int(self.headers.get("Content-Length") or 0)
             if not 0 < length <= 30 * 1024 * 1024:

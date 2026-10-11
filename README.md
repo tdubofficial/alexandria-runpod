@@ -41,6 +41,16 @@ samples kept as voice references are stored in `/workspace/alexandria/voices/`, 
 pass the sample to ACE-Step as `reference_audio_path` (ACE-Step calls this style transfer: it steers the sound,
 it is not an exact voice clone). Move profiles between the claude.ai studio and the engine with Export and Import.
 
+## Export formats
+
+The player's **Export** button converts the current track on the engine with ffmpeg: WAV and AIFF masters
+(24-bit/48 kHz, 24-bit/44.1 kHz), FLAC, ALAC, MP3 320, AAC 256, Ogg Vorbis, Opus, CD Red Book WAV
+(16-bit/44.1 kHz, dithered), Dolby Digital 2.0 and 5.1, Dolby Digital Plus 5.1, Dolby TrueHD 5.1 (MKV),
+DTS 5.1, six-channel WAV, MP4 (AAC) and MKV (Dolby Digital 5.1). Surround versions are upmixed from the
+stereo render. The Dolby and DTS files come from ffmpeg's open-source encoders (TrueHD and DTS are marked
+experimental there), not certified encoders. Without an engine, the studio builds the WAV, AIFF and CD
+masters in the browser.
+
 ## Idle auto-stop
 
 The studio stops its own pod after 30 minutes with no signed-in activity and no song rendering

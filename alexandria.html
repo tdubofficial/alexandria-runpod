@@ -384,7 +384,13 @@ input[type="range"]{accent-color:var(--blue)}
                 <div style="min-width:0;flex:1"><b id="audioName" style="display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">No audio loaded</b><small class="t3 num" id="audioTime">0:00 / 0:00</small></div>
                 <button class="btn btn-ghost btn-sm" data-action="load-audio"><svg class="i"><use href="#i-upload"/></svg>Load audio</button>
                 <button class="btn btn-ghost btn-sm" data-action="save-audio" id="saveAudioBtn" hidden><svg class="i"><use href="#i-download"/></svg>Save</button>
+                <button class="btn btn-ghost btn-sm" data-action="open-export" id="exportBtn" hidden><svg class="i"><use href="#i-package"/></svg>Export</button>
                 <input type="file" id="audioFile" accept="audio/*" hidden>
+              </div>
+              <div class="editor" id="exportPanel" hidden style="margin-top:12px;margin-bottom:0">
+                <div class="editor-h"><b>Export audio</b><span class="t3" id="exportWhere"></span></div>
+                <div class="row"><select id="exportFmt" class="select grow" aria-label="Export format"></select><button class="btn btn-primary btn-sm" data-action="do-export" id="doExportBtn"><svg class="i"><use href="#i-download"/></svg>Export</button><button class="btn btn-ghost btn-sm" data-action="close-export">Close</button></div>
+                <p class="t3" id="exportNote" style="font-size:13px;margin-top:8px"></p>
               </div>
             </div>
             <div style="min-width:0">
@@ -555,8 +561,9 @@ input[type="range"]{accent-color:var(--blue)}
       <!-- SETTINGS -->
       <section class="view" id="view-settings" hidden>
         <div class="card">
-          <div class="card-h"><svg class="i"><use href="#i-note"/></svg><h3>What's new</h3><span class="chip">v1.2</span></div>
+          <div class="card-h"><svg class="i"><use href="#i-note"/></svg><h3>What's new</h3><span class="chip">v1.3</span></div>
           <dl class="kv">
+            <dt>v1.3</dt><dd>Export in 18 formats: WAV and AIFF masters, FLAC, ALAC, MP3, AAC, Ogg Vorbis, Opus, CD (Red Book), Dolby Digital, Dolby Digital Plus, Dolby TrueHD, DTS, 5.1 WAV, MP4 and MKV.</dd>
             <dt>v1.2</dt><dd>Full player controls (top, ±10 s, end, loop, speed, volume, click or drag the waveform to choose where to play from, keyboard shortcuts). Editable preset library with a Mix genres builder and your own genres. Vocal profiles: edit, duplicate, delete, import, export, and create from a vocal sample. On the engine, your library is saved on the pod's storage.</dd>
             <dt>v1.1</dt><dd>RunPod engine: password sign-in, idle auto-stop after 30 minutes with an in-studio countdown, engine log viewer.</dd>
             <dt>v1.0</dt><dd>Studio, spec design with verified style prompt, Beat Blueprint, runtime check, tag canon, library, presets, local and cloud synthesis through the Alexandria bridge.</dd>
@@ -619,6 +626,7 @@ input[type="range"]{accent-color:var(--blue)}
   <symbol id="i-ff" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></symbol>
   <symbol id="i-loop" viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></symbol>
   <symbol id="i-volume" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></symbol>
+  <symbol id="i-package" viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></symbol>
   <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></symbol>
 </svg>
 
@@ -1158,6 +1166,8 @@ function specMarkdown(spec) {
 async function saveFile(filename, data, type = "text/plain") {
   await caps;
   if (downloads) {
+    const DL_OK = /\.(gif|png|jpe?g|webp|mp4|webm|txt|json|md|docx|pptx|epub|csv|ttf|html|svg|pdf|xlsx|zip)$/i;
+    if (!DL_OK.test(filename)) { data = await zipOne(filename, data instanceof Blob ? data : new Blob([data], { type })); filename = filename + ".zip"; }
     try { const r = await downloads.save({ filename, data }); if (r.status === "saved") toast("ok", "Saved " + filename); return; }
     catch (e) {
       if (e?.code === "declined") return;
@@ -1298,6 +1308,7 @@ async function loadAudio(blob, name) {
   $("#audioName").textContent = name;
   ["#playBtn", "#tStart", "#tBack", "#tFwd", "#tEnd"].forEach(sel => $(sel).disabled = false);
   $("#saveAudioBtn").hidden = !state.render.blob;
+  $("#exportBtn").hidden = false;
   setPlayIcon(false);
   try {
     const AC = window.AudioContext || window.webkitAudioContext; const ac = new AC();
@@ -1387,6 +1398,123 @@ audio.addEventListener("loadedmetadata", () => { updateTime(); drawWave(); });
   });
 })();
 function toggleLoop() { audio.loop = !audio.loop; $("#loopBtn").setAttribute("aria-pressed", String(audio.loop)); toast("info", audio.loop ? "Loop on" : "Loop off"); }
+
+/* ---------- export formats ---------- */
+const EXPORTS = [
+  ["Masters", [
+    ["wav48_24", "WAV · 24-bit / 48 kHz", "Film and TV master", { rate: 48000, bits: 24, kind: "wav" }],
+    ["aiff48_24", "AIFF · 24-bit / 48 kHz", "Film and TV master, Apple format", { rate: 48000, bits: 24, kind: "aiff" }],
+    ["wav44_24", "WAV · 24-bit / 44.1 kHz", "Music master", { rate: 44100, bits: 24, kind: "wav" }],
+  ]],
+  ["Lossless", [
+    ["flac", "FLAC", "Lossless, about half the size of WAV"],
+    ["alac", "ALAC · Apple Lossless (.m4a)", "Lossless for Apple devices"],
+  ]],
+  ["Streaming & sharing", [
+    ["mp3", "MP3 · 320 kbps", "Plays everywhere"],
+    ["aac", "AAC · 256 kbps (.m4a)", "Apple Music, phones, social platforms"],
+    ["ogg", "Ogg Vorbis", "Open format"],
+    ["opus", "Opus · 160 kbps", "Open format, small files"],
+  ]],
+  ["CD", [
+    ["cd", "CD · Red Book · 16-bit / 44.1 kHz WAV", "Dithered and ready to burn", { rate: 44100, bits: 16, kind: "wav" }],
+  ]],
+  ["Film, TV & video", [
+    ["ac3_20", "Dolby Digital (AC-3) · 2.0 stereo", "TV and streaming stereo"],
+    ["ac3_51", "Dolby Digital (AC-3) · 5.1", "Surround, upmixed from stereo"],
+    ["eac3_51", "Dolby Digital Plus (E-AC-3) · 5.1", "Surround, upmixed from stereo"],
+    ["truehd_51", "Dolby TrueHD · 5.1 (.mkv)", "Lossless surround, upmixed · experimental encoder"],
+    ["dts_51", "DTS · 5.1", "Surround, upmixed · experimental encoder"],
+    ["wav51", "WAV · 5.1 · 24-bit / 48 kHz", "Six-channel surround master, upmixed from stereo"],
+    ["mp4_aac", "MP4 (AAC)", "Video-ready container"],
+    ["mkv_ac3", "MKV (Dolby Digital 5.1)", "Video-ready container, upmixed surround"],
+  ]],
+];
+const EXPORT_TAGS = { wav48_24: "WAV 24bit 48k", aiff48_24: "AIFF 24bit 48k", wav44_24: "WAV 24bit 44.1k", flac: "FLAC", alac: "ALAC", mp3: "MP3 320k", aac: "AAC 256k", ogg: "Vorbis", opus: "Opus", cd: "CD 16bit 44.1k",
+  ac3_20: "Dolby Digital 2.0", ac3_51: "Dolby Digital 5.1", eac3_51: "Dolby Digital Plus 5.1", truehd_51: "Dolby TrueHD 5.1", dts_51: "DTS 5.1", wav51: "WAV 5.1 24bit 48k", mp4_aac: "MP4 AAC", mkv_ac3: "MKV Dolby Digital 5.1" };
+const EXPORT_BY_KEY = Object.fromEntries(EXPORTS.flatMap(([g, items]) => items.map(([k, label, note, local]) => [k, { k, label, note, local, group: g }])));
+let exportCaps = { ffmpeg: false };
+async function openExport() {
+  if (!audio.src) return toast("warn", "Load or render a track first");
+  exportCaps = { ffmpeg: false };
+  if (isLocalHost && location.protocol.startsWith("http")) { try { const r = await fetch("/formats", { cache: "no-store" }); if (r.ok) exportCaps = await r.json(); } catch {} }
+  const sel = $("#exportFmt"), prev = sel.value || ls.get("exportFmt", "wav48_24");
+  sel.innerHTML = EXPORTS.map(([g, items]) => `<optgroup label="${esc(g)}">${items.map(([k, label]) => {
+    const ok = exportCaps.ffmpeg || EXPORT_BY_KEY[k].local; return `<option value="${k}" ${ok ? "" : "disabled"}>${esc(label)}${ok ? "" : " — needs the engine"}</option>`; }).join("")}</optgroup>`).join("");
+  sel.value = [...sel.options].some(o => o.value === prev && !o.disabled) ? prev : "wav48_24";
+  $("#exportWhere").textContent = exportCaps.ffmpeg ? "Converted on your engine. All formats available." : "Converted in your browser. Open the engine studio for every format.";
+  updateExportNote(); $("#exportPanel").hidden = false;
+}
+function updateExportNote() {
+  const f = EXPORT_BY_KEY[$("#exportFmt").value]; if (!f) return;
+  const coded = /^(ac3|eac3|truehd|dts|mkv_ac3)/.test(f.k);
+  $("#exportNote").textContent = f.note + "." + (coded ? " These Dolby and DTS files come from open-source encoders, so services that require certified encodes may not accept them." : "");
+}
+function baseName() { return ($("#audioName").textContent || "Alexandria").replace(/\.[a-z0-9]{2,5}$/i, "").replace(/[^\w\- ]+/g, "").trim() || "Alexandria"; }
+async function currentAudioBlob() { return state.render.blob || (await (await fetch(audio.src)).blob()); }
+async function doExport() {
+  const key = $("#exportFmt").value, f = EXPORT_BY_KEY[key]; if (!f) return;
+  ls.set("exportFmt", key);
+  const btn = $("#doExportBtn"); btn.disabled = true; btn.innerHTML = `${icon("loader", "i spin")}Exporting…`;
+  try {
+    const src = await currentAudioBlob(), name = `${baseName()} - ${EXPORT_TAGS[key] || key}`;
+    if (exportCaps.ffmpeg) {
+      const r = await fetch(`/export?fmt=${key}&name=${encodeURIComponent(name)}`, { method: "POST", headers: { "Content-Type": src.type || "application/octet-stream", "X-Filename": encodeURIComponent($("#audioName").textContent || "audio.wav") }, body: src });
+      if (r.status === 401) { location.href = "/login"; return; }
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || `Export failed (${r.status})`);
+      const blob = await r.blob(); await saveFile(name + (r.headers.get("X-Extension") || ".bin"), blob);
+    } else if (f.local) {
+      const blob = await encodeInBrowser(src, f.local); await saveFile(name + (f.local.kind === "aiff" ? ".aiff" : ".wav"), blob);
+    } else throw new Error("This format needs the engine studio.");
+    toast("ok", "Exported", f.label);
+  } catch (e) { toast("err", "Export failed", String(e.message || e).slice(0, 200), 9000); }
+  finally { btn.disabled = false; btn.innerHTML = `${icon("download")}Export`; }
+}
+
+/* in-browser master encoders: resample, then 16-bit (TPDF-dithered) or 24-bit PCM in WAV or AIFF */
+async function encodeInBrowser(blob, { rate, bits, kind }) {
+  const AC = window.AudioContext || window.webkitAudioContext; const ac = new AC();
+  const src = await ac.decodeAudioData(await blob.arrayBuffer()); ac.close?.();
+  const off = new OfflineAudioContext(2, Math.ceil(src.duration * rate), rate);
+  const node = off.createBufferSource(); node.buffer = src; node.connect(off.destination); node.start();
+  const out = await off.startRendering();
+  const L = out.getChannelData(0), Rch = out.numberOfChannels > 1 ? out.getChannelData(1) : L, n = out.length, bps = bits / 8;
+  const pcm = new Uint8Array(n * 2 * bps), max = bits === 16 ? 32767 : 8388607, le = kind === "wav";
+  let o = 0;
+  for (let i = 0; i < n; i++) for (const ch of [L, Rch]) {
+    let v = ch[i]; if (bits === 16) v += (Math.random() - Math.random()) / 32768;
+    let q = Math.max(-max - 1, Math.min(max, Math.round(v * max)));
+    if (q < 0) q += bits === 16 ? 65536 : 16777216;
+    if (bits === 16) { if (le) { pcm[o++] = q & 255; pcm[o++] = q >> 8; } else { pcm[o++] = q >> 8; pcm[o++] = q & 255; } }
+    else { if (le) { pcm[o++] = q & 255; pcm[o++] = (q >> 8) & 255; pcm[o++] = q >> 16; } else { pcm[o++] = q >> 16; pcm[o++] = (q >> 8) & 255; pcm[o++] = q & 255; } }
+  }
+  return kind === "wav" ? wavFile(pcm, rate, bits) : aiffFile(pcm, rate, bits, n);
+}
+function wavFile(pcm, rate, bits) {
+  const h = new DataView(new ArrayBuffer(44)), bpsf = 2 * bits / 8, w = (o, s) => [...s].forEach((c, i) => h.setUint8(o + i, c.charCodeAt(0)));
+  w(0, "RIFF"); h.setUint32(4, 36 + pcm.length, true); w(8, "WAVE"); w(12, "fmt "); h.setUint32(16, 16, true); h.setUint16(20, 1, true); h.setUint16(22, 2, true);
+  h.setUint32(24, rate, true); h.setUint32(28, rate * bpsf, true); h.setUint16(32, bpsf, true); h.setUint16(34, bits, true); w(36, "data"); h.setUint32(40, pcm.length, true);
+  return new Blob([h.buffer, pcm], { type: "audio/wav" });
+}
+function aiffFile(pcm, rate, bits, frames) {
+  const h = new DataView(new ArrayBuffer(54)), w = (o, s) => [...s].forEach((c, i) => h.setUint8(o + i, c.charCodeAt(0)));
+  w(0, "FORM"); h.setUint32(4, 46 + pcm.length); w(8, "AIFF"); w(12, "COMM"); h.setUint32(16, 18); h.setUint16(20, 2); h.setUint32(22, frames); h.setUint16(26, bits);
+  // sample rate as an 80-bit IEEE extended float
+  let e = Math.floor(Math.log2(rate)), m = rate / Math.pow(2, e); h.setUint16(28, 16383 + e);
+  const hi = Math.floor(m * 2 ** 31), lo = Math.floor((m * 2 ** 31 - hi) * 2 ** 32); h.setUint32(30, hi); h.setUint32(34, lo);
+  w(38, "SSND"); h.setUint32(42, 8 + pcm.length); h.setUint32(46, 0); h.setUint32(50, 0);
+  return new Blob([h.buffer, pcm], { type: "audio/aiff" });
+}
+/* store-only ZIP, for hosts whose download list doesn't include audio file types */
+const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+async function zipOne(filename, blob) {
+  const data = new Uint8Array(await blob.arrayBuffer()), name = new TextEncoder().encode(filename), crc = crc32(data);
+  const lh = new DataView(new ArrayBuffer(30)); lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint32(14, crc, true); lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true); lh.setUint16(26, name.length, true);
+  const ch = new DataView(new ArrayBuffer(46)); ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint32(16, crc, true); ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true); ch.setUint16(28, name.length, true);
+  const end = new DataView(new ArrayBuffer(22)); end.setUint32(0, 0x06054b50, true); end.setUint16(8, 1, true); end.setUint16(10, 1, true); end.setUint32(12, 46 + name.length, true); end.setUint32(16, 30 + name.length + data.length, true);
+  return new Blob([lh.buffer, name, data, ch.buffer, name, end.buffer], { type: "application/zip" });
+}
 
 /* ---------- library ---------- */
 function specColors(s) { const p = allPresets().find(x => (s.genre || "").toLowerCase().includes(x.name.split(" ")[0].toLowerCase())); const h = [...(s.title || "x")].reduce((a, c) => a + c.charCodeAt(0), 0) % 360; return p ? p.colors : [`hsl(${h} 60% 30%)`, `hsl(${(h + 50) % 360} 80% 60%)`]; }
@@ -1859,6 +1987,9 @@ document.addEventListener("click", async e => {
     case "load-audio": return $("#audioFile").click();
     case "save-audio": if (state.render.blob) return saveFile($("#audioName").textContent, state.render.blob); return;
     case "play": return togglePlay();
+    case "open-export": return openExport();
+    case "close-export": $("#exportPanel").hidden = true; return;
+    case "do-export": return doExport();
     case "seek-start": return seekTo(0);
     case "seek-back": return seekTo(audio.currentTime - 10);
     case "seek-fwd": return seekTo(audio.currentTime + 10);
@@ -1912,6 +2043,7 @@ $("#brief").addEventListener("input", () => { updateBriefCount(); saveDraft(); }
 $("#libSearch").addEventListener("input", e => { state.libSearch = e.target.value; renderLibrary(); });
 $("#pText").addEventListener("input", updateProfileCount);
 $("#fBpm").addEventListener("input", e => $("#fBpmVal").textContent = e.target.value);
+$("#exportFmt").addEventListener("change", updateExportNote);
 $("#newGenre").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addGenre(); } });
 $("#profileImport").addEventListener("change", async e => { const f = e.target.files[0]; e.target.value = ""; if (f) await importProfiles(f); });
 $("#voiceFile").addEventListener("change", async e => { const f = e.target.files[0]; e.target.value = ""; if (f) await runVoiceLab(f); });
