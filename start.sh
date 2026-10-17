@@ -64,6 +64,11 @@ nohup python3 alexandria_bridge.py --host 0.0.0.0 --port 7870 --no-browser --ace
 sleep 2
 cat "$APP/logs/bridge.log"
 echo
+if [ -n "${ALEX_BATCH:-}" ] && [ -f "$APP/batches/$ALEX_BATCH" ]; then
+  PYB="$ACE/.venv/bin/python"; "$PYB" -c "import numpy" 2>/dev/null || PYB=python3
+  echo "==> Batch $ALEX_BATCH running in the background (pod log lines start with BATCH)"
+  ACE_URL="$ACE_URL" ALEX_APP="$APP" nohup "$PYB" "$APP/batch.py" "$APP/batches/$ALEX_BATCH" 2>&1 | tee -a "$APP/logs/batch.log" &
+fi
 if [ "${ALEX_SELFTEST:-0}" = "1" ]; then
   echo "==> Self-test running in the background (results appear in the pod log as SELFTEST lines)"
   ACE_URL="$ACE_URL" python3 "$APP/selftest.py" 2>&1 | tee "$APP/logs/selftest.log" &

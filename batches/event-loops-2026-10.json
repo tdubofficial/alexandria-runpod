@@ -1,0 +1,603 @@
+{
+ "name": "event-loops-2026-10",
+ "created": "2026-10-17",
+ "formats": {
+  "ac3": "384k",
+  "dts": "768k"
+ },
+ "loudness_lufs": -16,
+ "genres": {
+  "01_RnB_and_Soul": {
+   "chart": "Billboard Hot R&B Songs, week of Oct 17, 2026",
+   "style": "moody alt-R&B and trap-soul, 70-100 BPM often half-time, soft 808s with long sub tails, sparse crisp hats and rimshots, maj7/min9 Rhodes and filtered pads, lo-fi guitar loops, wide dark reverb, gliding sub-bass, negative space"
+  },
+  "02_Classical_and_Cinematic": {
+   "chart": "Billboard Classical Crossover Albums, week of Oct 17, 2026",
+   "style": "neo-classical felt piano with arpeggiated ostinatos, simple diatonic vi-IV-I-V progressions, cinematic strings and soft choir pads, string-quartet arrangements, close intimate piano with soft hall reverb, 60-90 BPM"
+  },
+  "03_Country_and_Americana": {
+   "chart": "Billboard Hot Country Songs, week of Oct 17, 2026",
+   "style": "modern Nashville country-rock with a honky-tonk edge, 75-125 BPM shuffles and driving 4/4, live punchy kit and train-beat snare, acoustic strumming, twangy Telecaster licks, pedal steel and fiddle, simple I-IV-V-vi harmony, organic polished mix"
+  },
+  "04_Latin_and_Mediterranean": {
+   "chart": "Billboard Hot Latin Songs, week of Oct 17, 2026",
+   "style": "two camps: urbano reggaeton/dembow 88-100 BPM with sub-heavy 808s, plucky synths and perreo bounce; regional Mexican sierreno/corridos with 12-string requinto runs, tololoche bass and triplet strums; minor keys with Andalusian/Phrygian color"
+  },
+  "05_Pop_Celebration": {
+   "chart": "Billboard Hot 100, week of Oct 17, 2026",
+   "style": "genre-blended pop: synth-pop, country-pop, pop-rock, psych-disco and trap-R&B, 85-125 BPM, four-on-the-floor or mid-tempo grooves, bright synth or guitar ostinatos, phaser and filter sweeps, crisp punchy drums, loud polished wide mix"
+  },
+  "06_HipHop_Anthems": {
+   "chart": "Billboard Hot Rap Songs, week of Oct 17, 2026",
+   "style": "trap and Southern bounce with melodic R&B-rap, 130-160 BPM in half-time feel, distorted sliding 808s, rapid hi-hat rolls and triplet flams, claps on 3, minor-key bells, plucks, dark piano and choir stabs, some Afro-swing percussion, dry huge low end"
+  },
+  "07_Jazz_and_Lounge": {
+   "chart": "Billboard Smooth Jazz Airplay Songs, Oct 17, 2026",
+   "style": "smooth-jazz groove, 85-105 BPM, light R&B backbeat, pillowy snare, silky tenor/soprano sax or clean jazz guitar leads, Rhodes and Wurli maj9/min11/13 chords, slap or fingerstyle funk bass, glossy mid-forward mix, laid-back late-night feel"
+  },
+  "08_Gospel_and_Inspirational": {
+   "chart": "Billboard Hot Gospel Songs, week of Oct 17, 2026",
+   "style": "worship ballads 65-80 BPM building from pads and piano to choir swells and live-drum crescendos, plus uptempo 95-115 BPM urban gospel; gospel walk-ups, 2-5-1 runs, maj9/add9 voicings, Hammond organ with Leslie, wide hall reverb, vamp-style repetition"
+  },
+  "09_Lullaby_and_Playful": {
+   "chart": "Billboard Kid Albums, week of Oct 17, 2026",
+   "style": "bright animated-musical pop, cool-jazz piano trio, and soft lullabies; simple major-key melodies, ukulele, glockenspiel, claps, upright bass, brushed swing drums, 6/9 and maj7 jazz color, soft piano for lullabies, 60-130 BPM"
+  },
+  "10_Holiday": {
+   "chart": "Billboard Holiday 100, final edition Jan 3, 2026",
+   "style": "retro 1950s-60s rockabilly shuffles and wall-of-sound pop, crooner ballads; sleigh bells, glockenspiel, celesta, castanets, handclaps, walking upright bass, swing drums, brass and string swells, ii-V and I-vi-ii-V turnarounds, bright roomy plate reverb, nostalgic warmth"
+  }
+ },
+ "tracks": [
+  {
+   "n": 1,
+   "genre": "01_RnB_and_Soul",
+   "title": "Black Tie Evening",
+   "kit": "Kit 02 Black Tie Wedding",
+   "bpm": 78,
+   "key": "Db major",
+   "time_signature": 4,
+   "loop_bars": 44,
+   "prompt": "alt-R&B slow jam, 78 BPM half-time, soft knocking 808 with long sub tail, crisp sparse hats, rim clicks, lush Rhodes maj9 chords, velvet string pad swells, muted electric guitar licks, warm analog low end, wide plate reverb, candlelit black-tie elegance, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 2,
+   "genre": "01_RnB_and_Soul",
+   "title": "Gilded Hall",
+   "kit": "Kit 12 Luxury Wedding",
+   "bpm": 84,
+   "key": "Ab major",
+   "time_signature": 4,
+   "loop_bars": 48,
+   "prompt": "luxurious neo-soul, 84 BPM laid-back pocket, dusty live kit with brushed snare, round fingerstyle bass, Rhodes and grand piano maj7 voicings, lush string section, gentle harp glissandos, warm tape saturation, golden chandelier glow, romantic and refined, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 3,
+   "genre": "01_RnB_and_Soul",
+   "title": "Champagne Toast",
+   "kit": "Kit 18 Engagement Party",
+   "bpm": 92,
+   "key": "Eb major",
+   "time_signature": 4,
+   "loop_bars": 52,
+   "prompt": "upbeat R&B groove, 92 BPM, tight snappy snare, finger snaps, bouncy syncopated bass guitar, bright Rhodes stabs, glassy synth pluck arpeggios, muted funk guitar, warm sub, polished wide mix, celebratory and flirtatious, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 4,
+   "genre": "01_RnB_and_Soul",
+   "title": "Skyline Vows",
+   "kit": "Kit 23 Modern City Wedding",
+   "bpm": 72,
+   "key": "F minor",
+   "time_signature": 4,
+   "loop_bars": 40,
+   "prompt": "nocturnal trap-soul, 72 BPM half-time, gliding 808 bass, sparse trap hats with rolls, airy filtered synth pads, min9 Rhodes chords, reversed guitar swells, city-night ambience, deep wide reverb, sleek modern romance, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 5,
+   "genre": "01_RnB_and_Soul",
+   "title": "Twenty-Five Candles",
+   "kit": "Kit 38 Anniversary",
+   "bpm": 68,
+   "key": "Bb major",
+   "time_signature": 4,
+   "loop_bars": 40,
+   "prompt": "classic quiet-storm soul ballad, 68 BPM, soft live drums with brushes, warm Rhodes and Wurlitzer, smooth fingered bass, gentle string pads, tender clean guitar fills, intimate dry center, sentimental warm candlelight mood, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 6,
+   "genre": "02_Classical_and_Cinematic",
+   "title": "Olive Grove Procession",
+   "kit": "Kit 01 Botanical Wedding",
+   "bpm": 72,
+   "key": "D major",
+   "time_signature": 4,
+   "loop_bars": 40,
+   "prompt": "neo-classical cinematic, 72 BPM, flowing felt piano arpeggios, warm cello and violin section, soft harp, gentle french horn swells, sunlit garden calm, soft hall reverb, graceful and romantic, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 7,
+   "genre": "02_Classical_and_Cinematic",
+   "title": "Garden Gate",
+   "kit": "Kit 21 Botanical Wedding",
+   "bpm": 76,
+   "key": "G major",
+   "time_signature": 4,
+   "loop_bars": 44,
+   "prompt": "string quartet chamber piece, 76 BPM, lyrical first violin melody, warm viola and cello harmony, light pizzicato pulse, soft felt piano, airy spring garden feel, natural room reverb, elegant and hopeful, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 8,
+   "genre": "02_Classical_and_Cinematic",
+   "title": "Ballroom Waltz",
+   "kit": "Kit 32 Classic Ballroom Wedding",
+   "bpm": 90,
+   "key": "Eb major",
+   "time_signature": 3,
+   "loop_bars": 68,
+   "prompt": "classic orchestral waltz in 3/4, 90 BPM, lush full string section, sweeping legato violins, oom-pah-pah low strings and harp, warm woodwinds, gentle timpani, grand ballroom hall reverb, timeless black-and-gold elegance, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 9,
+   "genre": "02_Classical_and_Cinematic",
+   "title": "Lakeside Morning",
+   "kit": "Kit 31 Lakeside Wedding",
+   "bpm": 66,
+   "key": "A major",
+   "time_signature": 4,
+   "loop_bars": 36,
+   "prompt": "ambient cinematic piano, 66 BPM, gentle repeating piano ostinato, soft sustained string pads, distant airy choir, light shimmering celesta, misty lake morning, wide soft reverb, serene and romantic, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 10,
+   "genre": "02_Classical_and_Cinematic",
+   "title": "Garden Brunch",
+   "kit": "Kit 20 Bridal Shower",
+   "bpm": 96,
+   "key": "C major",
+   "time_signature": 4,
+   "loop_bars": 56,
+   "prompt": "playful chamber strings, 96 BPM, bright pizzicato ostinato, lilting violin melody, light flute, warm piano chords, soft triangle accents, sunny garden brunch, pastel and charming, natural room sound, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 11,
+   "genre": "03_Country_and_Americana",
+   "title": "Barn Lights",
+   "kit": "Kit 22 Rustic Barn Wedding",
+   "bpm": 96,
+   "key": "G major",
+   "time_signature": 4,
+   "loop_bars": 56,
+   "prompt": "warm country ballad groove, 96 BPM, brushed live kit, strummed acoustic guitars, crying pedal steel, gentle mandolin, warm upright bass, string-light glow, rustic barn warmth, organic room reverb, heartfelt and cozy, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 12,
+   "genre": "03_Country_and_Americana",
+   "title": "Carter Family Picnic",
+   "kit": "Kit 07 Family Reunion",
+   "bpm": 110,
+   "key": "D major",
+   "time_signature": 4,
+   "loop_bars": 60,
+   "prompt": "upbeat country-folk, 110 BPM, train-beat snare, bright acoustic strumming, banjo rolls, fiddle melody, twangy Telecaster licks, walking bass, sunny backyard picnic, polished organic mix, joyful, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 13,
+   "genre": "03_Country_and_Americana",
+   "title": "Harrison Homecoming",
+   "kit": "Kit 17 Botanical Family Reunion",
+   "bpm": 88,
+   "key": "C major",
+   "time_signature": 4,
+   "loop_bars": 48,
+   "prompt": "Americana porch groove, 88 BPM, soft shuffle on live kit, fingerpicked acoustic guitar, warm Hammond organ pad, slide guitar, upright bass, golden-hour nostalgia, natural warm mix, welcoming, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 14,
+   "genre": "03_Country_and_Americana",
+   "title": "Anderson Park Afternoon",
+   "kit": "Kit 27 Family Reunion",
+   "bpm": 120,
+   "key": "A major",
+   "time_signature": 4,
+   "loop_bars": 68,
+   "prompt": "driving country-rock, 120 BPM, punchy live drums, chugging electric rhythm guitar, twangy lead Telecaster riffs, pedal steel swells, fiddle accents, bright summer energy, loud polished mix, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 15,
+   "genre": "03_Country_and_Americana",
+   "title": "Cedar Hollow Housewarming",
+   "kit": "Kit 28 Housewarming",
+   "bpm": 100,
+   "key": "E major",
+   "time_signature": 4,
+   "loop_bars": 56,
+   "prompt": "feel-good acoustic Americana, 100 BPM, kick and brushed snare, strummed acoustic and 12-string guitars, mandolin chops, light accordion, warm bass, front-porch welcome, roomy natural reverb, homey and bright, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 16,
+   "genre": "04_Latin_and_Mediterranean",
+   "title": "Amalfi Terrace",
+   "kit": "Kit 13 Mediterranean Wedding",
+   "bpm": 104,
+   "key": "A minor",
+   "time_signature": 4,
+   "loop_bars": 60,
+   "prompt": "Mediterranean flamenco-pop rumba, 104 BPM, nylon guitar rumba strum and runs, palmas handclaps, cajon groove, warm upright bass, Andalusian cadence, mandolin tremolo accents, sunlit coastal terrace, warm natural mix, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 17,
+   "genre": "04_Latin_and_Mediterranean",
+   "title": "Coastal Sunset",
+   "kit": "Kit 03 Coastal Wedding",
+   "bpm": 94,
+   "key": "B minor",
+   "time_signature": 4,
+   "loop_bars": 52,
+   "prompt": "tropical reggaeton-pop, 94 BPM, soft dembow kick-snare pattern, warm sub 808, plucky marimba synth, nylon guitar arpeggios, shakers and congas, breezy airy pads, dry close mix, golden sunset romance, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 18,
+   "genre": "04_Latin_and_Mediterranean",
+   "title": "Desert Canyon Dusk",
+   "kit": "Kit 33 Desert Wedding",
+   "bpm": 120,
+   "key": "D minor",
+   "time_signature": 3,
+   "loop_bars": 88,
+   "prompt": "sierreno acoustic in 3/4, 120 BPM, 12-string requinto runs, strummed bajo sexto, warm tololoche upright bass, light shaker, Phrygian flavor, desert dusk warmth, live natural room sound, romantic, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 19,
+   "genre": "04_Latin_and_Mediterranean",
+   "title": "Grand Entrance Waltz",
+   "kit": "Kit 30 Quinceanera",
+   "bpm": 92,
+   "key": "G major",
+   "time_signature": 3,
+   "loop_bars": 68,
+   "prompt": "quinceanera ballroom waltz in 3/4, 92 BPM, sweeping violins, mariachi-style trumpets, harp arpeggios, guitarron bass, vihuela strums, elegant grand ballroom, warm hall reverb, joyful and proud, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 20,
+   "genre": "04_Latin_and_Mediterranean",
+   "title": "Fiesta Rosa",
+   "kit": "Kit 30 Quinceanera",
+   "bpm": 98,
+   "key": "E minor",
+   "time_signature": 4,
+   "loop_bars": 56,
+   "prompt": "modern cumbia-pop, 98 BPM, cumbia guira scrape and conga groove, bouncy bass, accordion riffs, bright synth plucks, handclaps, dembow-tinged kick, pink party lights, festive and danceable, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 21,
+   "genre": "05_Pop_Celebration",
+   "title": "Cheers to Fifty",
+   "kit": "Kit 04 Milestone Birthday",
+   "bpm": 118,
+   "key": "C major",
+   "time_signature": 4,
+   "loop_bars": 68,
+   "prompt": "glittering disco-pop, 118 BPM four-on-the-floor, crisp claps, octave-jumping disco bass, funky rhythm guitar, string stabs, shimmering synth arpeggios, confetti brightness, loud polished wide mix, celebratory, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 22,
+   "genre": "05_Pop_Celebration",
+   "title": "Fortieth in Rose Gold",
+   "kit": "Kit 14 Milestone Birthday",
+   "bpm": 112,
+   "key": "F major",
+   "time_signature": 4,
+   "loop_bars": 64,
+   "prompt": "sleek synth-pop, 112 BPM, punchy electronic drums, bright synth ostinato, warm analog bass, sparkling bell plucks, sidechained pads, rose-gold glamour, polished wide mix, upbeat, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 23,
+   "genre": "05_Pop_Celebration",
+   "title": "Loft Lights",
+   "kit": "Kit 24 Glamorous 40th Birthday",
+   "bpm": 122,
+   "key": "A minor",
+   "time_signature": 4,
+   "loop_bars": 68,
+   "prompt": "psychedelic disco, 122 BPM four-on-the-floor, phaser-swept synths, rubbery bassline, crisp hats, filtered guitar licks, glassy pads, city-rooftop night glamour, wide glossy mix, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 24,
+   "genre": "05_Pop_Celebration",
+   "title": "Golden Fifty",
+   "kit": "Kit 34 Luxury 50th Birthday",
+   "bpm": 104,
+   "key": "Bb major",
+   "time_signature": 4,
+   "loop_bars": 60,
+   "prompt": "retro soul-pop, 104 BPM, tight live drums, warm brass stabs, Wurlitzer chords, bouncy bass, tambourine, glamorous gold and black, vintage warm mix, joyful and classy, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 25,
+   "genre": "05_Pop_Celebration",
+   "title": "A Night to Shine",
+   "kit": "Kit 40 Glamorous Sweet Sixteen",
+   "bpm": 124,
+   "key": "D major",
+   "time_signature": 4,
+   "loop_bars": 68,
+   "prompt": "bubbly dance-pop, 124 BPM, bright four-on-the-floor kick, sparkly synth chords, plucky arpeggios, handclaps, glittery risers, pink neon glow, loud shiny mix, youthful and fun, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 26,
+   "genre": "05_Pop_Celebration",
+   "title": "Desert Weekend",
+   "kit": "Kit 19 Bachelor Weekend",
+   "bpm": 120,
+   "key": "G minor",
+   "time_signature": 4,
+   "loop_bars": 68,
+   "prompt": "pop-house groove, 120 BPM, punchy house kick, offbeat hats, deep bass, chopped synth stabs, tropical marimba plucks, poolside sunset party energy, wide club mix, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 27,
+   "genre": "06_HipHop_Anthems",
+   "title": "Class of Twenty-Seven",
+   "kit": "Kit 06 Graduation",
+   "bpm": 140,
+   "key": "C minor",
+   "time_signature": 4,
+   "loop_bars": 80,
+   "prompt": "triumphant trap anthem, 140 BPM half-time, booming sliding 808s, rapid hi-hat rolls, claps on 3, orchestral brass and choir stabs, cinematic piano, victorious graduation energy, huge dry low end, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 28,
+   "genre": "06_HipHop_Anthems",
+   "title": "Cap and Gown",
+   "kit": "Kit 16 Graduation",
+   "bpm": 92,
+   "key": "Eb major",
+   "time_signature": 4,
+   "loop_bars": 52,
+   "prompt": "soulful boom-bap, 92 BPM, dusty sampled-style drum break, deep bass, chopped soul piano and horn stabs, vinyl warmth, proud and nostalgic, punchy dry mix, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 29,
+   "genre": "06_HipHop_Anthems",
+   "title": "The Next Chapter",
+   "kit": "Kit 26 Graduation",
+   "bpm": 150,
+   "key": "G minor",
+   "time_signature": 4,
+   "loop_bars": 84,
+   "prompt": "cinematic trap, 150 BPM half-time, distorted 808 glides, triplet hi-hat flams, dark piano loop, bell melody, string ostinato, epic choir pads, ambitious and bold, dry in-your-face mix, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 30,
+   "genre": "06_HipHop_Anthems",
+   "title": "Grad Party Bounce",
+   "kit": "Kit 36 Graduation Party",
+   "bpm": 102,
+   "key": "A minor",
+   "time_signature": 4,
+   "loop_bars": 56,
+   "prompt": "Afro-swing bounce, 102 BPM, swung percussion and log drum, punchy kick, snappy rim, warm plucked synth melody, bouncy 808 bass, shakers, party celebration energy, crisp dry mix, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 31,
+   "genre": "06_HipHop_Anthems",
+   "title": "Next Scene",
+   "kit": "Kit 09 Business Launch",
+   "bpm": 136,
+   "key": "F minor",
+   "time_signature": 4,
+   "loop_bars": 76,
+   "prompt": "sleek melodic trap-pop, 136 BPM half-time, clean 808, crisp hats, glossy synth pads, filtered pluck arpeggio, cinematic risers, premiere-night launch energy, modern wide mix, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 32,
+   "genre": "07_Jazz_and_Lounge",
+   "title": "Willow House Tour",
+   "kit": "Kit 08 Property Open House",
+   "bpm": 92,
+   "key": "F major",
+   "time_signature": 4,
+   "loop_bars": 52,
+   "prompt": "smooth jazz groove, 92 BPM, light R&B backbeat, pillowy snare, clean jazz guitar melody, Rhodes maj9 chords, fingerstyle bass, soft shaker, inviting open-house warmth, glossy relaxed mix, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 33,
+   "genre": "07_Jazz_and_Lounge",
+   "title": "Launch Night Cocktails",
+   "kit": "Kit 09 Business Launch",
+   "bpm": 98,
+   "key": "Ab major",
+   "time_signature": 4,
+   "loop_bars": 56,
+   "prompt": "upscale lounge jazz, 98 BPM, tight brushed groove, silky soprano sax lead, Wurlitzer comping, slap-tinged funk bass, vibraphone accents, sleek cocktail-hour sophistication, glossy mix, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 34,
+   "genre": "07_Jazz_and_Lounge",
+   "title": "Heritage Center Toast",
+   "kit": "Kit 29 Retirement Celebration",
+   "bpm": 86,
+   "key": "Bb major",
+   "time_signature": 4,
+   "loop_bars": 48,
+   "prompt": "warm smooth jazz, 86 BPM, laid-back backbeat, tenor sax melody, Rhodes 13th chords, warm upright-style bass, soft piano fills, champagne gold and navy, honored and relaxed, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 35,
+   "genre": "07_Jazz_and_Lounge",
+   "title": "Anniversary Dinner",
+   "kit": "Kit 38 Anniversary",
+   "bpm": 80,
+   "key": "Db major",
+   "time_signature": 4,
+   "loop_bars": 44,
+   "prompt": "late-night jazz lounge, 80 BPM, brushed drums, soft tenor sax, grand piano maj9 voicings, walking upright bass, warm candlelit dinner, intimate gentle reverb, sentimental, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 36,
+   "genre": "07_Jazz_and_Lounge",
+   "title": "Evening on the Porch",
+   "kit": "Kit 28 Housewarming",
+   "bpm": 94,
+   "key": "G major",
+   "time_signature": 4,
+   "loop_bars": 52,
+   "prompt": "smooth jazz-funk, 94 BPM, relaxed backbeat, clean jazz guitar octaves, Wurlitzer chords, fingerstyle funk bass, light congas, cozy evening at home, warm glossy mix, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 37,
+   "genre": "08_Gospel_and_Inspirational",
+   "title": "Community Sunday",
+   "kit": "Kit 10 Church Celebration",
+   "bpm": 72,
+   "key": "Ab major",
+   "time_signature": 4,
+   "loop_bars": 40,
+   "prompt": "worship ballad, 72 BPM, warm grand piano add9 chords, sustained ambient pads, Hammond organ with Leslie swells, soft live drums, round bass, wordless choir oohs, wide hall reverb, uplifting and welcoming, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 38,
+   "genre": "08_Gospel_and_Inspirational",
+   "title": "Fellowship Hall",
+   "kit": "Kit 10 Church Celebration",
+   "bpm": 104,
+   "key": "C major",
+   "time_signature": 4,
+   "loop_bars": 60,
+   "prompt": "uptempo urban gospel, 104 BPM, punchy live drums, hand claps, Hammond organ riffs, gospel piano walk-ups, funky bass, tambourine, joyful celebration vamp, wide lively mix, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 39,
+   "genre": "08_Gospel_and_Inspirational",
+   "title": "Everyone Belongs Here",
+   "kit": "Kit 10 Church Celebration",
+   "bpm": 66,
+   "key": "F major",
+   "time_signature": 4,
+   "loop_bars": 36,
+   "prompt": "gentle hymn-like instrumental, 66 BPM, soft piano and organ, warm strings, light acoustic guitar, swelling choir pads, peaceful sanctuary reverb, comforting and hopeful, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 40,
+   "genre": "08_Gospel_and_Inspirational",
+   "title": "Reunion Sunday",
+   "kit": "Kit 07 Family Reunion",
+   "bpm": 98,
+   "key": "Bb major",
+   "time_signature": 4,
+   "loop_bars": 56,
+   "prompt": "gospel shuffle, 98 BPM, swung live drums, Hammond organ with Leslie, gospel piano 2-5-1 runs, walking bass, hand claps, tambourine, family warmth, roomy natural mix, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 41,
+   "genre": "08_Gospel_and_Inspirational",
+   "title": "A Life Well Lived",
+   "kit": "Kit 29 Retirement Celebration",
+   "bpm": 76,
+   "key": "Eb major",
+   "time_signature": 4,
+   "loop_bars": 44,
+   "prompt": "inspirational gospel ballad, 76 BPM, piano maj9 voicings, organ swells, soft live drums building to warm crescendo, strings, wordless choir pads, grateful and triumphant, wide hall reverb, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 42,
+   "genre": "09_Lullaby_and_Playful",
+   "title": "A Little Joy",
+   "kit": "Kit 05 Baby Shower",
+   "bpm": 70,
+   "key": "F major",
+   "time_signature": 4,
+   "loop_bars": 40,
+   "prompt": "gentle lullaby, 70 BPM, soft felt piano melody, music box, warm string pad, light glockenspiel, soft acoustic guitar, cozy nursery calm, soft reverb, tender and sweet, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 43,
+   "genre": "09_Lullaby_and_Playful",
+   "title": "Moon and Teddy",
+   "kit": "Kit 15 Pastel Baby Shower",
+   "bpm": 64,
+   "key": "C major",
+   "time_signature": 3,
+   "loop_bars": 48,
+   "prompt": "dreamy lullaby waltz in 3/4, 64 BPM, music box melody, celesta, soft harp, warm cello pad, twinkling chimes, pastel moonlit nursery, gentle wide reverb, peaceful, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 44,
+   "genre": "09_Lullaby_and_Playful",
+   "title": "Sophie's Shower",
+   "kit": "Kit 25 Baby Shower",
+   "bpm": 108,
+   "key": "G major",
+   "time_signature": 4,
+   "loop_bars": 60,
+   "prompt": "bouncy acoustic pop, 108 BPM, ukulele strums, handclaps, glockenspiel melody, upright bass, light brushed drums, whistled-style synth lead, sunny and playful, clean bright mix, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 45,
+   "genre": "09_Lullaby_and_Playful",
+   "title": "A Little Chapter",
+   "kit": "Kit 35 Storybook Baby Shower",
+   "bpm": 96,
+   "key": "D major",
+   "time_signature": 4,
+   "loop_bars": 56,
+   "prompt": "whimsical storybook orchestral, 96 BPM, pizzicato strings, playful clarinet and flute, glockenspiel, soft piano, light tuba bounce, fairy-tale wonder, warm natural reverb, heartwarming, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 46,
+   "genre": "09_Lullaby_and_Playful",
+   "title": "He or She",
+   "kit": "Kit 37 Gender Reveal",
+   "bpm": 118,
+   "key": "C major",
+   "time_signature": 4,
+   "loop_bars": 68,
+   "prompt": "playful jazz-pop, 118 BPM, swinging brushed drums, cool-jazz piano trio chords with 6/9 color, walking upright bass, finger snaps, glockenspiel accents, pink and blue confetti fun, anticipatory and joyful, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 47,
+   "genre": "10_Holiday",
+   "title": "Fireside Swing",
+   "kit": "Kit 39 Holiday Party",
+   "bpm": 120,
+   "key": "Bb major",
+   "time_signature": 4,
+   "loop_bars": 68,
+   "prompt": "big-band holiday swing, 120 BPM, swinging ride and brushes, walking upright bass, muted trumpets and sax section, sleigh bells, celesta sparkle, ii-V turnarounds, cozy fireside party, roomy plate reverb, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 48,
+   "genre": "10_Holiday",
+   "title": "Snowfall Shuffle",
+   "kit": "Kit 39 Holiday Party",
+   "bpm": 140,
+   "key": "G major",
+   "time_signature": 4,
+   "loop_bars": 80,
+   "prompt": "rockabilly holiday shuffle, 140 BPM, slapback twangy electric guitar, slap upright bass, shuffle snare, sleigh bells, honky-tonk piano, handclaps, retro 1950s warmth, bright festive mix, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 49,
+   "genre": "10_Holiday",
+   "title": "Mistletoe Lounge",
+   "kit": "Kit 39 Holiday Party",
+   "bpm": 70,
+   "key": "Eb major",
+   "time_signature": 4,
+   "loop_bars": 40,
+   "prompt": "crooner jazz-trio ballad, 70 BPM, brushed drums, lush jazz piano with diminished passing chords, upright bass, soft string pad, gentle celesta, snowy evening glow, warm plate reverb, nostalgic, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  },
+  {
+   "n": 50,
+   "genre": "10_Holiday",
+   "title": "Carter Home Holiday",
+   "kit": "Kit 39 Holiday Party",
+   "bpm": 130,
+   "key": "D major",
+   "time_signature": 4,
+   "loop_bars": 72,
+   "prompt": "wall-of-sound holiday pop, 130 BPM, booming tom and snare pattern, castanets, sleigh bells, glockenspiel, layered strings and piano, warm saxophone, joyful retro 60s celebration, big roomy reverb, instrumental, no vocals, steady loopable arrangement, consistent energy, no intro, no ending, no fade"
+  }
+ ]
+}

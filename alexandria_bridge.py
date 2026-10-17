@@ -40,6 +40,7 @@ import json
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import threading
 import time
@@ -719,12 +720,39 @@ class Handler(BaseHTTPRequestHandler):
         self.cors()
         self.end_headers()
 
+    def batch_files(self, rel):
+        """Batch results, for fetching without a browser session. Enabled only while ALEX_BATCH_TOKEN (24+ chars) is set;
+        the token must arrive in the X-Alex-Batch-Token header. Anything else gets a plain 404."""
+        token = os.environ.get("ALEX_BATCH_TOKEN", "")
+        given = self.headers.get("X-Alex-Batch-Token", "")
+        if len(token) < 24 or not hmac.compare_digest(token.encode(), given.encode()):
+            return self.send_json({"error": "not found"}, 404)
+        root = (Path(ARGS.out).parent / "batch_out").resolve()
+        target = (root / rel).resolve()
+        if root not in target.parents and target != root:
+            return self.send_json({"error": "not found"}, 404)
+        if target.is_dir():
+            files = [{"path": str(p.relative_to(root)), "bytes": p.stat().st_size, "mtime": int(p.stat().st_mtime)}
+                     for p in sorted(target.rglob("*")) if p.is_file()]
+            return self.send_json({"files": files})
+        if not target.is_file():
+            return self.send_json({"error": "not found"}, 404)
+        size = target.stat().st_size
+        self.send_response(200)
+        self.send_header("Content-Type", "application/zip" if target.suffix == ".zip" else "application/octet-stream")
+        self.send_header("Content-Length", str(size))
+        self.end_headers()
+        with open(target, "rb") as f:
+            shutil.copyfileobj(f, self.wfile, 1 << 20)
+
     def do_GET(self):
         path = self.path.split("?")[0]
         if path == "/login":
             return self.login_page() if AUTH is not None else self.deny("/")
         if path == "/logout":
             return self.do_logout()
+        if path.startswith("/batch-files/"):
+            return self.batch_files(urllib.parse.unquote(path[len("/batch-files/"):]))
         if not self.authed():
             return self.deny(path)
         if path in ("/", "/index.html", "/alexandria.html"):
