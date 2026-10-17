@@ -265,7 +265,7 @@ def make_loop(y, t):
             "loop_samples": n_out, "match_score": round(score, 3), "harmony_after": round(h_after, 3), "harmony_before": round(h_before, 3),
             "rhythm_match": round(rh_final, 3), "rhythm_score": round(rh, 3), "seam_harmony": round(seam_h, 3), "inner_harmony_median": round(float(np.median(inner)), 3),
             "inner_harmony_p10": round(float(np.percentile(inner, 10)), 3), "length_change_pct": round(100 * (n_out - L) / L, 4),
-            "start_mask_ratio": round(float(masking), 3), "cut_version": 3}
+            "start_mask_ratio": round(float(masking), 3), "cut_version": 4}
     return loop, info
 
 
@@ -291,10 +291,32 @@ def upmix_periodic(st):
     return np.ascontiguousarray(up[n + d:2 * n + d]), d
 
 
+CODEC_DELAY = {"ac3": 256, "dts": 512}          # samples; measured with impulses (ffmpeg ac3 / dca encoders at 48 kHz)
+
+
 def encode(x51, path, codec, rate):
+    """Encode one loop so the decoded file lines up sample-for-sample with the loop.
+
+    Decoders output D samples of start-up padding, then the input. Feeding the loop rotated by D means decoded sample
+    n (n >= D) equals loop sample n, so there is no time jump at the seam: only the first D samples (5.3 ms AC-3,
+    10.7 ms DTS) are lost, and the loop starts ~15 ms before an onset, so that gap sits just ahead of a hit.
+    Short fades into and out of the gap turn what would be a click into a soft breath.
+    """
+    D = CODEC_DELAY[codec]; L = x51.shape[0]; F = 144                  # 3 ms fades
+    y = x51.copy()
+    y[D:D + F] *= np.sin(np.linspace(0, np.pi / 2, F, dtype=np.float32))[:, None]
+    y[L - F:] *= np.cos(np.linspace(0, np.pi / 2, F, dtype=np.float32))[:, None]
+    y[:D] = 0.0                                                         # replaced by decoder padding anyway
+    inp = np.roll(y, -D, axis=0)
     args = ["-f", "f32le", "-ar", str(SR), "-ac", "6", "-channel_layout", "5.1(side)", "-i", "-"]
     args += (["-c:a", "ac3", "-b:a", rate] if codec == "ac3" else ["-c:a", "dca", "-strict", "-2", "-b:a", rate])
-    ff(args + [str(path)], inp=np.clip(x51, -1, 1).astype("<f4").tobytes())
+    ff(args + [str(path)], inp=np.clip(inp, -1, 1).astype("<f4").tobytes())
+
+
+def seam_error(decoded, ref, D):
+    """How closely the decoded file matches the loop outside the start-up gap (1.0 = identical shape)."""
+    a = decoded[D + 144:].ravel(); b = ref[D + 144:len(decoded)].ravel()
+    return round(ncc(a, b), 4)
 
 
 def probe(path):
@@ -314,7 +336,7 @@ def process(t, batch, out_root, work_root):
     meta_p = gdir / f"{base}.json"
     if f_ac3.exists() and f_dts.exists() and meta_p.exists():
         m = json.loads(meta_p.read_text())
-        if m.get("cut_version", 1) >= 3:
+        if m.get("cut_version", 1) >= 4:
             return m
     work = work_root / base; work.mkdir(parents=True, exist_ok=True)
     good = float(os.environ.get("ALEX_LOOP_GOOD", "0.85"))     # seam harmony this close to the track's own norm is accepted
@@ -355,7 +377,8 @@ def process(t, batch, out_root, work_root):
     checks = {}
     for name, f in (("ac3", f_ac3), ("dts", f_dts)):
         d = decode(f, 6)
-        checks[name] = {**probe(f), "decoded_seconds": round(len(d) / SR, 3), "seam_jump": round(seam_jump(d), 2)}
+        checks[name] = {**probe(f), "decoded_seconds": round(len(d) / SR, 3), "seam_jump": round(seam_jump(d), 2),
+                        "gap_ms": round(CODEC_DELAY[name] / SR * 1000, 1), "match_to_master": seam_error(d, x51, CODEC_DELAY[name])}
     meta = {**{k: t[k] for k in ("n", "genre", "title", "kit", "bpm", "key", "time_signature", "loop_bars", "prompt")},
             **info, "pcm_seam_jump": round(seam_jump(x51), 2), "gain_db": round(gain_db, 2), "upmix_delay": delay,
             "files": {"ac3": f_ac3.name, "dts": f_dts.name}, "checks": checks}
@@ -382,7 +405,8 @@ def readme(gname, g, metas, batch):
               "", "Looping", "-------",
               "Each file is one full loop: set your player to repeat. The end crossfades into the start on the beat, and the",
               "5.1 upmix is periodic, so the audio itself has no break at the seam. Dolby Digital and DTS decoders add a few",
-              "milliseconds of start-up padding, so each loop is cut to begin just before a downbeat, where the drum hit masks it.",
+              "milliseconds of start-up padding (5.3 ms Dolby Digital, 10.7 ms DTS). Each file is aligned so that padding is the only",
+              "difference from the master, it sits just before a note or drum hit, and it has 3 ms fades so it doesn't click.",
               "For sample-perfect looping in an editor or game engine, ask for the lossless 5.1 masters.",
               "", "Made with Alexandria Studio. Original compositions; no samples, melodies or lyrics from charted songs."]
     return "\n".join(lines) + "\n"
