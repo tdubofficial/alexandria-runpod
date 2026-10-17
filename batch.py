@@ -144,45 +144,105 @@ def seam_jump(a):
     return float(d[4090:4102].max() / typ)
 
 
+def chroma_frames(mono, n=4096, hop=2048):
+    """12-bin pitch-class energy per frame (80 Hz - 2 kHz spectral peaks)."""
+    win = np.hanning(n).astype(np.float32)
+    frames = (len(mono) - n) // hop
+    k = np.arange(1, n // 2 + 1); f = k * SR / n
+    sel = (f >= 80) & (f <= 2000)
+    pc = (np.round(12 * np.log2(f[sel] / 440)).astype(int) + 69) % 12
+    out = np.zeros((frames, 12), np.float32)
+    for s in range(0, frames, 1024):
+        idx = np.arange(s, min(frames, s + 1024))
+        seg = np.lib.stride_tricks.sliding_window_view(mono, n)[idx * hop] * win
+        mag = np.abs(np.fft.rfft(seg, axis=1))[:, 1:][:, sel]
+        for c in range(12):
+            out[idx, c] = mag[:, pc == c].sum(1)
+    return out, SR / hop
+
+
+def cos(a, b):
+    a = a.ravel(); b = b.ravel()
+    return float(np.dot(a, b) / ((np.linalg.norm(a) * np.linalg.norm(b)) or 1.0))
+
+
 def make_loop(y, t):
-    """Return (periodic stereo loop with the downbeat ~15 ms in, info dict)."""
+    """Return (periodic stereo loop with a downbeat ~15 ms in, info dict).
+
+    Searches start bars 8-15 and loop lengths of loop_bars +-12 bars, scoring how well the music right before and
+    right after the end matches the music right before and after the start (harmony from chroma, rhythm from onsets).
+    """
     hop = 512; fps = SR / hop
     mono = y.mean(1)
     env_all = onset_env(mono, hop)
     env_low = onset_env(mono, hop, fmax=250)
+    chroma, cfps = chroma_frames(mono)
     bpm = refine_tempo(env_all + env_low, t["bpm"], fps)
     beat_s = 60 / bpm; bar_s = beat_s * t["time_signature"]
-    # start: strongest low-band onset in bar 9 (after an 8-bar lead-in)
     lo, hi = int(8 * bar_s * fps), int(9 * bar_s * fps)
-    s0 = lo + int(np.argmax(env_low[lo:hi] + 0.5 * env_all[lo:hi]))
-    L0 = t["loop_bars"] * bar_s * fps
-    W = int(2 * bar_s * fps)
+    g0 = (lo + int(np.argmax(env_low[lo:hi] + 0.5 * env_all[lo:hi]))) / fps        # a strong downbeat (seconds)
+    total_s = len(mono) / SR
+    W2 = 2 * bar_s
+
+    def chroma_win(t0, t1):
+        a, b = int(t0 * cfps), int(t1 * cfps)
+        return chroma[max(0, a):max(a + 1, b)].mean(0)
+
+    sm = np.hanning(7) / np.hanning(7).sum()                  # ~60 ms smoothing so near-misses still count
+    lo_s, all_s = np.convolve(env_low, sm, "same"), np.convolve(env_all, sm, "same")
+
+    def onset_win(t0, shift=0):
+        a = int(t0 * fps) + shift; n = int(W2 * fps)
+        return np.concatenate([lo_s[a:a + n], all_s[a:a + n]])
+
+    q = int(beat_s * fps * 0.25)
+
+    best = None
+    for kb in range(0, 8):
+        st = g0 + kb * bar_s
+        ca, cb = chroma_win(st, st + W2), chroma_win(st - W2, st)
+        oa = onset_win(st)
+        for nb in range(max(16, t["loop_bars"] - 12), t["loop_bars"] + 13):
+            en = st + nb * bar_s
+            if en + W2 + 2 > total_s - 10 or nb * bar_s < 90:
+                continue
+            h_after = cos(ca, chroma_win(en, en + W2)); h_before = cos(cb, chroma_win(en - W2, en))
+            rh = max(ncc(oa, onset_win(en, d)) for d in range(-q, q + 1, 2))
+            score = 0.4 * h_after + 0.3 * h_before + 0.3 * rh - 0.002 * abs(nb - t["loop_bars"]) + (0.01 if nb % 4 == 0 else 0)
+            if best is None or score > best[0]:
+                best = (score, st, nb, h_after, h_before, rh)
+    if best is None:
+        raise RuntimeError("render too short for the loop")
+    score, st, nb, h_after, h_before, rh = best
+    # refine the end within half a beat on onsets, then to the sample on the waveform (+-12 ms)
+    s0 = int(st * fps); L0 = nb * bar_s * fps; W = int(W2 * fps)
     ref = np.concatenate([env_low[s0:s0 + W], env_all[s0:s0 + W]])
     cands = range(int(s0 + L0 - beat_s * fps * 0.5), int(s0 + L0 + beat_s * fps * 0.5) + 1)
-    if cands[-1] + W >= len(env_all) - int(10 * fps):
-        raise RuntimeError("render too short for the loop")
-    scores = [(ncc(ref, np.concatenate([env_low[e:e + W], env_all[e:e + W]])), e) for e in cands]
-    sim, e0 = max(scores)
-    # sample-accurate alignment of the end against the start (+-12 ms)
+    rh_final, e0 = max((ncc(ref, np.concatenate([env_low[e:e + W], env_all[e:e + W]])), e) for e in cands)
     a0, b0 = s0 * hop, e0 * hop
     w = int(0.6 * SR); r = int(0.012 * SR)
     seg = mono[a0:a0 + w]
-    best = max(range(-r, r + 1, 4), key=lambda k: ncc(seg, mono[b0 + k:b0 + k + w]))
-    best = max(range(best - 4, best + 5), key=lambda k: ncc(seg, mono[b0 + k:b0 + k + w]))
-    L = (b0 + best) - a0
+    k = max(range(-r, r + 1, 4), key=lambda k: ncc(seg, mono[b0 + k:b0 + k + w]))
+    k = max(range(k - 4, k + 5), key=lambda k: ncc(seg, mono[b0 + k:b0 + k + w]))
+    L = (b0 + k) - a0
     pre = int(0.015 * SR)                                      # codec start padding lands just before the downbeat
     a = a0 - pre
-    X = int(min(beat_s, 0.5) * SR)                             # equal-power crossfade, continuation -> head
+    X = int(min(bar_s, 2.5) * SR)                              # one-bar equal-power crossfade, continuation -> head
     fin = np.sin(np.linspace(0, np.pi / 2, X, dtype=np.float32))[:, None]
     fout = np.cos(np.linspace(0, np.pi / 2, X, dtype=np.float32))[:, None]
     loop = y[a:a + L].copy()
     loop[:X] = y[a:a + X] * fin + y[a + L:a + L + X] * fout
-    head_match = ncc(y[a:a + X].mean(1), y[a + L:a + L + X].mean(1))
     n_out = int(round(L / FRAME)) * FRAME
     loop = fourier_resample(loop, n_out)
-    info = {"measured_bpm": round(bpm, 2), "loop_start_s": round(a / SR, 3), "loop_seconds": round(n_out / SR, 3),
-            "loop_samples": n_out, "rhythm_match": round(sim, 3), "waveform_match": round(head_match, 3),
-            "length_change_pct": round(100 * (n_out - L) / L, 4)}
+    # QA: harmony across the seam of the finished loop vs ordinary 2-bar boundaries inside it
+    lc, _ = chroma_frames(loop.mean(1))
+    Wc = max(2, int(W2 * cfps))
+    seam_h = cos(lc[-Wc:].mean(0), lc[:Wc].mean(0))
+    inner = [cos(lc[i - Wc:i].mean(0), lc[i:i + Wc].mean(0)) for i in range(Wc, len(lc) - Wc, Wc)]
+    info = {"measured_bpm": round(bpm, 2), "loop_start_s": round(a / SR, 3), "loop_seconds": round(n_out / SR, 3), "loop_bars_used": nb,
+            "loop_samples": n_out, "match_score": round(score, 3), "harmony_after": round(h_after, 3), "harmony_before": round(h_before, 3),
+            "rhythm_match": round(rh_final, 3), "rhythm_score": round(rh, 3), "seam_harmony": round(seam_h, 3), "inner_harmony_median": round(float(np.median(inner)), 3),
+            "inner_harmony_p10": round(float(np.percentile(inner, 10)), 3), "length_change_pct": round(100 * (n_out - L) / L, 4), "cut_version": 2}
     return loop, info
 
 
@@ -230,43 +290,56 @@ def process(t, batch, out_root, work_root):
     f_dts = gdir / f"{base}_DTS5.1_{rates['dts']}bps.dts"
     meta_p = gdir / f"{base}.json"
     if f_ac3.exists() and f_dts.exists() and meta_p.exists():
-        return json.loads(meta_p.read_text())
+        m = json.loads(meta_p.read_text())
+        if m.get("cut_version", 1) >= 2:
+            return m
     work = work_root / base; work.mkdir(parents=True, exist_ok=True)
-    last_err = None
+    good = float(os.environ.get("ALEX_LOOP_GOOD", "0.85"))     # seam harmony this close to the track's own norm is accepted
+    tried = []
     for attempt in range(3):
         try:
-            src, secs, dur = render(t, attempt, work)
-            log(f"#{t['n']:02d} rendered {dur:.0f}s of audio in {secs:.0f}s (attempt {attempt + 1})")
+            existing = sorted(work.glob(f"render_{attempt}.*"))
+            if existing:
+                src, secs, dur = existing[0], 0, 0
+                log(f"#{t['n']:02d} reusing render {attempt + 1}")
+            else:
+                src, secs, dur = render(t, attempt, work)
+                log(f"#{t['n']:02d} rendered {dur:.0f}s of audio in {secs:.0f}s (attempt {attempt + 1})")
             y = decode(src)
             loop, info = make_loop(y, t)
-            if info["rhythm_match"] < 0.35 and attempt < 2:
-                raise RuntimeError(f"loop points don't match well (rhythm {info['rhythm_match']}); re-rendering")
-            gain_db = batch.get("loudness_lufs", -16) - lufs(loop)
-            peak = float(np.abs(loop).max()) or 1e-9
-            gain_db = min(gain_db, 20 * math.log10(0.89 / peak))   # keep peaks under -1 dBFS
-            loop *= 10 ** (gain_db / 20)
-            x51, delay = upmix_periodic(loop)
-            peak51 = float(np.abs(x51).max())
-            if peak51 > 0.95:
-                x51 *= 0.95 / peak51
-            encode(x51, f_ac3, "ac3", rates["ac3"])
-            encode(x51, f_dts, "dts", rates["dts"])
-            checks = {}
-            for name, f in (("ac3", f_ac3), ("dts", f_dts)):
-                d = decode(f, 6)
-                checks[name] = {**probe(f), "decoded_seconds": round(len(d) / SR, 3), "seam_jump": round(seam_jump(d), 2)}
-            meta = {**{k: t[k] for k in ("n", "genre", "title", "kit", "bpm", "key", "time_signature", "loop_bars", "prompt")},
-                    **info, "pcm_seam_jump": round(seam_jump(x51), 2), "gain_db": round(gain_db, 2), "upmix_delay": delay,
-                    "render_seconds": round(secs), "attempt": attempt + 1, "files": {"ac3": f_ac3.name, "dts": f_dts.name}, "checks": checks}
-            meta_p.write_text(json.dumps(meta, indent=1))
-            shutil.rmtree(work, ignore_errors=True)
-            log(f"#{t['n']:02d} {t['title']}: loop {info['loop_seconds']}s @ {info['measured_bpm']} BPM, rhythm match {info['rhythm_match']}, "
-                f"PCM seam x{meta['pcm_seam_jump']}, AC-3 seam x{checks['ac3']['seam_jump']}, DTS seam x{checks['dts']['seam_jump']}")
-            return meta
+            info["render_seconds"] = round(secs); info["attempt"] = attempt + 1
+            ok = info["seam_harmony"] >= min(good, info["inner_harmony_p10"])
+            tried.append((info["match_score"] + (1 if ok else 0), loop, info))
+            log(f"#{t['n']:02d} attempt {attempt + 1}: seam harmony {info['seam_harmony']} (track p10 {info['inner_harmony_p10']}, "
+                f"median {info['inner_harmony_median']}), rhythm {info['rhythm_match']}, {info['loop_bars_used']} bars")
+            if ok:
+                break
         except Exception as e:  # noqa: BLE001
-            last_err = e
             log(f"#{t['n']:02d} attempt {attempt + 1} failed: {str(e)[:200]}")
-    raise RuntimeError(f"{t['title']}: {last_err}")
+    if not tried:
+        raise RuntimeError(f"{t['title']}: no usable render")
+    _, loop, info = max(tried, key=lambda x: x[0])
+    gain_db = batch.get("loudness_lufs", -16) - lufs(loop)
+    peak = float(np.abs(loop).max()) or 1e-9
+    gain_db = min(gain_db, 20 * math.log10(0.89 / peak))       # keep peaks under -1 dBFS
+    loop *= 10 ** (gain_db / 20)
+    x51, delay = upmix_periodic(loop)
+    peak51 = float(np.abs(x51).max())
+    if peak51 > 0.95:
+        x51 *= 0.95 / peak51
+    encode(x51, f_ac3, "ac3", rates["ac3"])
+    encode(x51, f_dts, "dts", rates["dts"])
+    checks = {}
+    for name, f in (("ac3", f_ac3), ("dts", f_dts)):
+        d = decode(f, 6)
+        checks[name] = {**probe(f), "decoded_seconds": round(len(d) / SR, 3), "seam_jump": round(seam_jump(d), 2)}
+    meta = {**{k: t[k] for k in ("n", "genre", "title", "kit", "bpm", "key", "time_signature", "loop_bars", "prompt")},
+            **info, "pcm_seam_jump": round(seam_jump(x51), 2), "gain_db": round(gain_db, 2), "upmix_delay": delay,
+            "files": {"ac3": f_ac3.name, "dts": f_dts.name}, "checks": checks}
+    meta_p.write_text(json.dumps(meta, indent=1))
+    log(f"#{t['n']:02d} {t['title']}: loop {info['loop_seconds']}s @ {info['measured_bpm']} BPM (attempt {info['attempt']}), seam harmony "
+        f"{info['seam_harmony']} vs track median {info['inner_harmony_median']}, AC-3 seam x{checks['ac3']['seam_jump']}, DTS seam x{checks['dts']['seam_jump']}")
+    return meta
 
 
 def readme(gname, g, metas, batch):
@@ -276,7 +349,7 @@ def readme(gname, g, metas, batch):
              f"Chart style notes: {g['style']}", "", "Tracks", "------"]
     for m in metas:
         lines.append(f"{m['n']:02d}  {m['title']}  ({m['kit']})")
-        lines.append(f"    {m['measured_bpm']} BPM (asked {m['bpm']}), {m['key']}, {m['time_signature']}/4 time, loop {m['loop_seconds']} s ({m['loop_bars']} bars)")
+        lines.append(f"    {m['measured_bpm']} BPM (asked {m['bpm']}), {m['key']}, {m['time_signature']}/4 time, loop {m['loop_seconds']} s ({m.get('loop_bars_used', m['loop_bars'])} bars)")
         lines.append(f"    Style prompt: {m['prompt']}")
     lines += ["", "Formats", "-------",
               f"- Dolby Digital (AC-3) 5.1, 48 kHz, {batch['formats']['ac3']}bps (.ac3)",
