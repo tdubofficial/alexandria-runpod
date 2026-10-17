@@ -116,7 +116,7 @@ def refine_tempo(env, bpm, fps):
     def comb(lag):
         return sum(ac(lag * k) for k in range(1, 9) if lag * k + 2 < len(env) - 8)
     p0 = fps * 60 / bpm
-    lags = np.arange(p0 * 0.96, p0 * 1.04, 0.02)
+    lags = np.arange(p0 * 0.92, p0 * 1.08, 0.02)
     best = max(lags, key=comb)
     return 60 * fps / best
 
@@ -225,8 +225,30 @@ def make_loop(y, t):
     k = max(range(-r, r + 1, 4), key=lambda k: ncc(seg, mono[b0 + k:b0 + k + w]))
     k = max(range(k - 4, k + 5), key=lambda k: ncc(seg, mono[b0 + k:b0 + k + w]))
     L = (b0 + k) - a0
-    pre = int(0.015 * SR)                                      # codec start padding lands just before the downbeat
-    a = a0 - pre
+    pre = int(0.015 * SR)                                      # codec start padding lands just before the start point
+    # Any onset within the first bar can start the loop (the length L stays the same, so the seam match holds).
+    # Pick the one with the quietest 15 ms before it relative to what follows: that is where decoders' start-up
+    # padding is least audible.
+    def mask_ratio(p):
+        b = np.sqrt(np.mean(mono[p - pre:p] ** 2)) + 1e-9
+        f = np.sqrt(np.mean(mono[p:p + int(0.08 * SR)] ** 2)) + 1e-9
+        return b / f
+    span = int(bar_s * SR); cands_p = [a0]
+    e_ = env_all[s0:s0 + int(bar_s * fps)]
+    if len(e_) > 3:
+        thr = e_.mean() + e_.std()
+        cands_p += [int((s0 + i) * hop) for i in range(1, len(e_) - 1) if e_[i] > thr and e_[i] >= e_[i - 1] and e_[i] > e_[i + 1]]
+    refined = []
+    for p in cands_p:                                          # snap each candidate to its sharpest rise (+-6 ms)
+        win = mono[p - 288:p + 288]
+        if len(win) < 576:
+            continue
+        rise = np.abs(np.diff(win)); q = p - 288 + int(np.argmax(np.convolve(rise, np.ones(48), "same")))
+        if q + L + int(bar_s * SR) < len(mono) - 10 * SR:
+            refined.append(q)
+    a1 = min(refined or [a0], key=mask_ratio)
+    masking = mask_ratio(a1)
+    a = a1 - pre
     X = int(min(bar_s, 2.5) * SR)                              # one-bar equal-power crossfade, continuation -> head
     fin = np.sin(np.linspace(0, np.pi / 2, X, dtype=np.float32))[:, None]
     fout = np.cos(np.linspace(0, np.pi / 2, X, dtype=np.float32))[:, None]
@@ -242,7 +264,8 @@ def make_loop(y, t):
     info = {"measured_bpm": round(bpm, 2), "loop_start_s": round(a / SR, 3), "loop_seconds": round(n_out / SR, 3), "loop_bars_used": nb,
             "loop_samples": n_out, "match_score": round(score, 3), "harmony_after": round(h_after, 3), "harmony_before": round(h_before, 3),
             "rhythm_match": round(rh_final, 3), "rhythm_score": round(rh, 3), "seam_harmony": round(seam_h, 3), "inner_harmony_median": round(float(np.median(inner)), 3),
-            "inner_harmony_p10": round(float(np.percentile(inner, 10)), 3), "length_change_pct": round(100 * (n_out - L) / L, 4), "cut_version": 2}
+            "inner_harmony_p10": round(float(np.percentile(inner, 10)), 3), "length_change_pct": round(100 * (n_out - L) / L, 4),
+            "start_mask_ratio": round(float(masking), 3), "cut_version": 3}
     return loop, info
 
 
@@ -291,7 +314,7 @@ def process(t, batch, out_root, work_root):
     meta_p = gdir / f"{base}.json"
     if f_ac3.exists() and f_dts.exists() and meta_p.exists():
         m = json.loads(meta_p.read_text())
-        if m.get("cut_version", 1) >= 2:
+        if m.get("cut_version", 1) >= 3:
             return m
     work = work_root / base; work.mkdir(parents=True, exist_ok=True)
     good = float(os.environ.get("ALEX_LOOP_GOOD", "0.85"))     # seam harmony this close to the track's own norm is accepted
