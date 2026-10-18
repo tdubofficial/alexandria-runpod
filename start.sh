@@ -59,7 +59,7 @@ fi
 pkill -f "alexandria_bridge.py" 2>/dev/null || true
 echo "==> Starting the studio on port 7870"
 cd "$APP"
-nohup python3 alexandria_bridge.py --host 0.0.0.0 --port 7870 --no-browser --ace-thinking --ace-api "$ACE_URL" --idle-stop-minutes "${ALEX_IDLE_STOP_MINUTES:-30}" --out "$APP/renders" \
+ALEX_ACE_DIR="$ACE" nohup python3 alexandria_bridge.py --host 0.0.0.0 --port 7870 --no-browser --ace-thinking --ace-api "$ACE_URL" --idle-stop-minutes "${ALEX_IDLE_STOP_MINUTES:-30}" --out "$APP/renders" \
   > "$APP/logs/bridge.log" 2>&1 &
 sleep 2
 cat "$APP/logs/bridge.log"

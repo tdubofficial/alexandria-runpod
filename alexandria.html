@@ -250,6 +250,11 @@ code.k{font-family:var(--f-mono);font-size:13px;background:var(--elev);padding:1
 .editor-h b{font-size:16px}
 .editor-h span{font-size:13px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
+.trqueue{display:flex;flex-direction:column;gap:6px;margin-top:10px}.trq{display:grid;grid-template-columns:minmax(0,1fr) auto 140px minmax(0,160px);gap:10px;align-items:center;font-size:13px}.trq>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trbar{height:6px;border-radius:3px;background:var(--elev);overflow:hidden}.trbar>i{display:block;height:100%;background:var(--blue);border-radius:3px;transition:width .3s}
+.trtrain{border-top:1px solid var(--border);margin-top:16px;padding-top:14px}.trtrain h4{margin:0 0 8px;font-size:15px}
+.trad{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)}.trad small{font-size:12px}.trad a{color:var(--blue)}
+@media (max-width:640px){.trq{grid-template-columns:minmax(0,1fr) 90px}.trq>span:nth-child(2),.trq>span:last-child{display:none}}
 .snstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.snstats>div{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;min-width:0}.snstats small{display:block;font-size:12px;color:var(--text3)}.snstats b{display:block;font-size:15px;font-weight:600;overflow-wrap:anywhere}
 @media (max-width:640px){.snstats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .chips button{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:14px;cursor:pointer}
@@ -467,6 +472,11 @@ input[type="range"]{accent-color:var(--blue)}
           </div>
           <div class="lib" id="trackList"></div>
         </div>
+        <div class="card" id="trainCard">
+          <div class="card-h"><svg class="i"><use href="#i-cpu"/></svg><h3>Train the engine on my music</h3></div>
+          <p class="t2" style="font-size:14px;margin-bottom:12px">Upload finished songs you own. Each song is labeled from My Sound and My lyrics, then the engine learns an adapter that makes renders sound like your productions. Songs go only to your engine's private storage.</p>
+          <div id="trainBody"></div>
+        </div>
       </section>
 
       <!-- ENGINES -->
@@ -612,9 +622,9 @@ input[type="range"]{accent-color:var(--blue)}
       <!-- SETTINGS -->
       <section class="view" id="view-settings" hidden>
         <div class="card">
-          <div class="card-h"><svg class="i"><use href="#i-note"/></svg><h3>What's new</h3><span class="chip">v1.5</span></div>
+          <div class="card-h"><svg class="i"><use href="#i-note"/></svg><h3>What's new</h3><span class="chip">v1.6</span></div>
           <dl class="kv">
-            <dt>v1.5</dt><dd>My Sound: analyze your finished tracks in the browser (tempo, swing, key, loudness, low end, tone, width, harmony, energy arc) into a library of style cues the writer uses. Song details in My lyrics.</dd><dt>v1.4</dt><dd>Every AI feature works on the engine: an open-source model runs on your pod (Qwen3.6 27B by default) with Claude as the fallback. My lyrics: upload or paste your own songs and the writer studies the closest ones to write in your voice. Automatic runtime repair for specs.</dd>
+            <dt>v1.6</dt><dd>Train the engine on your own songs: resumable uploads, automatic labels from My Sound and My lyrics, one-click LoKr/LoRA training, and adapters (including free MIT-licensed starters) you can switch on for renders.</dd><dt>v1.5</dt><dd>My Sound: analyze your finished tracks in the browser (tempo, swing, key, loudness, low end, tone, width, harmony, energy arc) into a library of style cues the writer uses. Song details in My lyrics.</dd><dt>v1.4</dt><dd>Every AI feature works on the engine: an open-source model runs on your pod (Qwen3.6 27B by default) with Claude as the fallback. My lyrics: upload or paste your own songs and the writer studies the closest ones to write in your voice. Automatic runtime repair for specs.</dd>
             <dt>v1.3</dt><dd>Export in 18 formats: WAV and AIFF masters, FLAC, ALAC, MP3, AAC, Ogg Vorbis, Opus, CD (Red Book), Dolby Digital, Dolby Digital Plus, Dolby TrueHD, DTS, 5.1 WAV, MP4 and MKV.</dd>
             <dt>v1.2</dt><dd>Full player controls (top, ±10 s, end, loop, speed, volume, click or drag the waveform to choose where to play from, keyboard shortcuts). Editable preset library with a Mix genres builder and your own genres. Vocal profiles: edit, duplicate, delete, import, export, and create from a vocal sample. On the engine, your library is saved on the pod's storage.</dd>
             <dt>v1.1</dt><dd>RunPod engine: password sign-in, idle auto-stop after 30 minutes with an in-studio countdown, engine log viewer.</dd>
@@ -1117,7 +1127,7 @@ function go(view) {
   $("#viewTitle").textContent = VIEWS.find(v => v[0] === view)[1];
   renderNav();
   if (view === "library") { renderLibrary(); renderLyricsLib(); }
-  if (view === "sound") renderSound();
+  if (view === "sound") { renderSound(); trRefresh(); }
   if (view === "presets") { renderPresets(); renderProfiles(); }
   window.scrollTo({ top: 0 });
 }
@@ -2474,9 +2484,162 @@ async function importTracks(file) {
   } catch (e) { toast("err", "Couldn't import", String(e.message || e).slice(0, 160)); }
 }
 
+
+/* ---------- Train the engine on my music (engine studio only) ---------- */
+const TR = { st: null, set: ls.get("trainSet", ""), queue: [], poll: null, uploading: false };
+Object.defineProperty(window, "__alxTrain", { value: { TR, trUploadOne, trRefresh, trSet } });
+const trEnc = s => encodeURIComponent(s);
+const fmtMB = b => b >= 1e9 ? (b / 1e9).toFixed(2) + " GB" : (b / 1e6).toFixed(1) + " MB";
+async function trFetch(path, opts = {}) {
+  const r = await fetch(path, { cache: "no-store", ...opts });
+  if (r.status === 401) { location.href = "/login"; throw new Error("Signed out"); }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok && r.status !== 409) throw new Error(j.error || `Engine returned ${r.status}`);
+  return j;
+}
+async function trRefresh() {
+  if (!bridgeMode) return renderTrain();
+  try { TR.st = await trFetch("/train/status"); } catch (e) { TR.st = { error: String(e.message || e) }; }
+  if (TR.st.sets && !TR.st.sets.some(s => s.id === TR.set)) TR.set = TR.st.sets[0]?.id || "";
+  renderTrain();
+  clearTimeout(TR.poll);
+  if (TR.st.job?.running || Object.values(TR.st.installing || {}).includes("downloading")) TR.poll = setTimeout(trRefresh, 4000);
+}
+function trSet() { return (TR.st?.sets || []).find(s => s.id === TR.set); }
+function trLabelFor(file) {
+  const title = trackTitle(file).toLowerCase();
+  const t = (store.cache.tracks || []).find(x => x.title.toLowerCase() === title);
+  const l = (store.cache.lyrics || []).find(x => x.title.trim().toLowerCase() === title);
+  if (!t && !l) return null;
+  const caption = stripNames([t?.notes, t ? trackCues(t) : "", l?.style].filter(Boolean).join(", ")).replace(/\s+/g, " ").slice(0, 900);
+  const lab = { caption: caption || undefined, language: l?.text ? "en" : "instrumental", lyrics: l?.text || "" };
+  if (t?.a && t.a.steadyBeat !== false) lab.bpm = Math.round(t.a.bpm);
+  else if (l?.bpm) lab.bpm = Number(l.bpm);
+  if (t?.a?.key) lab.keyscale = t.a.key; else if (l?.key) lab.keyscale = l.key;
+  if (t?.a?.timeSig) lab.timesignature = String(t.a.timeSig);
+  return lab;
+}
+async function trFillLabels(quiet) {
+  const s = trSet(); if (!s) return;
+  const songs = {}; let n = 0;
+  for (const song of s.songs) { const lab = trLabelFor(song.file); if (lab && (lab.caption || lab.lyrics)) { songs[song.file] = lab; n++; } }
+  if (n) await trFetch(`/train/labels/${trEnc(s.id)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ songs }) });
+  if (!quiet) toast(n ? "ok" : "info", n ? `${n} song${n === 1 ? "" : "s"} labeled` : "Nothing to label from your library",
+    n ? "Captions, tempo and key from My Sound; lyrics from My lyrics." : "Songs without labels are described by the engine when training starts.");
+  await trRefresh();
+}
+async function trUploadOne(item) {
+  const f = item.file, set = TR.set;
+  const base = `/train/upload/${trEnc(set)}/${trEnc(f.name)}`;
+  let off = (await trFetch(base)).bytes || 0;
+  if (off >= f.size) { item.pct = 100; item.state = "already there"; return; }
+  const CH = 8 * 1024 * 1024; let tries = 0;
+  while (off < f.size) {
+    try {
+      const j = await trFetch(`${base}?offset=${off}&total=${f.size}`, { method: "PUT", body: f.slice(off, Math.min(f.size, off + CH)) });
+      off = j.bytes; tries = 0;
+      item.pct = Math.round(100 * off / f.size); item.state = j.extracted ? `unpacked ${j.extracted.length} files` : (j.done ? "uploaded" : "uploading");
+    } catch (e) {
+      if (++tries > 5) throw e;
+      item.state = `retrying (${tries})…`; renderTrainQueue();
+      await new Promise(r => setTimeout(r, 2000 * tries));
+      off = (await trFetch(base)).bytes || 0;                 // resume from what the engine has
+    }
+    renderTrainQueue();
+  }
+}
+async function trAddFiles(files) {
+  if (!$("#trOwn").checked) return toast("warn", "Confirm the rights first", "Tick the box: these are your recordings, and anyone whose voice is on them agreed.");
+  if (!TR.set) return toast("warn", "Create a training set first");
+  const audio = /\.(mp3|wav|flac|ogg|opus)$/i;
+  TR.queue = files.map(f => ({ file: f, pct: 0, state: "waiting" })); TR.uploading = true; renderTrainQueue();
+  let ok = 0;
+  for (const item of TR.queue) {
+    try {
+      if (audio.test(item.file.name)) {                         // measure it now: it labels the song and joins My Sound
+        item.state = "analyzing"; renderTrainQueue();
+        try {
+          const a = await analyzeTrack(item.file, (x, m) => { item.state = `analyzing: ${m} ${Math.round(x * 100)}%`; renderTrainQueue(); });
+          const title = trackTitle(item.file.name), same = (store.cache.tracks || []).find(t => t.title.toLowerCase() === title.toLowerCase());
+          await store.put("tracks", { id: same?.id || "tr_" + uid(), title, fileName: item.file.name.slice(0, 120), notes: same?.notes || "", a, cues: describeTrack(a),
+            aiCues: same?.aiCues || "", cuesEdited: same?.cuesEdited || "", addedAt: same?.addedAt || Date.now(), analyzedAt: Date.now() });
+        } catch { /* still upload; the engine can describe it */ }
+      }
+      await trUploadOne(item); ok++;
+    } catch (e) { item.state = "failed: " + String(e.message || e).slice(0, 80); }
+    renderTrainQueue();
+  }
+  TR.uploading = false;
+  await trRefresh(); await trFillLabels(true); renderSound();
+  toast(ok === TR.queue.length ? "ok" : "warn", `${ok} of ${TR.queue.length} uploaded`, "Labels filled from My Sound and My lyrics where titles match.", 8000);
+}
+function renderTrainQueue() {
+  const el = $("#trQueue"); if (!el) return;
+  el.innerHTML = TR.queue.length ? TR.queue.map(q => `<div class="trq"><span>${esc(q.file.name)}</span><span class="num t3">${fmtMB(q.file.size)}</span>
+    <div class="trbar"><i style="width:${q.pct}%"></i></div><span class="t3" style="font-size:12px">${esc(q.state)}</span></div>`).join("") : "";
+}
+function renderTrain() {
+  const body = $("#trainBody"); if (!body) return;
+  if (!bridgeMode) { body.innerHTML = `<p class="t2" style="font-size:14px">Training runs on your engine. Open the studio from your RunPod link (the engine studio) to upload songs and train.</p>`; return; }
+  const st = TR.st;
+  if (!st) { body.innerHTML = `<p class="t3">Loading…</p>`; return; }
+  if (st.error) { body.innerHTML = `<p class="t2">${esc(st.error)}</p>`; return; }
+  const s = trSet(), job = st.job || {}, run = job.running;
+  const labeled = s ? s.songs.filter(x => x.labeled).length : 0, withLyr = s ? s.songs.filter(x => x.lyrics).length : 0;
+  const active = st.active?.name;
+  body.innerHTML = `
+    <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <select id="trSetSel" class="input" style="max-width:280px">${(st.sets || []).map(x => `<option value="${esc(x.id)}" ${x.id === TR.set ? "selected" : ""}>${esc(x.name)} (${x.songs.length})</option>`).join("") || `<option value="">No sets yet</option>`}</select>
+      <input id="trNewName" class="input" style="max-width:220px" maxlength="60" placeholder="New set name, e.g. 2024-2026 album">
+      <button class="btn btn-ghost btn-sm" data-action="tr-new-set">${icon("plus")}Create set</button>
+      ${s && !run ? `<button class="btn btn-ghost btn-sm" data-action="tr-del-set" title="Delete this set and its uploads">${icon("trash")}</button>` : ""}
+    </div>
+    <label class="check" style="margin:0 0 10px"><input type="checkbox" id="trOwn" ${ls.get("trOwn", false) ? "checked" : ""}> These are my own recordings, and anyone whose voice is on them has agreed to this training</label>
+    <div class="row" style="gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary" data-action="tr-pick" ${!s || TR.uploading ? "disabled" : ""}>${icon("upload")}Add songs</button>
+      <span class="t3" style="font-size:13px">MP3, WAV, FLAC, OGG or Opus, lyrics as <i>Song Title.lyrics.txt</i>, or one .zip. FLAC is best: lossless at half the size of WAV.</span>
+      <input type="file" id="trFiles" multiple hidden accept="audio/*,.mp3,.wav,.flac,.ogg,.opus,.txt,.json,.zip">
+    </div>
+    <div id="trQueue" class="trqueue"></div>
+    ${s ? `<div class="t2 num" style="font-size:13px;margin:12px 0 6px">${s.songs.length} song${s.songs.length === 1 ? "" : "s"} · ${fmtMB(s.bytes)} · ${labeled} labeled · ${withLyr} with lyrics
+      ${s.songs.length ? `<button class="btn btn-ghost btn-sm" data-action="tr-labels" style="margin-left:6px">${icon("sparkles")}Fill labels from my library</button>` : ""}</div>
+      <div class="lib">${s.songs.map(x => `<div class="lib-item" style="grid-template-columns:minmax(0,1fr) auto"><div style="min-width:0"><b>${esc(x.file)}</b>
+        <small class="num">${fmtMB(x.bytes)}${x.bpm ? " · " + x.bpm + " BPM" : ""}${x.keyscale ? " · " + esc(x.keyscale) : ""} · ${x.labeled ? "labeled" : "engine will describe it"}${x.lyrics ? " · lyrics" : " · instrumental"}</small>
+        ${x.caption ? `<small style="white-space:normal">${esc(x.caption.slice(0, 220))}</small>` : ""}</div>
+        <div class="lib-actions">${run ? "" : `<button class="iconbtn" data-trdel="${esc(x.file)}" aria-label="Remove ${esc(x.file)}">${icon("trash")}</button>`}</div></div>`).join("")}</div>` : ""}
+    <div class="trtrain">
+      <h4>Train</h4>
+      ${run ? `<div class="t2" style="font-size:14px"><b>${esc(job.phase)}</b>: ${esc(job.message || "")}</div>
+        ${job.phase === "training" ? `<div class="trbar" style="margin:8px 0"><i style="width:${Math.min(100, Math.round(100 * (job.epoch || 0) / (job.epochs || 1)))}%"></i></div>
+        <div class="t3 num" style="font-size:12px">${job.loss != null ? "loss " + Number(job.loss).toFixed(4) : ""}</div>` : ""}
+        <button class="btn btn-ghost btn-sm" data-action="tr-stop" style="margin-top:8px">Stop and save what it has learned</button>`
+      : `<div class="row" style="gap:8px;flex-wrap:wrap">
+          <select id="trMethod" class="input" style="max-width:260px"><option value="lokr">Fast (LoKr, recommended)</option><option value="lora">Standard (LoRA)</option></select>
+          <select id="trPreset" class="input" style="max-width:220px"><option value="quick">Quick pass</option><option value="standard" selected>Standard</option><option value="thorough">Thorough</option></select>
+          <input id="trAdName" class="input" style="max-width:220px" maxlength="60" placeholder="Adapter name (optional)">
+          <button class="btn btn-indigo" data-action="tr-start" ${!s || !s.songs.length ? "disabled" : ""}>${icon("cpu")}Train on this set</button></div>
+        <p class="t3" style="font-size:12px;margin-top:6px">Renders wait while training runs. The engine describes any song without a label first, then prepares the audio, then trains.${job.phase === "done" ? `<br><b>Last run:</b> ${esc(job.message)}` : job.phase === "error" ? `<br><b>Last run failed:</b> ${esc(job.error || "")}` : ""}</p>`}
+    </div>
+    <div class="trtrain">
+      <h4>Adapters for renders</h4>
+      <label class="check" style="margin:4px 0"><input type="radio" name="trUse" value="" ${!active ? "checked" : ""}> None (the engine's own sound)</label>
+      ${(st.adapters || []).map(a => `<div class="trad"><label class="check" style="margin:0"><input type="radio" name="trUse" value="${esc(a.name)}" ${active === a.name ? "checked" : ""}>
+        <span><b>${esc(a.title || a.name)}</b><small class="t3"> ${a.starter ? `${esc(a.license)} · <a href="${esc(a.source)}" target="_blank" rel="noopener">source</a>` : `${a.songs} songs · ${esc(a.method || "")} · ${a.epochs_done || a.epochs} epochs${a.stopped_early ? " (stopped early)" : ""}`}</small></span></label>
+        <button class="iconbtn" data-trdelad="${esc(a.name)}" aria-label="Delete adapter ${esc(a.name)}">${icon("trash")}</button></div>`).join("")}
+      <div class="row" style="gap:10px;margin-top:8px;align-items:center"><label for="trScale" class="t2" style="font-size:13px">Strength</label>
+        <input type="range" id="trScale" min="0" max="100" step="5" value="${Math.round(100 * (st.active?.scale ?? 1))}" style="flex:1;max-width:260px">
+        <span class="num t2" id="trScaleVal">${Math.round(100 * (st.active?.scale ?? 1))}%</span></div>
+      <h4 style="margin-top:14px">Starter adapters (free, permissive licenses)</h4>
+      ${Object.entries(st.starters || {}).map(([k, v]) => `<div class="trad"><span style="min-width:0"><b>${esc(v.title)}</b> <small class="t3">${esc(v.license)} · <a href="https://huggingface.co/${esc(v.repo)}" target="_blank" rel="noopener">${esc(v.repo)}</a></small><br><small class="t3" style="white-space:normal">${esc(v.about)}</small></span>
+        ${(st.adapters || []).some(a => a.name === k) ? `<span class="chip">Installed</span>` : st.installing?.[k] === "downloading" ? `<span class="chip">${icon("loader", "i spin")} Downloading…</span>`
+          : `<span>${st.installing?.[k] ? `<small class="t3">${esc(st.installing[k])}</small> ` : ""}<button class="btn btn-ghost btn-sm" data-trstarter="${esc(k)}">${icon("download")}Install</button></span>`}</div>`).join("")}
+    </div>`;
+  renderTrainQueue();
+}
+
 /* ---------- events ---------- */
 document.addEventListener("click", async e => {
-  const t = e.target.closest("[data-edittrack],[data-asktrack],[data-deltrack],[data-aitrack],[data-editlyric],[data-asklyric],[data-dellyric],[data-delgenre],[data-action],[data-nav],[data-seg],[data-preset],[data-copy],[data-openspec],[data-askdel],[data-delspec],[data-libfilter],[data-editprofile],[data-delprofile],[data-askdelprofile],[data-dupprofile],[data-exportprofile],[data-editpreset],[data-duppreset],[data-askdelpreset],[data-delpreset],[data-genre]");
+  const t = e.target.closest("[data-trdel],[data-trdelad],[data-trstarter],[data-edittrack],[data-asktrack],[data-deltrack],[data-aitrack],[data-editlyric],[data-asklyric],[data-dellyric],[data-delgenre],[data-action],[data-nav],[data-seg],[data-preset],[data-copy],[data-openspec],[data-askdel],[data-delspec],[data-libfilter],[data-editprofile],[data-delprofile],[data-askdelprofile],[data-dupprofile],[data-exportprofile],[data-editpreset],[data-duppreset],[data-askdelpreset],[data-delpreset],[data-genre]");
   if (!t) return;
   const d = t.dataset;
   if (d.nav) return go(d.nav);
@@ -2486,6 +2649,11 @@ document.addEventListener("click", async e => {
   if (d.openspec) { const s = state.library.find(x => x.id === d.openspec); if (s) { state.spec = JSON.parse(JSON.stringify(s)); state.seg = "spec"; go("studio"); renderSpec(); } return; }
   if (d.askdel) { state.confirmDel = d.askdel; return renderLibrary(); }
   if (d.delspec) { try { await store.deleteSpec(d.delspec); toast("ok", "Spec deleted"); } catch { toast("err", "Couldn't delete", "Try again."); } state.confirmDel = null; return renderLibrary(); }
+  if (d.trdel) { try { await trFetch(`/train/file/${trEnc(TR.set)}/${trEnc(d.trdel)}`, { method: "DELETE" }); } catch (err) { toast("err", "Couldn't remove", err.message); } return trRefresh(); }
+  if (d.trdelad) { if (!confirm(`Delete the adapter "${d.trdelad}"?`)) return; try { await trFetch(`/train/adapter/${trEnc(d.trdelad)}`, { method: "DELETE" }); } catch (err) { toast("err", "Couldn't delete", err.message); } return trRefresh(); }
+  if (d.trstarter) { t.disabled = true; t.innerHTML = `${icon("loader", "i spin")}Installing…`;
+    try { await trFetch(`/train/starter/${trEnc(d.trstarter)}`, { method: "POST" }); toast("info", "Downloading the adapter", "About 130-180 MB; it appears under Adapters for renders when ready."); } catch (err) { toast("err", "Couldn't install", err.message); }
+    return trRefresh(); }
   if (d.edittrack) return editTrack(d.edittrack);
   if (d.aitrack) return aiTrackCues(d.aitrack);
   if (d.asktrack) { state.confirmTrack = d.asktrack; return renderSound(); }
@@ -2532,6 +2700,19 @@ document.addEventListener("click", async e => {
     case "upload-lyrics": return $("#lyricsFiles").click();
     case "paste-lyric": state.editLyric = null; fillLyricEditor({}); $("#lyricEditor").hidden = false; $("#lyTitle").focus(); return;
     case "pick-tracks": return $("#trackFiles").click();
+    case "tr-pick": return $("#trFiles").click();
+    case "tr-new-set": { const name = ($("#trNewName").value || "").trim() || "My songs";
+      try { const j = await trFetch("/train/sets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) }); TR.set = j.id; ls.set("trainSet", j.id); } catch (err) { return toast("err", "Couldn't create the set", err.message); }
+      return trRefresh(); }
+    case "tr-del-set": { const s = trSet(); if (!s || !confirm(`Delete the set "${s.name}" and its ${s.songs.length} uploaded songs from the engine?`)) return;
+      try { await trFetch(`/train/sets/${trEnc(s.id)}`, { method: "DELETE" }); } catch (err) { return toast("err", "Couldn't delete", err.message); } TR.set = ""; return trRefresh(); }
+    case "tr-labels": return trFillLabels(false);
+    case "tr-start": { const opts = { method: $("#trMethod").value, preset: $("#trPreset").value, name: $("#trAdName").value.trim() || undefined };   // read before labels re-render the card
+      await trFillLabels(true);
+      try { await trFetch(`/train/start/${trEnc(TR.set)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(opts) });
+        toast("ok", "Training started", "You can leave this page; it keeps running on the engine."); } catch (err) { toast("err", "Couldn't start training", err.message); }
+      return trRefresh(); }
+    case "tr-stop": try { await trFetch("/train/stop", { method: "POST" }); } catch (err) { toast("err", "Couldn't stop", err.message); } return trRefresh();
     case "import-tracks": return $("#trackImport").click();
     case "export-tracks": return exportTracks();
     case "save-track": return saveTrackEdit();
@@ -2607,6 +2788,23 @@ $("#fBpm").addEventListener("input", e => $("#fBpmVal").textContent = e.target.v
 $("#exportFmt").addEventListener("change", updateExportNote);
 $("#useMyLyrics").addEventListener("change", e => ls.set("useMyLyrics", e.target.checked));
 $("#useMySound").addEventListener("change", e => ls.set("useMySound", e.target.checked));
+document.addEventListener("change", async e => {
+  const el = e.target;
+  if (el.id === "trSetSel") { TR.set = el.value; ls.set("trainSet", el.value); return renderTrain(); }
+  if (el.id === "trOwn") return ls.set("trOwn", el.checked);
+  if (el.id === "trFiles") { const f = [...el.files]; el.value = ""; if (f.length) trAddFiles(f); return; }
+  if (el.name === "trUse") {
+    try { await trFetch("/train/adapter", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: el.value || null, scale: Number($("#trScale").value) / 100 }) });
+      toast("ok", el.value ? "Adapter on for renders" : "Adapter off", el.value ? "New renders use it." : "Renders use the engine's own sound."); }
+    catch (err) { toast("err", "Couldn't switch the adapter", err.message); }
+    return trRefresh();
+  }
+  if (el.id === "trScale") {
+    const name = TR.st?.active?.name; if (!name) return;
+    try { await trFetch("/train/adapter", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, scale: Number(el.value) / 100 }) }); } catch (err) { toast("err", "Couldn't set strength", err.message); }
+  }
+});
+document.addEventListener("input", e => { if (e.target.id === "trScale") $("#trScaleVal").textContent = e.target.value + "%"; });
 $("#trackFiles").addEventListener("change", e => { const f = [...e.target.files]; e.target.value = ""; if (f.length) analyzeFiles(f); });
 $("#trackImport").addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f) importTracks(f); });
 $("#lyText").addEventListener("paste", () => setTimeout(() => {

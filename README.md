@@ -87,6 +87,30 @@ Checked against synthetic tracks with known values: tempo within 1 BPM, loudness
 EBU R128 meter, swing within 0.02, key correct except for relative major/minor pairs (both are shown when close).
 The descriptor wording uses fixed thresholds and is an estimate.
 
+## Train the engine on your music
+
+My Sound -> **Train the engine on my music** (engine studio only):
+
+1. Create a training set and tick the rights box (your recordings; anyone whose voice is on them agreed).
+2. **Add songs**: MP3, WAV, FLAC, OGG or Opus (FLAC is best), lyrics as `Song Title.lyrics.txt`, or one `.zip`.
+   Uploads go in 8 MB pieces and resume where they stopped if the connection drops. Each audio file is also measured
+   in the browser and added to My Sound.
+3. Labels are written for the engine from My Sound (caption, BPM, key) and My lyrics (lyrics), matched by title.
+   Songs without a label are described by ACE-Step's own auto-labeler when training starts.
+4. **Train on this set**: Fast (LoKr, recommended) or Standard (LoRA), Quick/Standard/Thorough (epochs 300/500/800 for
+   LoKr; 200/500/800 for LoRA). The bridge drives ACE-Step's API: dataset scan, auto-label, preprocess, train, export.
+   Renders wait while training runs; idle auto-stop treats training as activity.
+5. **Adapters for renders**: pick one (or none) and a strength; the choice is reloaded after the pod restarts.
+
+Files live under the engine's folder because ACE-Step only reads paths inside its working directory:
+`/workspace/ACE-Step-1.5/datasets/alexandria/<set>/` (songs, tensors, run) and
+`/workspace/ACE-Step-1.5/adapters/alexandria/<adapter>/`.
+
+**Starter adapters** (free, MIT, from Hugging Face, installed on request from a fixed list):
+- `artificialguybr/AceStep_Refine_Redmond` - general musicality refinement for the turbo model (training data not described).
+- `DisturbingTheField/ACE-Step-v1.5-raspy-vocal-and-instrumental-5-LoRAs` (instrumental adapter) - trained on the author's own tracks.
+- `DisturbingTheField/ACE-Step-v1.5-acoustic-guitar-and-a-merge-LoRA` - trained on the author's own guitar recordings.
+
 ## Export formats
 
 The player's **Export** button converts the current track on the engine with ffmpeg: WAV and AIFF masters

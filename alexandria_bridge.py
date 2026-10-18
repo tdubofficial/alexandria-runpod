@@ -31,6 +31,10 @@ Engines
           {duration} {seed}. The newest audio file written to {out_dir} is returned.
 """
 import argparse
+try:
+    import alexandria_train          # training (engine); optional so a bridge copied on its own still runs
+except ImportError:
+    alexandria_train = None
 import glob
 import hashlib
 import hmac
@@ -260,6 +264,7 @@ AUDIO_EXT = (".wav", ".mp3", ".flac", ".ogg")
 MIME = {".wav": "audio/wav", ".mp3": "audio/mpeg", ".flac": "audio/flac", ".ogg": "audio/ogg"}
 
 ARGS = None
+TRAINER = None          # alexandria_train.Trainer, set in main()
 AUTH = None            # {"salt": bytes, "hash": bytes, "iterations": int} when a password is set
 SESSIONS = {}          # token -> expiry timestamp
 FAILS = {}             # client ip -> [timestamps of failed logins]
@@ -557,6 +562,8 @@ def touch():
 
 
 def busy():
+    if TRAINER is not None and TRAINER.running:
+        return True
     with JOBS_LOCK:
         return any(j.get("status") in ("queued", "running") for j in JOBS.values())
 
@@ -755,6 +762,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.batch_files(urllib.parse.unquote(path[len("/batch-files/"):]))
         if not self.authed():
             return self.deny(path)
+        if path.startswith("/train/"):
+            return TRAINER.handle(self, "GET", path) if TRAINER else self.send_json({"error": "Training isn't available on this bridge"}, 404)
         if path in ("/", "/index.html", "/alexandria.html"):
             page = HERE / "alexandria.html"
             if not page.exists():
@@ -767,7 +776,7 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             return self.wfile.write(data)
         if path == "/health":
-            return self.send_json({"ok": True, "version": "1.5", "store": True,
+            return self.send_json({"ok": True, "version": "1.6", "store": True,
                                    "idle": {"enabled": bool(ARGS.idle_stop_minutes), "seconds_left": idle_seconds_left(),
                                             "minutes": ARGS.idle_stop_minutes, "key": bool(runpod_key()),
                                             "error": IDLE_STATE["error"]},
@@ -838,6 +847,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_PUT(self):
         if not self.authed():
             return self.deny(self.path)
+        if self.path.split("?")[0].startswith("/train/"):
+            return TRAINER.handle(self, "PUT", self.path.split("?")[0]) if TRAINER else self.send_json({"error": "Training isn't available on this bridge"}, 404)
         m = re.fullmatch(r"/store/([a-z]+)", self.path.split("?")[0])
         if not m or m.group(1) not in STORE_NAMES:
             return self.send_json({"error": "Not found"}, 404)
@@ -860,6 +871,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_DELETE(self):
         if not self.authed():
             return self.deny(self.path)
+        if self.path.split("?")[0].startswith("/train/"):
+            return TRAINER.handle(self, "DELETE", self.path.split("?")[0]) if TRAINER else self.send_json({"error": "Training isn't available on this bridge"}, 404)
         m = re.fullmatch(r"/voices/(v_[a-f0-9]{12})", self.path.split("?")[0])
         vp = voice_path(m.group(1)) if m else None
         if not vp:
@@ -872,6 +885,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.do_login()
         if not self.authed():
             return self.deny(self.path)
+        if self.path.split("?")[0].startswith("/train/"):
+            return TRAINER.handle(self, "POST", self.path.split("?")[0]) if TRAINER else self.send_json({"error": "Training isn't available on this bridge"}, 404)
         if self.path.split("?")[0] == "/llm":
             try:
                 req = json.loads(self.rfile.read(min(int(self.headers.get("Content-Length") or 0), 2 * 1024 * 1024)) or b"{}")
@@ -1000,6 +1015,14 @@ def main():
         print("  No music engine is running. Start ACE-Step 1.5's API server (start_api_server.bat);")
         print("  the bridge will find it on http://127.0.0.1:8001 without a restart.")
     print(f"Renders: {ARGS.out}")
+    global TRAINER
+    if alexandria_train is None:
+        print("Training: off (alexandria_train.py isn't next to the bridge)")
+    else:
+      TRAINER = alexandria_train.Trainer(os.environ.get("ALEX_ACE_DIR", "/workspace/ACE-Step-1.5"), ace_api_url, RENDER_LOCK,
+                                       log=lambda m: print(m, flush=True))
+      print(f"Training sets: {TRAINER.root}")
+      threading.Thread(target=TRAINER.restore_active, daemon=True).start()
     if ARGS.idle_stop_minutes:
         threading.Thread(target=idle_watch, daemon=True).start()
     if not ARGS.no_browser and (HERE / "alexandria.html").exists():
