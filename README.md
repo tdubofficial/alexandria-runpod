@@ -32,6 +32,8 @@ To ship an update, push to `main` and restart the pod.
 | `start.sh` | Start ACE-Step's API (private) and the studio on port 7870 |
 | `alexandria_bridge.py` | Studio server: sign-in, job queue, talks to ACE-Step |
 | `alexandria.html` | The studio |
+| `alexandria_train.py` | Training sets, uploads, labels, extraction and adapters |
+| `extract.py` | Listens to training songs: stems, lyrics, tempo, key, tags (runs in its own venv) |
 
 ## Your library on the engine
 
@@ -100,7 +102,15 @@ My Sound -> **Train the engine on my music** (engine studio only):
 4. **Train on this set**: Fast (LoKr, recommended) or Standard (LoRA), Quick/Standard/Thorough (epochs 300/500/800 for
    LoKr; 200/500/800 for LoRA). The bridge drives ACE-Step's API: dataset scan, auto-label, preprocess, train, export.
    Renders wait while training runs; idle auto-stop treats training as activity.
-5. **Adapters for renders**: pick one (or none) and a strength; the choice is reloaded after the pod restarts.
+5. **Listen: lyrics and instruments** (optional): the engine listens to every song in the set. Demucs (htdemucs) splits each
+   one into drums, bass, other and vocals; Whisper large-v3 transcribes the separated vocal; tempo is beat-tracked on the drum
+   stem and key is read from the bass and harmony stems; an AudioSet tagger (Audio Spectrogram Transformer) names genres,
+   instruments and voice types; vocal presence, pitch range and syllables per beat describe the delivery. Results are in
+   `<set>/extract/<song>.json`. Songs you have no notes or lyrics for are labeled from this. The transcription is a machine
+   draft (sung vocals are hard to transcribe), so lyrics in My lyrics always win. The tools install once into their own
+   environment, `/workspace/alexandria/xvenv` (about 6 GB with models), so the engine's packages are untouched.
+   Labels prefer what you wrote: BPM and key on a song sheet in My lyrics beat the meter's estimate.
+6. **Adapters for renders**: pick one (or none) and a strength; the choice is reloaded after the pod restarts.
 
 Files live under the engine's folder because ACE-Step only reads paths inside its working directory:
 `/workspace/ACE-Step-1.5/datasets/alexandria/<set>/` (songs, tensors, run) and
@@ -110,6 +120,9 @@ Files live under the engine's folder because ACE-Step only reads paths inside it
 - `artificialguybr/AceStep_Refine_Redmond` - general musicality refinement for the turbo model (training data not described).
 - `DisturbingTheField/ACE-Step-v1.5-raspy-vocal-and-instrumental-5-LoRAs` (instrumental adapter) - trained on the author's own tracks.
 - `DisturbingTheField/ACE-Step-v1.5-acoustic-guitar-and-a-merge-LoRA` - trained on the author's own guitar recordings.
+
+Scripted imports: while the pod variable `ALEX_BATCH_TOKEN` (24+ characters) is set, the `/train/*`, `/store/*` and
+`/batch-files/*` routes also accept that token in an `X-Alex-Batch-Token` header. Remove the variable when you're done.
 
 ## Export formats
 

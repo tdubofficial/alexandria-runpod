@@ -622,9 +622,9 @@ input[type="range"]{accent-color:var(--blue)}
       <!-- SETTINGS -->
       <section class="view" id="view-settings" hidden>
         <div class="card">
-          <div class="card-h"><svg class="i"><use href="#i-note"/></svg><h3>What's new</h3><span class="chip">v1.6</span></div>
+          <div class="card-h"><svg class="i"><use href="#i-note"/></svg><h3>What's new</h3><span class="chip">v1.7</span></div>
           <dl class="kv">
-            <dt>v1.6</dt><dd>Train the engine on your own songs: resumable uploads, automatic labels from My Sound and My lyrics, one-click LoKr/LoRA training, and adapters (including free MIT-licensed starters) you can switch on for renders.</dd><dt>v1.5</dt><dd>My Sound: analyze your finished tracks in the browser (tempo, swing, key, loudness, low end, tone, width, harmony, energy arc) into a library of style cues the writer uses. Song details in My lyrics.</dd><dt>v1.4</dt><dd>Every AI feature works on the engine: an open-source model runs on your pod (Qwen3.6 27B by default) with Claude as the fallback. My lyrics: upload or paste your own songs and the writer studies the closest ones to write in your voice. Automatic runtime repair for specs.</dd>
+            <dt>v1.7</dt><dd>Listen: the engine separates each training song into stems, transcribes the lyrics, measures tempo, key and vocal delivery, and tags genres and instruments, then uses that to label songs you have no notes for. Tempo and key you wrote on a song sheet now beat the meter's estimate.</dd><dt>v1.6</dt><dd>Train the engine on your own songs: resumable uploads, automatic labels from My Sound and My lyrics, one-click LoKr/LoRA training, and adapters (including free MIT-licensed starters) you can switch on for renders.</dd><dt>v1.5</dt><dd>My Sound: analyze your finished tracks in the browser (tempo, swing, key, loudness, low end, tone, width, harmony, energy arc) into a library of style cues the writer uses. Song details in My lyrics.</dd><dt>v1.4</dt><dd>Every AI feature works on the engine: an open-source model runs on your pod (Qwen3.6 27B by default) with Claude as the fallback. My lyrics: upload or paste your own songs and the writer studies the closest ones to write in your voice. Automatic runtime repair for specs.</dd>
             <dt>v1.3</dt><dd>Export in 18 formats: WAV and AIFF masters, FLAC, ALAC, MP3, AAC, Ogg Vorbis, Opus, CD (Red Book), Dolby Digital, Dolby Digital Plus, Dolby TrueHD, DTS, 5.1 WAV, MP4 and MKV.</dd>
             <dt>v1.2</dt><dd>Full player controls (top, ±10 s, end, loop, speed, volume, click or drag the waveform to choose where to play from, keyboard shortcuts). Editable preset library with a Mix genres builder and your own genres. Vocal profiles: edit, duplicate, delete, import, export, and create from a vocal sample. On the engine, your library is saved on the pod's storage.</dd>
             <dt>v1.1</dt><dd>RunPod engine: password sign-in, idle auto-stop after 30 minutes with an in-studio countdown, engine log viewer.</dd>
@@ -2486,7 +2486,7 @@ async function importTracks(file) {
 
 
 /* ---------- Train the engine on my music (engine studio only) ---------- */
-const TR = { st: null, set: ls.get("trainSet", ""), queue: [], poll: null, uploading: false };
+const TR = { st: null, set: ls.get("trainSet", ""), queue: [], poll: null, uploading: false, ex: null };
 Object.defineProperty(window, "__alxTrain", { value: { TR, trUploadOne, trRefresh, trSet } });
 const trEnc = s => encodeURIComponent(s);
 const fmtMB = b => b >= 1e9 ? (b / 1e9).toFixed(2) + " GB" : (b / 1e6).toFixed(1) + " MB";
@@ -2501,21 +2501,41 @@ async function trRefresh() {
   if (!bridgeMode) return renderTrain();
   try { TR.st = await trFetch("/train/status"); } catch (e) { TR.st = { error: String(e.message || e) }; }
   if (TR.st.sets && !TR.st.sets.some(s => s.id === TR.set)) TR.set = TR.st.sets[0]?.id || "";
+  if (TR.set && TR.st.sets) { try { TR.ex = await trFetch(`/train/extract/${trEnc(TR.set)}`); } catch { TR.ex = null; } } else TR.ex = null;
   renderTrain();
   clearTimeout(TR.poll);
-  if (TR.st.job?.running || Object.values(TR.st.installing || {}).includes("downloading")) TR.poll = setTimeout(trRefresh, 4000);
+  const exBusy = ["installing tools", "running"].includes(TR.ex?.state);
+  if (TR.st.job?.running || exBusy || Object.values(TR.st.installing || {}).includes("downloading")) TR.poll = setTimeout(trRefresh, 4000);
 }
 function trSet() { return (TR.st?.sets || []).find(s => s.id === TR.set); }
+/* What the engine heard when it listened to a song (extract.py): genres, instruments and voice types from AudioSet tags. */
+const EX_GENRE = /music$|^Funk$|^Jazz$|^Disco$|^Blues$|^Reggae$|^Dubstep$|^Techno$|^Trance|^Afrobeat$|^Ska$|^Grime|^Electronica$|^Rhythm and blues$|^Opera$|^Country$|^Folk|^House|^Drum and bass$/;
+const EX_SKIP = /^(Music|Song|Musical instrument|Speech|Background music|Theme music|Independent music|Vocal music|Happy music|Funny music|Sad music|Tender music|Exciting music|Angry music|Scary music|Sine wave|Reverberation|Echo|Distortion|Plucked string instrument|Bowed string instrument|Percussion|Keyboard \(musical\)|Wind instrument, woodwind instrument|Male speech, man speaking|Female speech, woman speaking|Narration, monologue|Yodeling|Middle Eastern music|Music of Asia|Music of Bollywood|Carnatic music|Christmas music|Wedding music|Lullaby|Music for children|Video game music|Jingle \(music\))$/;
+const EX_VOICE = /singing$|^Choir$|^Rapping$|^Humming$|^A capella$/;
+function exHeard(file) {
+  const r = TR.ex?.songs?.[file]; if (!r) return null;
+  const pick = (list, re, n, min) => (list || []).filter(t => re.test(t.label) && !EX_SKIP.test(t.label) && t.score >= min).slice(0, n).map(t => t.label.replace(/ music$/, "").replace(/, .*$/, "").toLowerCase());
+  const genres = pick(r.tags?.mix, EX_GENRE, 3, 0.004);
+  const voices = r.vocals?.presence > 0.1 ? pick(r.tags?.mix, EX_VOICE, 2, 0.003) : [];
+  const inst = pick(r.tags?.instrumental, /./, 14, 0.003).filter(x => !EX_GENRE.test(x) && !/ music$|^rhythm and blues$/.test(x) && !genres.includes(x) && !/singing$|^choir$|^rapping$/.test(x)).slice(0, 5);
+  const cues = [...genres, ...voices.map(v => v === "rapping" ? "rap vocals" : v.replace(" singing", " vocal")), ...inst];
+  return { cues: cues.join(", "), lyrics: r.lyrics || "", vocal: (r.vocals?.presence || 0) > 0.1 };
+}
 function trLabelFor(file) {
   const title = trackTitle(file).toLowerCase();
   const t = (store.cache.tracks || []).find(x => x.title.toLowerCase() === title);
   const l = (store.cache.lyrics || []).find(x => x.title.trim().toLowerCase() === title);
-  if (!t && !l) return null;
-  const caption = stripNames([t?.notes, t ? trackCues(t) : "", l?.style].filter(Boolean).join(", ")).replace(/\s+/g, " ").slice(0, 900);
-  const lab = { caption: caption || undefined, language: l?.text ? "en" : "instrumental", lyrics: l?.text || "" };
-  if (t?.a && t.a.steadyBeat !== false) lab.bpm = Math.round(t.a.bpm);
-  else if (l?.bpm) lab.bpm = Number(l.bpm);
-  if (t?.a?.key) lab.keyscale = t.a.key; else if (l?.key) lab.keyscale = l.key;
+  const ex = exHeard(file);
+  if (!t && !l && !ex) return null;
+  // your own words first: a style prompt you wrote beats the meter's reading; what the engine heard fills gaps
+  const caption = stripNames([t?.notes, l?.style || (t ? trackCues(t) : ""), ex && !l?.style ? ex.cues : ""].filter(Boolean).join(", ")).replace(/\s+/g, " ").slice(0, 900);
+  const lyrics = l?.text || (ex?.vocal ? ex.lyrics : "");
+  const lab = { caption: caption || undefined, language: lyrics ? "en" : "instrumental", lyrics };
+  const statedBpm = Number(l?.bpm || t?.stated?.bpm) || 0;
+  if (statedBpm) lab.bpm = statedBpm;
+  else if (t?.a && t.a.steadyBeat !== false) lab.bpm = Math.round(t.a.bpm);
+  const statedKey = l?.key || t?.stated?.key;
+  if (statedKey) lab.keyscale = statedKey; else if (t?.a?.key) lab.keyscale = t.a.key;
   if (t?.a?.timeSig) lab.timesignature = String(t.a.timeSig);
   return lab;
 }
@@ -2525,7 +2545,7 @@ async function trFillLabels(quiet) {
   for (const song of s.songs) { const lab = trLabelFor(song.file); if (lab && (lab.caption || lab.lyrics)) { songs[song.file] = lab; n++; } }
   if (n) await trFetch(`/train/labels/${trEnc(s.id)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ songs }) });
   if (!quiet) toast(n ? "ok" : "info", n ? `${n} song${n === 1 ? "" : "s"} labeled` : "Nothing to label from your library",
-    n ? "Captions, tempo and key from My Sound; lyrics from My lyrics." : "Songs without labels are described by the engine when training starts.");
+    n ? "Captions, tempo and key from My Sound and My lyrics; what the engine heard fills the gaps." : "Songs without labels are described by the engine when training starts.");
   await trRefresh();
 }
 async function trUploadOne(item) {
@@ -2578,6 +2598,15 @@ function renderTrainQueue() {
   el.innerHTML = TR.queue.length ? TR.queue.map(q => `<div class="trq"><span>${esc(q.file.name)}</span><span class="num t3">${fmtMB(q.file.size)}</span>
     <div class="trbar"><i style="width:${q.pct}%"></i></div><span class="t3" style="font-size:12px">${esc(q.state)}</span></div>`).join("") : "";
 }
+function trExtractLine(s) {
+  const ex = TR.ex; if (!ex || (ex.state === "idle" && !Object.keys(ex.songs || {}).length)) return "";
+  const done = Object.keys(ex.songs || {}).length, total = ex.status?.total || s.songs.length, failed = Object.keys(ex.status?.failed || {}).length;
+  const msg = ex.state === "installing tools" ? "Installing the listening tools on the engine (first time only, a few minutes)…"
+    : ex.state === "running" ? `Listening: ${done} of ${total} songs (${esc(ex.status?.phase || "starting")})`
+    : String(ex.state).startsWith("error") ? `Listening failed: ${esc(ex.state.slice(7))}`
+    : `Listened to ${done} song${done === 1 ? "" : "s"}${failed ? `, ${failed} failed` : ""}. Transcribed lyrics are a machine draft: songs in My lyrics use your text instead.`;
+  return `<p class="t3" style="font-size:12px;margin:0 0 8px">${msg}</p>`;
+}
 function renderTrain() {
   const body = $("#trainBody"); if (!body) return;
   if (!bridgeMode) { body.innerHTML = `<p class="t2" style="font-size:14px">Training runs on your engine. Open the studio from your RunPod link (the engine studio) to upload songs and train.</p>`; return; }
@@ -2602,7 +2631,9 @@ function renderTrain() {
     </div>
     <div id="trQueue" class="trqueue"></div>
     ${s ? `<div class="t2 num" style="font-size:13px;margin:12px 0 6px">${s.songs.length} song${s.songs.length === 1 ? "" : "s"} · ${fmtMB(s.bytes)} · ${labeled} labeled · ${withLyr} with lyrics
-      ${s.songs.length ? `<button class="btn btn-ghost btn-sm" data-action="tr-labels" style="margin-left:6px">${icon("sparkles")}Fill labels from my library</button>` : ""}</div>
+      ${s.songs.length ? `<button class="btn btn-ghost btn-sm" data-action="tr-labels" style="margin-left:6px">${icon("sparkles")}Fill labels from my library</button>
+        <button class="btn btn-ghost btn-sm" data-action="tr-extract" ${run || ["installing tools", "running"].includes(TR.ex?.state) ? "disabled" : ""} title="Separates the vocal, transcribes lyrics and tags genres and instruments on the engine">${icon("mic")}Listen: lyrics and instruments</button>` : ""}</div>
+      ${trExtractLine(s)}
       <div class="lib">${s.songs.map(x => `<div class="lib-item" style="grid-template-columns:minmax(0,1fr) auto"><div style="min-width:0"><b>${esc(x.file)}</b>
         <small class="num">${fmtMB(x.bytes)}${x.bpm ? " · " + x.bpm + " BPM" : ""}${x.keyscale ? " · " + esc(x.keyscale) : ""} · ${x.labeled ? "labeled" : "engine will describe it"}${x.lyrics ? " · lyrics" : " · instrumental"}</small>
         ${x.caption ? `<small style="white-space:normal">${esc(x.caption.slice(0, 220))}</small>` : ""}</div>
@@ -2707,6 +2738,9 @@ document.addEventListener("click", async e => {
     case "tr-del-set": { const s = trSet(); if (!s || !confirm(`Delete the set "${s.name}" and its ${s.songs.length} uploaded songs from the engine?`)) return;
       try { await trFetch(`/train/sets/${trEnc(s.id)}`, { method: "DELETE" }); } catch (err) { return toast("err", "Couldn't delete", err.message); } TR.set = ""; return trRefresh(); }
     case "tr-labels": return trFillLabels(false);
+    case "tr-extract": try { await trFetch(`/train/extract/${trEnc(TR.set)}`, { method: "POST" });
+        toast("ok", "Listening to your songs", "Separating vocals, transcribing lyrics and tagging instruments on the engine."); } catch (err) { toast("err", "Couldn't start", err.message); }
+      return trRefresh();
     case "tr-start": { const opts = { method: $("#trMethod").value, preset: $("#trPreset").value, name: $("#trAdName").value.trim() || undefined };   // read before labels re-render the card
       await trFillLabels(true);
       try { await trFetch(`/train/start/${trEnc(TR.set)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(opts) });

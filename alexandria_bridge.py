@@ -752,6 +752,20 @@ class Handler(BaseHTTPRequestHandler):
         with open(target, "rb") as f:
             shutil.copyfileobj(f, self.wfile, 1 << 20)
 
+    def batch_token_ok(self):
+        token = os.environ.get("ALEX_BATCH_TOKEN", "")
+        given = self.headers.get("X-Alex-Batch-Token", "")
+        return len(token) >= 24 and hmac.compare_digest(token.encode(), given.encode())
+
+    def train_authed(self):
+        """Training and library routes also accept the batch token (only while ALEX_BATCH_TOKEN is set), for scripted imports."""
+        if self.authed():
+            return True
+        if self.path.split("?")[0].startswith(("/train/", "/store/")) and self.batch_token_ok():
+            touch()
+            return True
+        return False
+
     def do_GET(self):
         path = self.path.split("?")[0]
         if path == "/login":
@@ -760,7 +774,9 @@ class Handler(BaseHTTPRequestHandler):
             return self.do_logout()
         if path.startswith("/batch-files/"):
             return self.batch_files(urllib.parse.unquote(path[len("/batch-files/"):]))
-        if not self.authed():
+        if path.startswith("/train/") and self.train_authed():
+            return TRAINER.handle(self, "GET", path) if TRAINER else self.send_json({"error": "Training isn't available on this bridge"}, 404)
+        if not self.train_authed():
             return self.deny(path)
         if path.startswith("/train/"):
             return TRAINER.handle(self, "GET", path) if TRAINER else self.send_json({"error": "Training isn't available on this bridge"}, 404)
@@ -776,7 +792,7 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             return self.wfile.write(data)
         if path == "/health":
-            return self.send_json({"ok": True, "version": "1.6", "store": True,
+            return self.send_json({"ok": True, "version": "1.7", "store": True,
                                    "idle": {"enabled": bool(ARGS.idle_stop_minutes), "seconds_left": idle_seconds_left(),
                                             "minutes": ARGS.idle_stop_minutes, "key": bool(runpod_key()),
                                             "error": IDLE_STATE["error"]},
@@ -845,10 +861,10 @@ class Handler(BaseHTTPRequestHandler):
         self.send_json({"error": "Not found"}, 404)
 
     def do_PUT(self):
-        if not self.authed():
-            return self.deny(self.path)
-        if self.path.split("?")[0].startswith("/train/"):
+        if self.path.split("?")[0].startswith("/train/") and self.train_authed():
             return TRAINER.handle(self, "PUT", self.path.split("?")[0]) if TRAINER else self.send_json({"error": "Training isn't available on this bridge"}, 404)
+        if not self.train_authed():
+            return self.deny(self.path)
         m = re.fullmatch(r"/store/([a-z]+)", self.path.split("?")[0])
         if not m or m.group(1) not in STORE_NAMES:
             return self.send_json({"error": "Not found"}, 404)
@@ -869,10 +885,10 @@ class Handler(BaseHTTPRequestHandler):
         return self.send_json({"ok": True, "count": len(data)})
 
     def do_DELETE(self):
+        if self.path.split("?")[0].startswith("/train/") and self.train_authed():
+            return TRAINER.handle(self, "DELETE", self.path.split("?")[0]) if TRAINER else self.send_json({"error": "Training isn't available on this bridge"}, 404)
         if not self.authed():
             return self.deny(self.path)
-        if self.path.split("?")[0].startswith("/train/"):
-            return TRAINER.handle(self, "DELETE", self.path.split("?")[0]) if TRAINER else self.send_json({"error": "Training isn't available on this bridge"}, 404)
         m = re.fullmatch(r"/voices/(v_[a-f0-9]{12})", self.path.split("?")[0])
         vp = voice_path(m.group(1)) if m else None
         if not vp:
@@ -883,10 +899,10 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path.split("?")[0] == "/login" and AUTH is not None:
             return self.do_login()
+        if self.path.split("?")[0].startswith("/train/") and self.train_authed():
+            return TRAINER.handle(self, "POST", self.path.split("?")[0]) if TRAINER else self.send_json({"error": "Training isn't available on this bridge"}, 404)
         if not self.authed():
             return self.deny(self.path)
-        if self.path.split("?")[0].startswith("/train/"):
-            return TRAINER.handle(self, "POST", self.path.split("?")[0]) if TRAINER else self.send_json({"error": "Training isn't available on this bridge"}, 404)
         if self.path.split("?")[0] == "/llm":
             try:
                 req = json.loads(self.rfile.read(min(int(self.headers.get("Content-Length") or 0), 2 * 1024 * 1024)) or b"{}")

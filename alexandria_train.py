@@ -10,8 +10,10 @@ Pipeline (ACE-Step API): /v1/dataset/scan -> auto_label_async (only songs with n
 /v1/training/start_lokr or /v1/training/start -> /v1/training/status -> /v1/training/export -> /v1/lora/load.
 """
 import json
+import os
 import re
 import shutil
+import subprocess
 import threading
 import time
 import urllib.error
@@ -70,6 +72,60 @@ class Trainer:
         self.lock = threading.Lock()
         self.job = {"running": False, "phase": "idle", "message": "", "set": None}
         self.installing = {}                                   # starter key -> "downloading" | "error: ..."
+        self.extracting = {}                                   # set id -> "installing tools" | "running" | "error: ..."
+
+    # ---------------------------------------------------------------- listen to the songs (extract.py)
+    XVENV = Path(os.environ.get("ALEX_XVENV", "/workspace/alexandria/xvenv"))
+    XPKGS = ["numpy==1.26.4", "torch==2.5.1", "torchaudio==2.5.1", "demucs==4.0.1", "transformers==4.46.3",
+             "librosa==0.10.2.post1", "soundfile"]
+
+    def _xvenv(self):
+        """Tools for extraction live in their own venv on the volume, so the engine's packages are never changed."""
+        py = self.XVENV / "bin" / "python"
+        ready = self.XVENV / ".ready"
+        if ready.exists() and ready.read_text() == " ".join(self.XPKGS):
+            return py
+        uv = shutil.which("uv") or "/workspace/.uv/bin/uv"
+        logf = open(self.XVENV.parent / "logs" / "extract-install.log", "a")
+        if not py.exists():
+            subprocess.run([uv, "venv", str(self.XVENV), "--python", "3.11"], check=True, stdout=logf, stderr=logf)
+        subprocess.run([uv, "pip", "install", "--python", str(py), *self.XPKGS], check=True, stdout=logf, stderr=logf)
+        ready.write_text(" ".join(self.XPKGS))
+        return py
+
+    def extract_start(self, sid):
+        d = self.set_dir(sid)
+        if not (d / "songs").exists():
+            raise FileNotFoundError("No such training set")
+        if self.job.get("running"):
+            raise RuntimeError("Training is running; extract after it finishes")
+        if self.extracting.get(sid) in ("installing tools", "running"):
+            return self.extracting[sid]
+        self.extracting[sid] = "installing tools"
+
+        def go():
+            try:
+                py = self._xvenv()
+                self.extracting[sid] = "running"
+                logf = open(self.XVENV.parent / "logs" / f"extract-{sid}.log", "a")
+                subprocess.run([str(py), str(Path(__file__).with_name("extract.py")), str(d / "songs"), str(d / "extract")],
+                               check=True, stdout=logf, stderr=logf, cwd=str(d),
+                               env={**os.environ, "TORCH_HOME": os.environ.get("TORCH_HOME", "/workspace/hf-cache/torch")})
+                self.extracting[sid] = "finished"
+            except Exception as e:  # noqa: BLE001
+                self.extracting[sid] = f"error: {str(e)[:300]}"
+                self.log(f"extract {sid} failed: {e}")
+        threading.Thread(target=go, daemon=True).start()
+        return self.extracting[sid]
+
+    def extract_results(self, sid):
+        x = self.set_dir(sid) / "extract"
+        res = {"state": self.extracting.get(sid, "idle"), "status": self.read_json(x / "status.json", {}), "songs": {}}
+        if x.exists():
+            for f in sorted(x.glob("*.json")):
+                if f.name != "status.json":
+                    res["songs"][f.name[:-5]] = self.read_json(f, {})
+        return res
 
     # ---------------------------------------------------------------- engine calls
     def ace(self, path, body=None, method=None, timeout=120):
@@ -97,7 +153,7 @@ class Trainer:
 
     @property
     def running(self):
-        return bool(self.job.get("running"))
+        return bool(self.job.get("running")) or any(v in ("installing tools", "running") for v in self.extracting.values())
 
     def set_job(self, **kw):
         with self.lock:
@@ -463,6 +519,11 @@ class Trainer:
                 self.delete_song(parts[1], parts[2]); return h.send_json({"ok": True})
             if method == "POST" and len(parts) == 2 and parts[0] == "labels":
                 return h.send_json({"written": self.write_labels(parts[1], self._body(h).get("songs"))})
+            if len(parts) == 2 and parts[0] == "extract":
+                if method == "POST":
+                    return h.send_json({"state": self.extract_start(parts[1])})
+                if method == "GET":
+                    return h.send_json(self.extract_results(parts[1]))
             if method == "POST" and len(parts) == 2 and parts[0] == "start":
                 b = self._body(h)
                 return h.send_json({"job": self.start(parts[1], b.get("method", "lokr"), b.get("preset", "standard"), b.get("name"))})
