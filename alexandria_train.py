@@ -77,7 +77,7 @@ class Trainer:
     # ---------------------------------------------------------------- listen to the songs (extract.py)
     XVENV = Path(os.environ.get("ALEX_XVENV", "/workspace/alexandria/xvenv"))
     XPKGS = ["numpy==1.26.4", "torch==2.5.1", "torchaudio==2.5.1", "demucs==4.0.1", "transformers==4.46.3",
-             "librosa==0.10.2.post1", "soundfile"]
+             "librosa==0.10.2.post1", "soundfile", "hf_transfer"]
 
     def _xvenv(self):
         """Tools for extraction live in their own venv on the volume, so the engine's packages are never changed."""
@@ -111,7 +111,8 @@ class Trainer:
                 subprocess.run([str(py), str(Path(__file__).with_name("extract.py")), str(d / "songs"), str(d / "extract")],
                                check=True, stdout=logf, stderr=logf, cwd=str(d),
                                env={**os.environ, "TORCH_HOME": os.environ.get("TORCH_HOME", "/workspace/hf-cache/torch")})
-                self.extracting[sid] = "finished"
+                ph = str(self.read_json(d / "extract" / "status.json", {}).get("phase", ""))
+                self.extracting[sid] = ph if ph.startswith("error") else "finished"
             except Exception as e:  # noqa: BLE001
                 self.extracting[sid] = f"error: {str(e)[:300]}"
                 self.log(f"extract {sid} failed: {e}")
