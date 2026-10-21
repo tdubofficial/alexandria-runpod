@@ -2532,10 +2532,11 @@ function trLabelFor(file) {
   const lyrics = l?.text || (ex?.vocal ? ex.lyrics : "");
   const lab = { caption: caption || undefined, language: lyrics ? "en" : "instrumental", lyrics };
   const statedBpm = Number(l?.bpm || t?.stated?.bpm) || 0;
+  // a track with checked values ("stated") left tempo or key out on purpose when the measurements disagreed
   if (statedBpm) lab.bpm = statedBpm;
-  else if (t?.a && t.a.steadyBeat !== false) lab.bpm = Math.round(t.a.bpm);
+  else if (!t?.stated && t?.a && t.a.steadyBeat !== false) lab.bpm = Math.round(t.a.bpm);
   const statedKey = l?.key || t?.stated?.key;
-  if (statedKey) lab.keyscale = statedKey; else if (t?.a?.key) lab.keyscale = t.a.key;
+  if (statedKey) lab.keyscale = statedKey; else if (!t?.stated && t?.a?.key) lab.keyscale = t.a.key;
   if (t?.a?.timeSig) lab.timesignature = String(t.a.timeSig);
   return lab;
 }
